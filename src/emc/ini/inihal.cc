@@ -167,6 +167,7 @@ int ini_hal_init(int numjoints)
         MAKE_FLOAT_PIN_LETTER(axis_max_limit,max_limit,HAL_IN,idx,letter);
         MAKE_FLOAT_PIN_LETTER(axis_max_velocity,max_velocity,HAL_IN,idx,letter);
         MAKE_FLOAT_PIN_LETTER(axis_max_acceleration,max_acceleration,HAL_IN,idx,letter);
+        MAKE_FLOAT_PIN_LETTER(axis_max_jerk,max_jerk,HAL_IN,idx,letter);
     }
 
     MAKE_FLOAT_PIN(traj_default_velocity,HAL_IN);
@@ -217,6 +218,7 @@ int ini_hal_init_pins(int numjoints)
         INIT_PIN(axis_max_limit[idx]);
         INIT_PIN(axis_max_velocity[idx]);
         INIT_PIN(axis_max_acceleration[idx]);
+        INIT_PIN(axis_max_jerk[idx]);
     }
 
     return 0;
@@ -355,6 +357,15 @@ int check_ini_hal_items(int numjoints)
                 }
             }
         }
+        if (CHANGED_IDX(joint_max_jerk,idx) ) {
+            if (debug) SHOW_CHANGE_IDX(joint_max_jerk,idx);
+            UPDATE_IDX(joint_max_jerk,idx);
+            if (0 != emcJointSetMaxJerk(idx, NEW(joint_max_jerk[idx]))) {
+                if (emc_debug & EMC_DEBUG_CONFIG) {
+                    rcs_print_error("check_ini_hal_items:bad return from emcJointSetMaxJerk\n");
+                }
+            }
+        }
         if (   CHANGED_IDX(joint_home,idx)
             || CHANGED_IDX(joint_home_offset,idx)
             || CHANGED_IDX(joint_home_sequence,idx)
@@ -434,6 +445,17 @@ int check_ini_hal_items(int numjoints)
                   (    ext_offset_a_or_v_ratio[idx]) * NEW(axis_max_acceleration[idx]))) {
                 if (emc_debug & EMC_DEBUG_CONFIG) {
                     rcs_print_error("check_ini_hal_items:bad return from emcAxisSetMaxAcceleration\n");
+                }
+            }
+        }
+        if (CHANGED_IDX(axis_max_jerk,idx) ) {
+            if (debug) SHOW_CHANGE_IDX(axis_max_jerk,idx);
+            UPDATE_IDX(axis_max_jerk,idx);
+            if (0 != emcAxisSetMaxJerk(idx,
+                   (1 - ext_offset_a_or_v_ratio[idx]) * NEW(axis_max_jerk[idx]),
+                   (    ext_offset_a_or_v_ratio[idx]) * NEW(axis_max_jerk[idx]))) {
+                if (emc_debug & EMC_DEBUG_CONFIG) {
+                    rcs_print_error("check_ini_hal_items:bad return from emcAxisSetMaxJerk\n");
                 }
             }
         }
