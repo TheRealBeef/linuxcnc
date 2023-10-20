@@ -79,7 +79,7 @@ set_target_properties(linuxcnchal PROPERTIES
 target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal -fPIC)
 
 
-//BEEFNOTE: This may not always be necessary, but has been needed to solve missing RPC.H errors for me
+# BEEFNOTE: This may not always be necessary, but has been needed to solve missing RPC.H errors for me
 target_link_libraries(${PROJECT_NAME} PRIVATE tirpc)
 
 # Set custom output name :

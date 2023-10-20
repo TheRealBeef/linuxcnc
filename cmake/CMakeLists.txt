@@ -64,6 +64,9 @@ Boost library       Boost::python${BOOST_PYTHON_LIB_SUFFIX}
 
 include_directories("/usr/include/boost")
 
+# If RPC.H errors
+include_directories("/usr/include/tirpc/")
+
 # ~/lib (c - c++ code for motion, gcode etc.)
 add_subdirectory(${SRC_DIR}/liblinuxcnchal)
 add_subdirectory(${SRC_DIR}/liblinuxcncini)
@@ -106,7 +109,7 @@ add_subdirectory(${SRC_DIR}/components/ugenserkins)
 add_subdirectory(${SRC_DIR}/components/scurve)
 add_subdirectory(${SRC_DIR}/components/motmod) # jogging
 add_subdirectory(${SRC_DIR}/components/scope_rt)
-add_subdirectory(${SRC_DIR}/components/simple_tp)
+#add_subdirectory(${SRC_DIR}/components/simple_tp)
 
 # Components from here need a halcompile from .comp to .c file.
 #add_subdirectory(${SRC_DIR}/components/ddt)
