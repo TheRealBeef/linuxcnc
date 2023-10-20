@@ -20,6 +20,7 @@ include_directories(${SRC_DIR}/../../src/libnml/nml)
 include_directories(${SRC_DIR}/../../src/libnml/rcs)
 include_directories(${SRC_DIR}/../../src/libnml/cms)
 include_directories(/usr/include/python3.9)
+include_directories(/usr/include/boost)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")

@@ -46,7 +46,7 @@ echo "building linuxcnc with cmake. \n"
 cd cmake
 mkdir -p build
 cd build
-cmake ..
+cmake -DBUILD_USPACE=ON ..
 make
 make install
 cd ..

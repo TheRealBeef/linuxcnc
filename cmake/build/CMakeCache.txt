@@ -29,6 +29,17 @@
 //Value Computed by CMake
 5axiskins_SOURCE_DIR:STATIC=/home/user/linuxcnc/cmake/components/5axiskins
 
+//No help, variable specified on the command line.
+BUILD_USPACE:UNINITIALIZED=ON
+
+//The directory containing a CMake configuration file for Boost.
+Boost_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0
+
+//Path to a file.
+Boost_INCLUDE_DIR:PATH=/usr/include
+
+Boost_PYTHON39_LIBRARY_RELEASE:STRING=/usr/lib/x86_64-linux-gnu/libboost_python39.so.1.74.0
+
 //Path to a program.
 CMAKE_ADDR2LINE:FILEPATH=/usr/bin/addr2line
 
@@ -282,6 +293,12 @@ _togl_LIB_DEPENDS:STATIC=general;-ltcl8.6;general;-ltk8.6;general;-lX11;general;
 
 //Value Computed by CMake
 _togl_SOURCE_DIR:STATIC=/home/user/linuxcnc/cmake/togl_py
+
+//The directory containing a CMake configuration file for boost_headers.
+boost_headers_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_headers-1.74.0
+
+//The directory containing a CMake configuration file for boost_python.
+boost_python_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_python-1.74.0
 
 //Value Computed by CMake
 classicladder_BINARY_DIR:STATIC=/home/user/linuxcnc/cmake/build/classicladder
@@ -783,6 +800,8 @@ xyzbc-trt-kins_SOURCE_DIR:STATIC=/home/user/linuxcnc/cmake/components/xyzbc-trt-
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: Boost_DIR
+Boost_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ADDR2LINE
 CMAKE_ADDR2LINE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
@@ -943,4 +962,23 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Details about finding Boost
+FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake][cfound components: python39 ][v1.74.0()]
+//Details about finding Python3
+FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL=[/usr/bin/python3.9][/usr/include/python3.9][/usr/lib/x86_64-linux-gnu/libpython3.9.so][cfound components: Interpreter Development Development.Module Development.Embed ][v3.9.2()]
+_Python3_DEVELOPMENT_EMBED_SIGNATURE:INTERNAL=a2c188eb82d9821e4fb24c16832053ab
+_Python3_DEVELOPMENT_MODULE_SIGNATURE:INTERNAL=09e86d08211b5d41dc314029dba3f86a
+//Path to a program.
+_Python3_EXECUTABLE:INTERNAL=/usr/bin/python3.9
+//Path to a file.
+_Python3_INCLUDE_DIR:INTERNAL=/usr/include/python3.9
+//Python3 Properties
+_Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;9;2;64;;cpython-39-x86_64-linux-gnu;/usr/lib/python3.9;/usr/lib/python3.9;/usr/lib/python3/dist-packages;/usr/lib/python3/dist-packages
+_Python3_INTERPRETER_SIGNATURE:INTERNAL=a40be8c2fcb8cff70b008e09b37f6755
+//Path to a library.
+_Python3_LIBRARY_RELEASE:INTERNAL=/usr/lib/x86_64-linux-gnu/libpython3.9.so
+//ADVANCED property for variable: boost_headers_DIR
+boost_headers_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: boost_python_DIR
+boost_python_DIR-ADVANCED:INTERNAL=1
 

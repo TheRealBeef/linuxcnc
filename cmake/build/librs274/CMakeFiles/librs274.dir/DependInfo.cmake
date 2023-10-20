@@ -58,6 +58,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../librs274/../../src/libnml/rcs"
   "../librs274/../../src/libnml/cms"
   "/usr/include/python3.9"
+  "/usr/include/boost"
   "../librs274/../../src/libnml/inifile"
   "../librs274/../../include"
   "../librs274/../../src/hal"

@@ -128,10 +128,10 @@ add_subdirectory(${SRC_DIR}/gcode_py)
 
 # ~/projects (c - c++ gui projects)
 # add_subdirectory(${SRC_DIR}/projects/qt_occt) # Requires opencascade & kdl & qt installed.
-# add_subdirectory(${SRC_DIR}/projects/qt_nml) # Requires qt installed
-# add_subdirectory(${SRC_DIR}/projects/qt_ruckig_gui) # Requires qt installed
+# add_subdirectory(${SRC_DIR}/projects/qt_nml) # Requires qt installed, first start linuxcnc, then start qt_nml.
+# add_subdirectory(${SRC_DIR}/projects/qt_ruckig_gui) # Requires qt installed, run trough qt.
 
-# Experimental.
+# Experimental scurve motion planner.
 add_subdirectory(${SRC_DIR}/components/sc_tp)
 
 

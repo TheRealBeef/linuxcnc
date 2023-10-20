@@ -6,6 +6,9 @@ echo "current folder:"
 echo $PWD
 echo "\n"
 
+echo "clean qt-cmake config file \n"
+rm -rf CMakeLists.txt.user
+
 cd ..
 
 echo "clean ~/bin folder \n"

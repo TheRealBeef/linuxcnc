@@ -11,4 +11,4 @@ git add .
 git commit -m "commit"
 
 git push -f origin master    # this is force...
-
+git push -u origin master    
