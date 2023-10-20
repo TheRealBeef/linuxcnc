@@ -64,9 +64,6 @@ Boost library       Boost::python${BOOST_PYTHON_LIB_SUFFIX}
 
 include_directories("/usr/include/boost")
 
-# If RPC.H errors
-include_directories("/usr/include/tirpc/")
-
 # ~/lib (c - c++ code for motion, gcode etc.)
 add_subdirectory(${SRC_DIR}/liblinuxcnchal)
 add_subdirectory(${SRC_DIR}/liblinuxcncini)
