@@ -1,3 +1,10 @@
+```
+This linuxcnc fork has a cmake project under the hood.
+To build linuxcnc with cmake, visit ~/linuxcnc/cmake/ then execute the script : ./build_all
+
+To open and edit linuxcnc source code in a designer like qt, open the ~/linuxcnc/cmake/cmakelists.txt
+After building linuxcnc inside qt, don't forget to do a "make install". 
+```
 
 [![Badge GPL2]][License]
 [![Badge LGPL]][License]

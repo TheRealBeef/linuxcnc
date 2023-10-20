@@ -1,0 +1,493 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "components/motmod/motmod.so"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"ADD_LIBRARY",
+			"install",
+			"target_link_libraries",
+			"add_definitions",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"components/motmod/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 30,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 90,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 84,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 28,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 12,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 14,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 15,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 16,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 17,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 18,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 19,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 74,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-fPIC"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 4,
+					"define" : "RTAPI"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "USPACE"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "_GNU_SOURCE"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "__MODULE__"
+				},
+				{
+					"define" : "motmod_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/rtapi"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/hal"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/motion"
+				},
+				{
+					"backtrace" : 9,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/nml_intf"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/kinematics"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/tp"
+				},
+				{
+					"backtrace" : 12,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/libnml/posemath"
+				},
+				{
+					"backtrace" : 13,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../vendor/ruckig"
+				},
+				{
+					"backtrace" : 14,
+					"path" : "/usr/include/eigen3/Eigen"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../include"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				6,
+				7,
+				8,
+				9
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-fPIC"
+				},
+				{
+					"fragment" : "-std=gnu++2a"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 4,
+					"define" : "RTAPI"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "USPACE"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "_GNU_SOURCE"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "__MODULE__"
+				},
+				{
+					"define" : "motmod_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/rtapi"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/hal"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/motion"
+				},
+				{
+					"backtrace" : 9,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/nml_intf"
+				},
+				{
+					"backtrace" : 10,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/kinematics"
+				},
+				{
+					"backtrace" : 11,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/emc/tp"
+				},
+				{
+					"backtrace" : 12,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../src/libnml/posemath"
+				},
+				{
+					"backtrace" : 13,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../vendor/ruckig"
+				},
+				{
+					"backtrace" : 14,
+					"path" : "/usr/include/eigen3/Eigen"
+				},
+				{
+					"backtrace" : 3,
+					"isSystem" : true,
+					"path" : "/home/user/linuxcnc/cmake/components/motmod/../../../include"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				12,
+				14,
+				15,
+				16,
+				17,
+				18
+			]
+		}
+	],
+	"id" : "motmod::@cbc05b92200129ae8c4a",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "/home/user/linuxcnc/cmake/build/components/motmod/../../../../rtlib"
+			},
+			{
+				"backtrace" : 2,
+				"path" : "/home/user/linuxcnc/cmake/build/components/motmod/../../../../rtlib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/user/linuxcnc/cmake/components/motmod/../../build/liblinuxcnchal:",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "../../../components/motmod/../../build/liblinuxcnchal/liblinuxcnchal.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "motmod",
+	"nameOnDisk" : "motmod.so",
+	"paths" : 
+	{
+		"build" : "components/motmod",
+		"source" : "components/motmod"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				6,
+				7,
+				8,
+				9,
+				12,
+				14,
+				15,
+				16,
+				17,
+				18
+			]
+		},
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				5,
+				10,
+				11,
+				13
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/kinematics/cubic.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/axis.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/motion.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/command.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/control.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "/home/user/linuxcnc/src/emc/motion/simple_tp.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/simple_tp.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/emcmotutil.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/stashf.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/motion/dbuf.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "vendor/ruckig/ruckig_format.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "vendor/ruckig/cpp_interface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "vendor/ruckig/cpp_interface.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "vendor/ruckig/brake.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "vendor/ruckig/brake.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "vendor/ruckig/position-step1.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "vendor/ruckig/position-step2.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "vendor/ruckig/velocity-step1.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "vendor/ruckig/velocity-step2.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

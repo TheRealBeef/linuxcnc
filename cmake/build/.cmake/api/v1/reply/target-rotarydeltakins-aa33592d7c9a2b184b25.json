@@ -1,0 +1,193 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "rotarydeltakins_py/rotarydeltakins.so"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"ADD_LIBRARY",
+			"install",
+			"add_definitions",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"rotarydeltakins_py/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 20,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 36,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 24,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 10,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 12,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 14,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 15,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-fPIC"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 3,
+					"define" : "ULAPI"
+				},
+				{
+					"define" : "rotarydeltakins_EXPORTS"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py/../../src"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py/../../src/emc/nml_intf"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py/../../src/libnml/posemath"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py/../../src/emc/kinematics"
+				},
+				{
+					"backtrace" : 9,
+					"path" : "/usr/include/python3.9"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"id" : "rotarydeltakins::@4994e271654b74d39745",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py"
+			},
+			{
+				"backtrace" : 2,
+				"path" : "/home/user/linuxcnc/cmake/rotarydeltakins_py"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "",
+				"role" : "flags"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "rotarydeltakins",
+	"nameOnDisk" : "rotarydeltakins.so",
+	"paths" : 
+	{
+		"build" : "rotarydeltakins_py",
+		"source" : "rotarydeltakins_py"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/home/user/linuxcnc/src/emc/kinematics/rotarydeltakins.cc",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}
