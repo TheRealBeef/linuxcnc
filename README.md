@@ -20,7 +20,10 @@ There is a hal pin : joint.home_all, set this pin to high, then press the home a
 The machine is then homed on all axis without moving any machine motor. 
 
 ```
+```
+before a github push, perform the ~linuxcnc/cmake/./clean_all command.
 
+```
 
 [![Badge GPL2]][License]
 [![Badge LGPL]][License]

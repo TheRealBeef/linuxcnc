@@ -1,1 +1,0 @@
-/usr/bin/g++ -g -rdynamic CMakeFiles/rtapi_app.dir/home/user/linuxcnc/src/rtapi/uspace_rtapi_app.cc.o CMakeFiles/rtapi_app.dir/home/user/linuxcnc/src/rtapi/uspace_rtapi_parport.cc.o CMakeFiles/rtapi_app.dir/home/user/linuxcnc/src/rtapi/uspace_rtapi_string.c.o CMakeFiles/rtapi_app.dir/home/user/linuxcnc/src/rtapi/rtapi_pci.cc.o -o rtapi_app  -lpthread -pthread -lrt -ludev -ldl 

@@ -94,7 +94,6 @@ add_subdirectory(${SRC_DIR}/components/scope_rt)
 #add_subdirectory(${SRC_DIR}/components/comp)
 #add_subdirectory(${SRC_DIR}/components/and2)
 
-
 # ~/bin (executable commandline programs)
 add_subdirectory(${SRC_DIR}/inivar)
 add_subdirectory(${SRC_DIR}/halcmd)

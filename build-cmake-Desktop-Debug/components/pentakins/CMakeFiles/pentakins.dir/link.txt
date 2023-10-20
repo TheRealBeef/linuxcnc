@@ -1,1 +1,0 @@
-/usr/bin/gcc -fPIC -g -shared -Wl,-soname,pentakins.so -o pentakins.so CMakeFiles/pentakins.dir/home/user/linuxcnc/src/emc/kinematics/pentakins.c.o  -Wl,-rpath,/home/user/linuxcnc/cmake/components/pentakins/../../build/liblinuxcnchal: /home/user/linuxcnc/cmake/components/pentakins/../../build/liblinuxcnchal/liblinuxcnchal.so 

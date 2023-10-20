@@ -1,11 +1,18 @@
 #!/bin/sh
+echo "current folder:"
+echo $PWD
+echo "\n"
+
+echo "clean current linuxcnc installation."
+./clean_all
+
 echo "copy python scripts to ~/bin folder"
+cd ..
 cd scripts
-cp -rf * ../../bin
+cp -rf * ../bin
 cd ..
 
 echo "run check and set scripts. \n"
-cd ..
 cd src
 ./autogen.sh
 ./configure --enable-non-distributable=yes
@@ -19,6 +26,7 @@ cd hal
 cp *.h ../../include
 cd ..
 cd ..
+
 
 echo "building & installing components needed by the axis gui. \nBuilding with halcompile. \n"
 cd scripts

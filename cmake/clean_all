@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# This script clean's up linuxcnc. This script clean's linuxcnc for a github push.
+
+echo "current folder:"
+echo $PWD
+echo "\n"
+
+cd ..
+
+echo "clean ~/bin folder \n"
+cd bin
+rm -rf *
+cd ..
+
+echo "clean ~/rtlib folder \n"
+cd rtlib
+rm -rf *
+cd ..
+
+echo "clean ~/include folder \n"
+cd include
+rm -rf *
+cd ..
+
+echo "clean library's \n"
+cd lib
+rm -rf *.so
+rm -rf *.so.0
+rm -rf *.a
+cd python
+rm -rf *.so
+rm -rf *.so.0
+rm -rf *.a
+cd .. 
+cd .. 
+

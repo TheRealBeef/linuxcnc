@@ -1,1 +1,0 @@
-/usr/bin/g++ -fPIC -g -shared -Wl,-soname,rotarydeltakins.so.0 -o rotarydeltakins.so.0 CMakeFiles/rotarydeltakins.dir/home/user/linuxcnc/src/emc/kinematics/rotarydeltakins.cc.o 
