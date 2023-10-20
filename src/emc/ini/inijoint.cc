@@ -57,7 +57,7 @@ extern value_inihal_data old_inihal_data;
   emcJointSetType(int joint, unsigned char jointType);
   emcJointSetUnits(int joint, double units);
   emcJointSetBacklash(int joint, double backlash);
-  emcJointSetMaxJerk(int joint, double max_jerk);
+  emcJointSetMaxJerk(int joint, double jerk);
   emcJointSetMinPositionLimit(int joint, double limit);
   emcJointSetMaxPositionLimit(int joint, double limit);
   emcJointSetFerror(int joint, double ferror);
@@ -79,7 +79,6 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
     EmcJointType jointType;
     double units;
     double backlash;
-    double max_jerk;
     double offset;
     double limit;
     double home;
@@ -97,6 +96,7 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
     int comp_file_type; //type for the compensation file. type==0 means nom, forw, rev. 
     double maxVelocity;
     double maxAcceleration;
+    double maxJerk;
     double ferror;
 
     // compose string to match, joint = 0 -> JOINT_0, etc.
@@ -129,14 +129,6 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
             return -1;
         }
         old_inihal_data.joint_backlash[joint] = backlash;
-
-        // set max_jerk
-        max_jerk = 1.05;	            // default
-        jointIniFile->Find(&max_jerk, "MAX_JERK", jointString);
-        if (0 != emcJointSetMaxJerk(joint, max_jerk)) {
-            return -1;
-        }
-        old_inihal_data.joint_max_jerk[joint] = max_jerk;
 
         // set min position limit
         limit = -1e99;	                // default
@@ -235,6 +227,14 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
         }
         old_inihal_data.joint_max_acceleration[joint] = maxAcceleration;
 
+        // set max_jerk
+        maxJerk = DEFAULT_JOINT_MAX_JERK;
+        jointIniFile->Find(&maxJerk, "MAX_JERK", jointString);
+        if (0 != emcJointSetMaxJerk(joint, maxJerk)) {
+            return -1;
+        }
+        old_inihal_data.joint_max_jerk[joint] = maxJerk;
+
         comp_file_type = 0;             // default
         jointIniFile->Find(&comp_file_type, "COMP_FILE_TYPE", jointString);
         if (NULL != (inistring = jointIniFile->Find("COMP_FILE", jointString))) {
@@ -242,6 +242,7 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
                 return -1;
             }
         }
+
     }
 
     catch (EmcIniFile::Exception &e) {

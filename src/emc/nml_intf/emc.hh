@@ -89,6 +89,7 @@ struct PM_CARTESIAN;
 #define EMC_TRAJ_SET_VELOCITY_TYPE                   ((NMLTYPE) 205)
 #define EMC_TRAJ_SET_ACCELERATION_TYPE               ((NMLTYPE) 206)
 #define EMC_TRAJ_SET_MAX_VELOCITY_TYPE               ((NMLTYPE) 207)
+#define EMC_TRAJ_SET_MAX_JERK_TYPE                   ((NMLTYPE) 208)
 #define EMC_TRAJ_SET_SCALE_TYPE                      ((NMLTYPE) 209)
 #define EMC_TRAJ_SET_RAPID_SCALE_TYPE                ((NMLTYPE) 238)
 
@@ -285,8 +286,10 @@ extern int emcAxisSetMinPositionLimit(int axis, double limit);
 extern int emcAxisSetMaxPositionLimit(int axis, double limit);
 extern int emcAxisSetMaxVelocity(int axis, double vel, double ext_offset_vel);
 extern int emcAxisSetMaxAcceleration(int axis, double acc, double ext_offset_acc);
+extern int emcAxisSetMaxJerk(int axis, double jerk, double ext_offset_jerk);
 extern double emcAxisGetMaxVelocity(int axis);
 extern double emcAxisGetMaxAcceleration(int axis);
+extern double emcAxisGetMaxJerk(int axis);
 extern int emcAxisSetLockingJoint(int axis,int joint);
 
 extern int emcAxisUpdate(EMC_AXIS_STAT stat[], int numAxes);
@@ -310,7 +313,7 @@ extern int emcJointSetHomingParams(int joint, double home, double offset, double
 extern int emcJointUpdateHomingParams(int joint, double home, double offset, int sequence);
 extern int emcJointSetMaxVelocity(int joint, double vel);
 extern int emcJointSetMaxAcceleration(int joint, double acc);
-
+extern int emcJointSetMaxJerk(int joint, double jerk);
 extern int emcJointInit(int joint);
 extern int emcJointHalt(int joint);
 extern int emcJointHome(int joint);
@@ -345,6 +348,8 @@ extern int emcTrajSetVelocity(double vel, double ini_maxvel);
 extern int emcTrajSetAcceleration(double acc);
 extern int emcTrajSetMaxVelocity(double vel);
 extern int emcTrajSetMaxAcceleration(double acc);
+// BEEFNOTE: Do we need this one for jogging, or only big trajectory planner?
+//extern int emcTrajSetMaxJerk(double jerk);
 extern int emcTrajSetScale(double scale);
 extern int emcTrajSetRapidScale(double scale);
 extern int emcTrajSetFOEnable(unsigned char mode);   //feed override enable

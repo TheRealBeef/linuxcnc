@@ -76,6 +76,7 @@ int ini_hal_init_pins(int numjoints);
     ARRAY(hal_float_t,axis_max_limit,EMCMOT_MAX_AXIS) \
     ARRAY(hal_float_t,axis_max_velocity,EMCMOT_MAX_AXIS) \
     ARRAY(hal_float_t,axis_max_acceleration,EMCMOT_MAX_AXIS) \
+    ARRAY(hal_float_t,axis_max_jerk,EMCMOT_MAX_AXIS) \
 
 struct PTR {
     template<class T>
