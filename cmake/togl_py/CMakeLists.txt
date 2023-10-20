@@ -10,7 +10,7 @@ set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 include_directories(${SRC_DIR})
 include_directories(${SRC_DIR}/../../src)
 include_directories(${SRC_DIR}/../../src/emc/usr_intf/axis/extensions)
-include_directories(/usr/include/python3.9)
+include_directories(${Python3_INCLUDE_DIRS})
 include_directories(/usr/include/tcl8.6)
 
 # Set prefix.
@@ -20,7 +20,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/emc/usr_intf/axis/extensions/_toglmodule.c
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 
 # Link to libraries.

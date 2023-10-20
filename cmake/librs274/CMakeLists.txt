@@ -19,7 +19,7 @@ include_directories(${SRC_DIR}/../../src/libnml/posemath)
 include_directories(${SRC_DIR}/../../src/libnml/nml)
 include_directories(${SRC_DIR}/../../src/libnml/rcs)
 include_directories(${SRC_DIR}/../../src/libnml/cms)
-include_directories(/usr/include/python3.9)
+include_directories(${Python3_INCLUDE_DIRS})
 include_directories(/usr/include/boost)
 
 # Set prefix.
@@ -58,7 +58,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/emc/rs274ngc/interp_inspection.cc
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED
@@ -87,7 +92,7 @@ set_target_properties(pyplugin PROPERTIES
 
 # Link to libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE  linuxcncini pyplugin linuxcnchal tooldata
-    -lpython3.9
+    ${PYTHON_LIB}
     )
 
 # Add verion nr. .so.0.0.0

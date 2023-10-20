@@ -43,7 +43,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/hal/utils/halcmd.c
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 add_library(linuxcncini_ SHARED IMPORTED) # or STATIC instead of SHARED

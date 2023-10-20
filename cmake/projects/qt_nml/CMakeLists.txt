@@ -113,7 +113,12 @@ set_target_properties(tooldata PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${SRC_DIR}/../../../include"
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 target_link_libraries(${PROJECT} PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
     linuxcnchal linuxcncini linuxcnc_a nml rs274_ tooldata

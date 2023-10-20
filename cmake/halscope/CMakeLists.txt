@@ -51,7 +51,12 @@ set(SOURCES
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED

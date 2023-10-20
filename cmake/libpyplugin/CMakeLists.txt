@@ -10,17 +10,7 @@ set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 include_directories(${SRC_DIR})
 include_directories(${SRC_DIR}/../../src)
 include_directories(${SRC_DIR}/../../src/emc/pythonplugin)
-
-#[[
-PYTHON_CPPFLAGS=-I/usr/include/python3.9
-PYTHON_EXTRA_LIBS=-lcrypt -lpthread -ldl  -lutil -lm -lm
-PYTHON_EXTRA_LDFLAGS=-Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
-PYTHON_LIBS=-lcrypt -lpthread -ldl  -lutil -lm -lm
-BOOST_PYTHON_LIB=-lboost_python39
-PYTHON_CPPFLAGS=-I/usr/include/python3.9
-PYTHON_LIBS=-L/usr/lib -lpython3.9
-]]
-include_directories(/usr/include/python3.9)
+include_directories(${Python3_INCLUDE_DIRS})
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -29,7 +19,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/emc/pythonplugin/python_plugin.cc
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 add_library(linuxcncini SHARED IMPORTED) # or STATIC instead of SHARED
@@ -40,9 +35,9 @@ set_target_properties(linuxcncini PROPERTIES
 
 # Link to libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE linuxcncini -fPIC
-    -I/usr/lib -lpython3.9
+    -I/usr/lib ${PYTHON_LIB}
     -lstdc++
-    -lboost_python39 -lcrypt -lpthread -ldl -lutil -lm -lm
+    Boost::python${BOOST_PYTHON_LIB_SUFFIX} -lcrypt -lpthread -ldl -lutil -lm -lm
     -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
 )
 

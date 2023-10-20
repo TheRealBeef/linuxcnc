@@ -11,7 +11,7 @@ include_directories(${SRC_DIR})
 include_directories(${SRC_DIR}/../../src)
 include_directories(${SRC_DIR}/../../src/rtapi)
 include_directories(${SRC_DIR}/../../src/hal)
-include_directories(/usr/include/python3.9)
+include_directories(${Python3_INCLUDE_DIRS})
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -20,7 +20,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/hal/halmodule.cc
 )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED
 set_target_properties(linuxcnchal PROPERTIES

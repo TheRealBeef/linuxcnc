@@ -12,7 +12,7 @@ include_directories(${SRC_DIR}/../../src)
 include_directories(${SRC_DIR}/../../src/emc/nml_intf)
 include_directories(${SRC_DIR}/../../src/libnml/posemath)
 include_directories(${SRC_DIR}/../../src/emc/kinematics)
-include_directories(/usr/include/python3.9)
+include_directories(${Python3_INCLUDE_DIRS})
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -21,7 +21,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/emc/kinematics/rotarydeltakins.cc
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Link to libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE)

@@ -30,7 +30,7 @@ include_directories(${SRC_DIR}/../../src/libnml/cms)
 include_directories(${SRC_DIR}/../../src/libnml/posemath)
 include_directories(${SRC_DIR}/../../src/libnml/inifile)
 include_directories(${SRC_DIR}/../../src/libnml/os_intf)
-include_directories(/usr/include/python3.9)
+include_directories(${Python3_INCLUDE_DIRS})
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -43,7 +43,12 @@ set(SOURCES
     )
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 add_library(nml SHARED IMPORTED) # or STATIC instead of SHARED
@@ -93,8 +98,8 @@ set_target_properties(pyplugin PROPERTIES
 # Link to libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE
     nml linuxcnchal linuxcncini tooldata linuxcnc_a rs274_ pyplugin
-    -I/usr/lib -lpython3.9
-    -lboost_python39 -lcrypt -lpthread -ldl -lutil -lm -lm -lreadline
+    -I/usr/lib ${PYTHON_LIB}
+        Boost::python${BOOST_PYTHON_LIB_SUFFIX} -lcrypt -lpthread -ldl -lutil -lm -lm -lreadline
 )
 
 # Set custom output name :

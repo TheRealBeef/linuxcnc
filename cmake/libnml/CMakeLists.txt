@@ -62,7 +62,12 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../src/libnml/linklist/linklist.cc
 )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED
 set_target_properties(linuxcnchal PROPERTIES
@@ -72,6 +77,10 @@ set_target_properties(linuxcnchal PROPERTIES
 
 # Link to libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal -fPIC)
+
+
+//BEEFNOTE: This may not always be necessary, but has been needed to solve missing RPC.H errors for me
+target_link_libraries(${PROJECT_NAME} PRIVATE tirpc)
 
 # Set custom output name :
 # set_property(TARGET  ${PROJECT} PROPERTY OUTPUT_NAME thename)

@@ -31,7 +31,12 @@ set(SOURCES
     ${SRC_DIR}/../../src/emc/usr_intf/halui.cc
     )
 add_executable(${PROJECT_NAME} ${SOURCES})
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 add_library(nml SHARED IMPORTED) # or STATIC instead of SHARED
 set_target_properties(nml PROPERTIES

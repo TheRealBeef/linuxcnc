@@ -20,7 +20,12 @@ set(SOURCES
 )
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 target_include_directories(${PROJECT_NAME} PRIVATE ${BUILD_DIR})
@@ -37,11 +42,6 @@ target_link_libraries(${PROJECT_NAME})
 install(TARGETS ${PROJECT} DESTINATION ${BUILD_DIR}/../../../bin)
 
 # Notes.
-
-
-
-
-
 
 
 
