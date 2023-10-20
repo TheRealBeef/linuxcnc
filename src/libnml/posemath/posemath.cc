@@ -774,7 +774,8 @@ int PM_LINE::init(PM_POSE start, PM_POSE end)
 
     retval = pmLineInit(&_line, &_start, &_end);
 
-    toLine(_line, this);
+    // toLine duplicates a qt define.
+    toLineX(_line, this);
 
     return retval;
 }
@@ -785,7 +786,8 @@ int PM_LINE::point(double len, PM_POSE * point)
     PmPose _point;
     int retval;
 
-    toLine(*this, &_line);
+    // toLine duplicates a qt define.
+    toLineX(*this, &_line);
 
     retval = pmLinePoint(&_line, len, &_point);
 

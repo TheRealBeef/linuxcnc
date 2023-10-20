@@ -60,8 +60,18 @@ set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 include_directories(${SRC_DIR}/../)
 include_directories(${SRC_DIR}/../../)
 include_directories(${SRC_DIR}/../../../src)
+include_directories(${SRC_DIR}/../../../src/emc)
+include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
+include_directories(${SRC_DIR}/../../../src/emc/motion)
 include_directories(${SRC_DIR}/../../../src/rtapi)
-include_directories(${SRC_DIR}/../../qt_occt_src)
+include_directories(${SRC_DIR}/../../../src/libnml/nml)
+include_directories(${SRC_DIR}/../../../src/libnml/rcs)
+include_directories(${SRC_DIR}/../../../src/libnml/cms)
+include_directories(${SRC_DIR}/../../../src/libnml/posemath)
+include_directories(${SRC_DIR}/../../../src/emc/rs274ngc)
+include_directories(${SRC_DIR}/../../../src/emc/usr_intf/axis/extensions)
+
+include_directories(${SRC_DIR}/../qt_occt_src)
 
 # Set include paths for libraries to link.
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED

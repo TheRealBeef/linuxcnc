@@ -1,0 +1,8 @@
+#!/bin/sh
+
+# Be sure you did a make & make install.
+
+echo "start qt_occt. \n"
+cd ../../../scripts
+./rip-environment qt_occt
+

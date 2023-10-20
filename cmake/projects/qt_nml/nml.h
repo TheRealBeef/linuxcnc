@@ -2,7 +2,6 @@
 #define NML_H
 
 #include <config.h>
-
 #include <emc.hh>
 #include <emc_nml.hh>
 #include <string.h>
@@ -66,25 +65,25 @@ public:
             emcStatus = static_cast<EMC_STAT*>(stat->get_address());
         }
 
-        if(emcStatus->task.state== EMC_TASK_STATE_ENUM::EMC_TASK_STATE_ESTOP){
+        if(emcStatus->task.state== EMC_TASK_STATE::ESTOP){
             theStatus.estop=true;
         } else {
             theStatus.estop=false;
         }
 
-        if(emcStatus->task.state== EMC_TASK_STATE_ENUM::EMC_TASK_STATE_ON){
+        if(emcStatus->task.state== EMC_TASK_STATE::ON){
             theStatus.machine_on=true;
         } else {
             theStatus.machine_on=false;
         }
 
-        if(emcStatus->task.mode==EMC_TASK_MODE_ENUM::EMC_TASK_MODE_MANUAL){
+        if(emcStatus->task.mode==EMC_TASK_MODE::MANUAL){
             theStatus.mode=0;
         }
-        if(emcStatus->task.mode==EMC_TASK_MODE_ENUM::EMC_TASK_MODE_MDI){
+        if(emcStatus->task.mode==EMC_TASK_MODE::MDI){
             theStatus.mode=1;
         }
-        if(emcStatus->task.mode==EMC_TASK_MODE_ENUM::EMC_TASK_MODE_AUTO){
+        if(emcStatus->task.mode==EMC_TASK_MODE::AUTO){
             theStatus.mode=2;
         }
 
@@ -149,10 +148,10 @@ public:
         theStatus.spindle_enabled=emcStatus->motion.spindle->enabled;
         theStatus.spindle_homed=emcStatus->motion.spindle->homed;
         theStatus.spindle_scale=emcStatus->motion.spindle->spindle_scale;
-        theStatus.lube_level=emcStatus->io.lube.level;
+        // theStatus.lube_level=emcStatus->io.lube.level;
         theStatus.coolant=emcStatus->io.coolant.flood;
         theStatus.mist=emcStatus->io.coolant.mist;
-        theStatus.lube=emcStatus->io.lube.on;
+        // theStatus.lube=emcStatus->io.lube.on;
 
         theStatus.current_line=emcStatus->task.currentLine;
         theStatus.motion_line=emcStatus->task.motionLine; //! current executed gcode line
@@ -171,10 +170,10 @@ public:
             theStatus.homed_all=0;
         }
 
-        theStatus.pause = emcStatus->task.interpState == EMC_TASK_INTERP_PAUSED;
-        theStatus.run= emcStatus->task.interpState == EMC_TASK_INTERP_READING ||
-                                            emcStatus->task.interpState == EMC_TASK_INTERP_WAITING;
-        theStatus.idle= emcStatus->task.interpState == EMC_TASK_INTERP_IDLE;
+        theStatus.pause = emcStatus->task.interpState == EMC_TASK_INTERP::PAUSED;
+        theStatus.run= emcStatus->task.interpState == EMC_TASK_INTERP::READING ||
+                                            emcStatus->task.interpState == EMC_TASK_INTERP::WAITING;
+        theStatus.idle= emcStatus->task.interpState == EMC_TASK_INTERP::IDLE;
 
         theStatus.adaptive_feed_enabled=emcStatus->motion.traj.adaptive_feed_enabled;
 
@@ -182,37 +181,37 @@ public:
     }
     void machine_on(){
         EMC_TASK_SET_STATE s;
-        s.state=EMC_TASK_STATE_ENUM(EMC_TASK_STATE_ON);
+        s.state=EMC_TASK_STATE::ON;
         cmd->write(&s);
     }
     void machine_off(){
         EMC_TASK_SET_STATE s;
-        s.state=EMC_TASK_STATE_ENUM(EMC_TASK_STATE_OFF);
+        s.state=EMC_TASK_STATE::OFF;
         cmd->write(&s);
     }
     void estop_reset(){
         EMC_TASK_SET_STATE s;
-        s.state=EMC_TASK_STATE_ENUM(EMC_TASK_STATE_ESTOP_RESET);
+        s.state=EMC_TASK_STATE::ESTOP_RESET;
         cmd->write(&s);
     }
     void estop(){
         EMC_TASK_SET_STATE s;
-        s.state=EMC_TASK_STATE_ENUM(EMC_TASK_STATE_ESTOP);
+        s.state=EMC_TASK_STATE::ESTOP;
         cmd->write(&s);
     }
     void teleop(){
         EMC_TRAJ_SET_MODE x;
-        x.mode=EMC_TRAJ_MODE_TELEOP;
+        x.mode=EMC_TRAJ_MODE::TELEOP;
         cmd->write(&x);
     }
     void coord(){
         EMC_TRAJ_SET_MODE x;
-        x.mode=EMC_TRAJ_MODE_COORD;
+        x.mode=EMC_TRAJ_MODE::COORD;
         cmd->write(&x);
     }
     void free(){
         EMC_TRAJ_SET_MODE x;
-        x.mode=EMC_TRAJ_MODE_FREE;
+        x.mode=EMC_TRAJ_MODE::FREE;
         cmd->write(&x);
     }
     void home_x(){
@@ -257,17 +256,17 @@ public:
     }
     void mode_auto(){
         EMC_TASK_SET_MODE m;
-        m.mode=EMC_TASK_MODE_AUTO;
+        m.mode=EMC_TASK_MODE::AUTO;
         cmd->write(&m);
     }
     void mode_mdi(){
         EMC_TASK_SET_MODE m;
-        m.mode=EMC_TASK_MODE_MDI;
+        m.mode=EMC_TASK_MODE::MDI;
         cmd->write(&m);
     }
     void mode_manual(){
         EMC_TASK_SET_MODE m;
-        m.mode=EMC_TASK_MODE_MANUAL;
+        m.mode=EMC_TASK_MODE::MANUAL;
         cmd->write(&m);
     }
     void run(int theLine){
