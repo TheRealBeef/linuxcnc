@@ -1,1 +1,0 @@
-/usr/bin/cc -fPIC -shared -Wl,-soname,scope_rt.so -o scope_rt.so CMakeFiles/scope_rt.dir/home/user/linuxcnc/src/hal/utils/scope_rt.c.o  -Wl,-rpath,/home/user/linuxcnc/cmake/components/scope_rt/../../build/liblinuxcnchal: ../../../components/scope_rt/../../build/liblinuxcnchal/liblinuxcnchal.so 
