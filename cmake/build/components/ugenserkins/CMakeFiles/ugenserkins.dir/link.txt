@@ -1,1 +1,0 @@
-/usr/bin/cc -fPIC -shared -Wl,-soname,ugenserkins.so -o ugenserkins.so CMakeFiles/ugenserkins.dir/home/user/linuxcnc/src/emc/kinematics/ugenserkins.c.o  -Wl,-rpath,/home/user/linuxcnc/cmake/components/ugenserkins/../../build/liblinuxcnchal: ../../../components/ugenserkins/../../build/liblinuxcnchal/liblinuxcnchal.so 
