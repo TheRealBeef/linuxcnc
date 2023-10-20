@@ -25,14 +25,13 @@ void simple_tp_update(simple_tp_t *tp, double period)
     use_scurve=true;
 
     if(use_scurve){
-
+        // Determine a min distance that we aren't going to worry about
+        double tiny_dp = TINY_DP(tp->max_acc, period);
         // printf("period: %f \n", period); // Seems to be : 0.001
         // printf("max_jerk: %f \n", tp->max_jerk);
 
         //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
         //! Does it looks for machine limits?
-
-        // tp->max_jerk=200; //! Jerk max has to be added to ini or hal.
 
         r.period=period;
         r.curpos=tp->curr_pos;
@@ -50,7 +49,13 @@ void simple_tp_update(simple_tp_t *tp, double period)
         restore=r;
 
         if(tp->enable){ //! Button pressed, try to move.
-            r.tarpos=tp->pos_cmd;
+            // For the target position, check if the error is less than tiny_dp
+            // and if so, set target position to current position to stop
+            if (fabs(tp->pos_cmd - tp->curr_pos) <= tiny_dp) {
+                r.tarpos = tp->curr_pos;
+            } else {
+                r.tarpos=tp->pos_cmd;
+            }
             r.interfacetype=0;
         } else { //! Button released, try to stop.
             r.tarpos=tp->curr_pos;
@@ -60,21 +65,42 @@ void simple_tp_update(simple_tp_t *tp, double period)
         r=wrapper_get_pos(r); //! Calculate.
 
         //! When a nan uccur's, restore values.
+        // It appears that  nan's appear more frequently when period is too short...but may be another cause
         if(isnan(r.curpos)){
             printf("recieved nan value, fixing. \n");
             r=restore;
         }
 
-        if(r.curvel!=0){
-            //! Update results.
-            tp->curr_pos=r.curpos;
-            tp->curr_vel=r.curvel;
-            tp->curr_acc=r.curacc;
+        // If the desired position is further than
+        if(fabs(r.tarpos - r.curpos) > tiny_dp) {
+            // Ensure that ruckig doesn't somehow give too high vel values
+            if (r.curvel > tp->max_vel) {
+                r.curvel = tp->max_vel;
+            } else if (r.curvel < -tp->max_vel) {
+                r.curvel = -tp->max_vel;
+            }
+            // Ensure that ruckig doesn't somehow give too high accel  values
+            if (r.curacc > tp->max_acc) {
+                r.curacc = tp->max_acc;
+            } else if (r.curacc < -tp->max_acc) {
+                r.curacc = -tp->max_acc;
+            }
 
+            //! Update results.
+            tp->curr_pos = r.curpos;
+            tp->curr_vel = r.curvel;
+            tp->curr_acc = r.curacc;
             tp->active=1;
         } else {
             tp->active=0;
         }
+
+//        if(r.curvel != 0.0) {
+//            tp->active=1;
+//        } else {
+//            tp->active=0;
+//        }
+
 
     } else {
 
