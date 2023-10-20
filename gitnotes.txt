@@ -10,5 +10,7 @@ git push -u origin master
 git add .
 git commit -m "commit"
 
-git push -f origin master    # this is force...
+git push -f origin master	# this is force, will destroy history.
 git push -u origin master    
+
+git pull 					# To update the local clone 
