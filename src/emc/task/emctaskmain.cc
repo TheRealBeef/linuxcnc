@@ -364,6 +364,7 @@ static EMC_JOG_STOP *jog_stop_msg;
 static EMC_JOG_INCR *jog_incr_msg;
 static EMC_JOG_ABS *jog_abs_msg;
 static EMC_JOINT_SET_BACKLASH *set_backlash_msg;
+static EMC_JOINT_SET_MAX_JERK *set_max_jerk_msg;
 static EMC_JOINT_SET_HOMING_PARAMS *set_homing_params_msg;
 static EMC_JOINT_SET_FERROR *set_ferror_msg;
 static EMC_JOINT_SET_MIN_FERROR *set_min_ferror_msg;
@@ -800,6 +801,7 @@ static int emcTaskPlan(void)
 
 		// immediate commands
 	    case EMC_JOINT_SET_BACKLASH_TYPE:
+        case EMC_JOINT_SET_MAX_JERK_TYPE:
 	    case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 	    case EMC_JOINT_SET_FERROR_TYPE:
 	    case EMC_JOINT_SET_MIN_FERROR_TYPE:
@@ -1006,6 +1008,7 @@ static int emcTaskPlan(void)
 		    // immediate commands
 
 		case EMC_JOINT_SET_BACKLASH_TYPE:
+        case EMC_JOINT_SET_MAX_JERK_TYPE:
 		case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 		case EMC_JOINT_SET_FERROR_TYPE:
 		case EMC_JOINT_SET_MIN_FERROR_TYPE:
@@ -1107,6 +1110,7 @@ static int emcTaskPlan(void)
 		    // immediate commands
 
 		case EMC_JOINT_SET_BACKLASH_TYPE:
+        case EMC_JOINT_SET_MAX_JERK_TYPE:
 		case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 		case EMC_JOINT_SET_FERROR_TYPE:
 		case EMC_JOINT_SET_MIN_FERROR_TYPE:
@@ -1175,6 +1179,7 @@ static int emcTaskPlan(void)
 		    // immediate commands
 
 		case EMC_JOINT_SET_BACKLASH_TYPE:
+        case EMC_JOINT_SET_MAX_JERK_TYPE:
 		case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 		case EMC_JOINT_SET_FERROR_TYPE:
 		case EMC_JOINT_SET_MIN_FERROR_TYPE:
@@ -1257,6 +1262,7 @@ static int emcTaskPlan(void)
 		    // immediate commands
 
 		case EMC_JOINT_SET_BACKLASH_TYPE:
+        case EMC_JOINT_SET_MAX_JERK_TYPE:
 		case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 		case EMC_JOINT_SET_FERROR_TYPE:
 		case EMC_JOINT_SET_MIN_FERROR_TYPE:
@@ -1335,6 +1341,7 @@ static int emcTaskPlan(void)
 		// immediate commands
 
 	    case EMC_JOINT_SET_BACKLASH_TYPE:
+        case EMC_JOINT_SET_MAX_JERK_TYPE:
 	    case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 	    case EMC_JOINT_SET_FERROR_TYPE:
 	    case EMC_JOINT_SET_MIN_FERROR_TYPE:
@@ -1669,6 +1676,13 @@ static int emcTaskIssueCommand(NMLmsg * cmd)
 	    emcJointSetBacklash(set_backlash_msg->joint,
 			       set_backlash_msg->backlash);
 	break;
+
+    case EMC_JOINT_SET_MAX_JERK_TYPE:
+    set_max_jerk_msg = (EMC_JOINT_SET_MAX_JERK *) cmd;
+    retval =
+        emcJointSetMaxJerk(set_max_jerk_msg->joint,
+                   set_max_jerk_msg->max_jerk);
+    break;
 
     case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 	set_homing_params_msg = (EMC_JOINT_SET_HOMING_PARAMS *) cmd;

@@ -1,0 +1,1 @@
+/usr/bin/g++ -fPIC -g -shared -Wl,-soname,lineardeltakins.so.0 -o lineardeltakins.so.0 CMakeFiles/lineardeltakins.dir/home/user/linuxcnc/src/emc/kinematics/lineardeltakins.cc.o 

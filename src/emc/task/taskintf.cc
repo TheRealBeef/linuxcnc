@@ -142,6 +142,31 @@ int emcJointSetBacklash(int joint, double backlash)
     return retval;
 }
 
+int emcJointSetMaxJerk(int joint, double max_jerk)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(max_jerk)) {
+    printf("std::isnan error in emcJointSetMaxJerk()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    emcmotCommand.command = EMCMOT_SET_JOINT_MAX_JERK;
+    emcmotCommand.joint = joint;
+    emcmotCommand.max_jerk = max_jerk;
+
+    int retval = usrmotWriteEmcmotCommand(&emcmotCommand);
+
+    if (emc_debug & EMC_DEBUG_CONFIG) {
+        rcs_print("%s(%d, %.4f) returned %d\n", __FUNCTION__, joint, max_jerk, retval);
+    }
+    return retval;
+}
+
 int emcJointSetMinPositionLimit(int joint, double limit)
 {
 #ifdef ISNAN_TRAP

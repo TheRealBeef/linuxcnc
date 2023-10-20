@@ -254,6 +254,7 @@ static int tp_init() {
     tpSetCycleTime(&emcmotInternal->coord_tp,  emcmotConfig->trajCycleTime);
     tpSetVmax(     &emcmotInternal->coord_tp,  emcmotStatus->vel, emcmotStatus->vel);
     tpSetAmax(     &emcmotInternal->coord_tp,  emcmotStatus->acc);
+    tpSetMaxJerk(  &emcmotInternal->coord_tp,  emcmotStatus->max_jerk);
     tpSetPos(      &emcmotInternal->coord_tp, &emcmotStatus->carte_pos_cmd);
     return 0;
 }
@@ -755,6 +756,7 @@ static int export_joint(int num, joint_hal_t * addr)
     if ((retval = hal_pin_float_newf(HAL_OUT, &(addr->coarse_pos_cmd), mot_comp_id, "joint.%d.coarse-pos-cmd", num)) != 0) return retval;
     if ((retval = hal_pin_float_newf(HAL_OUT, &(addr->joint_pos_cmd), mot_comp_id, "joint.%d.pos-cmd", num)) != 0) return retval;
     if ((retval = hal_pin_float_newf(HAL_OUT, &(addr->joint_pos_fb), mot_comp_id, "joint.%d.pos-fb", num)) != 0) return retval;
+    if ((retval = hal_pin_float_newf(HAL_OUT, &(addr->joint_max_jerk), mot_comp_id, "joint.%d.max-jerk", num)) != 0) return retval;
     if ((retval = hal_pin_float_newf(HAL_OUT, &(addr->motor_pos_cmd), mot_comp_id, "joint.%d.motor-pos-cmd", num)) != 0) return retval;
     if ((retval = hal_pin_float_newf(HAL_IN, &(addr->motor_pos_fb), mot_comp_id, "joint.%d.motor-pos-fb", num)) != 0) return retval;
     if ((retval = hal_pin_float_newf(HAL_OUT, &(addr->motor_offset), mot_comp_id, "joint.%d.motor-offset", num)) != 0) return retval;
@@ -928,6 +930,7 @@ static int init_comm_buffers(void)
 	joint->min_ferror = 0.01;
 	joint->max_ferror = 1.0;
 	joint->backlash = 0.0;
+    joint->max_jerk = 1.0;
 
 	joint->comp.entries = 0;
 	joint->comp.entry = &(joint->comp.array[0]);

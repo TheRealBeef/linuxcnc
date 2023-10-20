@@ -77,7 +77,10 @@ int emcFormat(NMLTYPE type, void *buffer, CMS * cms)
 	break;
     case EMC_JOINT_SET_BACKLASH_TYPE:
 	((EMC_JOINT_SET_BACKLASH *) buffer)->update(cms);
-	break;
+    break;
+    case EMC_JOINT_SET_MAX_JERK_TYPE:
+    ((EMC_JOINT_SET_BACKLASH *) buffer)->update(cms);
+    break;
     case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 	((EMC_JOINT_SET_HOMING_PARAMS *) buffer)->update(cms);
 	break;
@@ -369,6 +372,8 @@ const char *emc_symbol_lookup(uint32_t type)
 	return "EMC_JOINT_SET_FERROR";
     case EMC_JOINT_SET_BACKLASH_TYPE:
 	return "EMC_JOINT_SET_BACKLASH";
+    case EMC_JOINT_SET_MAX_JERK_TYPE:
+    return "EMC_JOINT_SET_MAX_JERK";
     case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 	return "EMC_JOINT_SET_HOMING_PARAMS";
     case EMC_JOINT_SET_MAX_POSITION_LIMIT_TYPE:
@@ -1664,6 +1669,18 @@ void EMC_JOINT_SET_BACKLASH::update(CMS * cms)
 
     EMC_JOINT_CMD_MSG::update(cms);
     cms->update(backlash);
+
+}
+
+/*
+*	NML/CMS Update function for EMC_JOINT_SET_MAX_JERK
+*	Manually generated  - don't use NML CodeGen Java Applet.
+*/
+void EMC_JOINT_SET_MAX_JERK::update(CMS * cms)
+{
+
+    EMC_JOINT_CMD_MSG::update(cms);
+    cms->update(max_jerk);
 
 }
 

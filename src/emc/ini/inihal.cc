@@ -151,6 +151,7 @@ int ini_hal_init(int numjoints)
     for (int idx = 0; idx < numjoints; idx++) {
         MAKE_FLOAT_PIN_IDX(joint_backlash,backlash,HAL_IN,idx);
         MAKE_FLOAT_PIN_IDX(joint_ferror,ferror,HAL_IN,idx);
+        MAKE_FLOAT_PIN_IDX(joint_max_jerk,max_jerk,HAL_IN,idx);
         MAKE_FLOAT_PIN_IDX(joint_min_ferror,min_ferror,HAL_IN,idx);
         MAKE_FLOAT_PIN_IDX(joint_min_limit,min_limit,HAL_IN,idx);
         MAKE_FLOAT_PIN_IDX(joint_max_limit,max_limit,HAL_IN,idx);
@@ -201,6 +202,7 @@ int ini_hal_init_pins(int numjoints)
     for (int idx = 0; idx < numjoints; idx++) {
         INIT_PIN(joint_backlash[idx]);
         INIT_PIN(joint_ferror[idx]);
+        INIT_PIN(joint_max_jerk[idx]);
         INIT_PIN(joint_min_ferror[idx]);
         INIT_PIN(joint_min_limit[idx]);
         INIT_PIN(joint_max_limit[idx]);
@@ -305,6 +307,15 @@ int check_ini_hal_items(int numjoints)
             if (0 != emcJointSetBacklash(idx,NEW(joint_backlash[idx]))) {
                 if (emc_debug & EMC_DEBUG_CONFIG) {
                     rcs_print("check_ini_hal_items:bad return value from emcJointSetBacklash\n");
+                }
+        }   
+        }
+        if (CHANGED_IDX(joint_max_jerk,idx) ) {
+            if (debug) SHOW_CHANGE_IDX(joint_max_jerk,idx);
+            UPDATE_IDX(joint_max_jerk,idx);
+            if (0 != emcJointSetMaxJerk(idx,NEW(joint_max_jerk[idx]))) {
+                if (emc_debug & EMC_DEBUG_CONFIG) {
+                    rcs_print("check_ini_hal_items:bad return value from emcJointSetMaxJerk\n");
                 }
         }
         }

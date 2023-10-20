@@ -22,19 +22,22 @@
 // stopping criterion:
 #define TINY_DP(max_acc,period) (max_acc*period*period*0.001)
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    typedef struct simple_tp_t {
-	double pos_cmd;		/* position command */
-	double max_vel;		/* velocity limit */
-	double max_acc;		/* acceleration limit */
-	int enable;		/* if zero, motion stops ASAP */
-	double curr_pos;	/* current position */
-	double curr_vel;	/* current velocity */
-	int active;		/* non-zero if motion in progress */
-    } simple_tp_t;
+typedef struct simple_tp_t {
+    double pos_cmd;		/* position command */
+    double max_vel;		/* velocity limit */
+    double max_acc;		/* acceleration limit */
+    int enable;         /* if zero, motion stops ASAP */
+    double curr_pos;	/* current position */
+    double curr_vel;	/* current velocity */
+    int active;         /* non-zero if motion in progress */
+    double curr_acc;
+    double max_jerk;
+} simple_tp_t;
 
 /* I could write a bunch of functions to read and write the first four
    structure members, and to read the last three, but that seems silly.
@@ -58,3 +61,4 @@ extern void simple_tp_update(simple_tp_t *tp, double period);
 }
 #endif
 #endif	/* SIMPLE_TP_H */
+

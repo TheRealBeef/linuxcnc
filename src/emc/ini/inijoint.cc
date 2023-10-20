@@ -38,6 +38,7 @@ extern value_inihal_data old_inihal_data;
   MAX_VELOCITY <float>         max vel for joint
   MAX_ACCELERATION <float>     max accel for joint
   BACKLASH <float>             backlash
+  MAX_JERK <float>             max jerk used with scurve motion profile
   MIN_LIMIT <float>            minimum soft position limit
   MAX_LIMIT <float>            maximum soft position limit
   FERROR <float>               maximum following error, scaled to max vel
@@ -56,6 +57,7 @@ extern value_inihal_data old_inihal_data;
   emcJointSetType(int joint, unsigned char jointType);
   emcJointSetUnits(int joint, double units);
   emcJointSetBacklash(int joint, double backlash);
+  emcJointSetMaxJerk(int joint, double max_jerk);
   emcJointSetMinPositionLimit(int joint, double limit);
   emcJointSetMaxPositionLimit(int joint, double limit);
   emcJointSetFerror(int joint, double ferror);
@@ -77,6 +79,7 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
     EmcJointType jointType;
     double units;
     double backlash;
+    double max_jerk;
     double offset;
     double limit;
     double home;
@@ -126,6 +129,14 @@ static int loadJoint(int joint, EmcIniFile *jointIniFile)
             return -1;
         }
         old_inihal_data.joint_backlash[joint] = backlash;
+
+        // set max_jerk
+        max_jerk = 1.05;	            // default
+        jointIniFile->Find(&max_jerk, "MAX_JERK", jointString);
+        if (0 != emcJointSetMaxJerk(joint, max_jerk)) {
+            return -1;
+        }
+        old_inihal_data.joint_max_jerk[joint] = max_jerk;
 
         // set min position limit
         limit = -1e99;	                // default

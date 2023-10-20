@@ -27,6 +27,12 @@
 //Debug output
 #include "tp_debug.h"
 
+#include "ruckig_format.h"
+extern struct result wrapper_get_pos(struct result input);
+
+void ruckig_calc(){
+
+}
 
 double tcGetMaxTargetVel(TC_STRUCT const * const tc,
         double max_scale)
@@ -653,13 +659,16 @@ int tcInit(TC_STRUCT * const tc,
 int tcSetupMotion(TC_STRUCT * const tc,
         double vel,
         double ini_maxvel,
-        double acc)
+        double acc,
+        double max_jerk)
 {
     //FIXME assumes that state is already set up in TC_STRUCT, which depends on external order of function calls.
 
     tc->maxaccel = acc;
 
     tc->maxvel = ini_maxvel;
+
+    tc->max_jerk = max_jerk;
 
     tc->reqvel = vel;
     // To be computed by velocity optimization / spindle-sync calculations
@@ -669,7 +678,6 @@ int tcSetupMotion(TC_STRUCT * const tc,
 
     return TP_ERR_OK;
 }
-
 
 int tcSetupState(TC_STRUCT * const tc, TP_STRUCT const * const tp)
 {

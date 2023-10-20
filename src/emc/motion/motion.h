@@ -129,6 +129,7 @@ extern "C" {
 	EMCMOT_SET_VEL,		/* set the velocity for subsequent moves */
 	EMCMOT_SET_VEL_LIMIT,	/* set the max vel for all moves (tooltip) */
 	EMCMOT_SET_ACC,		/* set the max accel for moves (tooltip) */
+    EMCMOT_SET_MAX_JERK,		/* set the max jerk for moves (tooltip) */
 	EMCMOT_SET_TERM_COND,	/* set termination condition (stop, blend) */
 	EMCMOT_SET_NUM_JOINTS,	/* set the number of joints */
 	EMCMOT_SET_NUM_SPINDLES, /* set the number of spindles */
@@ -162,7 +163,8 @@ extern "C" {
 	EMCMOT_JOINT_HOME,              /* home a joint or all joints */
 	EMCMOT_JOINT_UNHOME,            /* unhome a joint or all joints*/
 	EMCMOT_SET_JOINT_POSITION_LIMITS, /* set the joint position +/- limits */
-	EMCMOT_SET_JOINT_BACKLASH,      /* set the joint backlash */
+    EMCMOT_SET_JOINT_BACKLASH,      /* set the joint backlash */
+    EMCMOT_SET_JOINT_MAX_JERK,      /* set the joint max jerk */
 	EMCMOT_SET_JOINT_MIN_FERROR,    /* minimum following error, input units */
 	EMCMOT_SET_JOINT_MAX_FERROR,    /* maximum following error, input units */
 	EMCMOT_SET_JOINT_VEL_LIMIT,     /* set the max joint vel */
@@ -221,6 +223,7 @@ extern "C" {
         int motion_type;        /* this move is because of traverse, feed, arc, or toolchange */
         double spindlesync;     /* user units per spindle revolution, 0 = no sync */
 	double acc;		/* max acceleration */
+    double max_jerk;    /* max jerk */
 	double backlash;	/* amount of backlash */
 	int id;			/* id for motion */
 	int termCond;		/* termination condition */
@@ -456,6 +459,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double pos_cmd;		/* commanded joint position */
 	double vel_cmd;		/* commanded joint velocity */
 	double acc_cmd;		/* commanded joint acceleration */
+    double max_jerk;    /* max jerk for scurve motion profile */
 	double backlash_corr;	/* correction for backlash */
 	double backlash_filt;	/* filtered backlash correction */
 	double backlash_vel;	/* backlash velocity variable */
@@ -503,6 +507,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double pos_fb;		/* position feedback, comp removed */
 	double vel_cmd;         /* current velocity */
 	double acc_cmd;         /* current acceleration */
+    double max_jerk;
 	double ferror;		/* following error */
 	double ferror_high_mark;	/* max following error */
 
@@ -637,6 +642,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	/* static status-- only changes upon input commands, e.g., config */
 	double vel;		/* scalar max vel */
 	double acc;		/* scalar max accel */
+    double max_jerk; /* max jerk for scurve motion profile */
 
 	int motionType;
 	double distance_to_go;  /* in this move */

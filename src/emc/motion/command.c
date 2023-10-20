@@ -740,6 +740,18 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
 	    joint->backlash = emcmotCommand->backlash;
 	    break;
 
+    case EMCMOT_SET_JOINT_MAX_JERK:
+        /* set the max jerk for the joint */
+        /* can be done at any time */
+        rtapi_print_msg(RTAPI_MSG_DBG, "SET_JOINT_MAX_JERK");
+        rtapi_print_msg(RTAPI_MSG_DBG, " %d", joint_num);
+        emcmot_config_change();
+        if (joint == 0) {
+        break;
+        }
+        joint->max_jerk = emcmotCommand->max_jerk;
+        break;
+
 	    /*
 	       Max and min ferror work like this: limiting ferror is
 	       determined by slope of ferror line, = maxFerror/limitVel ->
@@ -1030,6 +1042,7 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
 					emcmotCommand->vel,
 					emcmotCommand->ini_maxvel,
 					emcmotCommand->acc,
+                    emcmotCommand->max_jerk,
 					emcmotStatus->enables_new,
 					issue_atspeed,
 					emcmotCommand->turn,
@@ -1089,7 +1102,7 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
                             emcmotCommand->center, emcmotCommand->normal,
                             emcmotCommand->turn, emcmotCommand->motion_type,
                             emcmotCommand->vel, emcmotCommand->ini_maxvel,
-                            emcmotCommand->acc, emcmotStatus->enables_new,
+                            emcmotCommand->acc, emcmotCommand->max_jerk,emcmotStatus->enables_new,
 			    issue_atspeed, emcmotCommand->tag);
         if (res_addcircle < 0) {
             reportError(_("can't add circular move at line %d, error code %d"),
@@ -1165,6 +1178,14 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
 	    emcmotStatus->acc = emcmotCommand->acc;
 	    tpSetAmax(&emcmotInternal->coord_tp, emcmotStatus->acc);
 	    break;
+
+    case EMCMOT_SET_MAX_JERK:
+        /* set the max jerk */
+        /* can do it at any time */
+        rtapi_print_msg(RTAPI_MSG_DBG, "SET_MAX_JERK");
+        emcmotStatus->max_jerk = emcmotCommand->max_jerk;
+        tpSetMaxJerk(&emcmotInternal->coord_tp, emcmotStatus->max_jerk);
+        break;
 
 	case EMCMOT_PAUSE:
 	    /* pause the motion */
@@ -1440,6 +1461,7 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
 				emcmotCommand->vel,
 				emcmotCommand->ini_maxvel,
 				emcmotCommand->acc,
+                emcmotCommand->max_jerk,
 				emcmotStatus->enables_new,
 				0,
 				-1,
@@ -1490,6 +1512,7 @@ void emcmotCommandHandler_locked(void *arg, long servo_period)
                                     emcmotCommand->vel,
                                     emcmotCommand->ini_maxvel,
                                     emcmotCommand->acc,
+                                    emcmotCommand->max_jerk,
                                     emcmotStatus->enables_new,
                                     emcmotCommand->scale,
                                     emcmotCommand->tag);

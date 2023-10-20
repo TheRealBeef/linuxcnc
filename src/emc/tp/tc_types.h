@@ -136,6 +136,7 @@ typedef struct {
 
     //Acceleration
     double maxaccel;        // accel calc'd by task
+    double cur_acc;       // needed when using a scurve motion profile.
     double acc_ratio_tan;// ratio between normal and tangential accel
     
     int id;                 // segment's serial number
@@ -182,6 +183,8 @@ typedef struct {
 
     // Temporary status flags (reset each cycle)
     int is_blending;
+
+    double max_jerk;
 } TC_STRUCT;
 
 #endif				/* TC_TYPES_H */

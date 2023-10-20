@@ -104,6 +104,8 @@ typedef struct {
     double ini_maxvel;          /* max velocity allowed by machine
                                    constraints (INI file) for
                                    subsequent moves */
+    double max_jerk;            /* max jerk for scurve motion profile */
+    double cur_acc;             /* current acceleration used with scurve motion profile */
     double vLimit;		/* absolute upper limit on all vels */
 
     double aMax;        /* max accel (unused) */

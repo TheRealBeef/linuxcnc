@@ -209,7 +209,8 @@ void update_joint_status(void) {
 	joint_status->acc_cmd = joint->acc_cmd;
 	joint_status->ferror = joint->ferror;
 	joint_status->ferror_high_mark = joint->ferror_high_mark;
-	joint_status->backlash = joint->backlash;
+    joint_status->backlash = joint->backlash;
+    joint_status->max_jerk = joint->max_jerk;
 	joint_status->max_pos_limit = joint->max_pos_limit;
 	joint_status->min_pos_limit = joint->min_pos_limit;
 	joint_status->min_ferror = joint->min_ferror;
@@ -504,6 +505,10 @@ int main(int argc, char* argv[]) {
             case EMCMOT_SET_JOINT_BACKLASH:
                 log_print("SET_JOINT_BACKLASH joint=%d, backlash=%.6g\n", c->joint, c->backlash);
                 break;
+
+            case EMCMOT_SET_JOINT_MAX_JERK:
+                log_print("SET_JOINT_MAX_JERK joint=%d, max_jerk=%.6g\n", c->joint, c->max_jerk);
+            break;
 
             case EMCMOT_SET_JOINT_MIN_FERROR:
                 log_print("SET_JOINT_MIN_FERROR joint=%d, minFerror=%.6g\n", c->joint, c->minFerror);

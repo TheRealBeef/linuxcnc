@@ -16,16 +16,16 @@
 #include "rtapi.h"  /* printing functions */
 
 /** TP debug stuff */
-#ifdef TP_DEBUG
+//#ifdef TP_DEBUG
 //Kludge because I didn't know any better at the time
 //FIXME replace these with better names?
-#define tp_debug_print(...) rtapi_print(__VA_ARGS__)
-#elif defined(UNIT_TEST)
+//#define tp_debug_print(...) rtapi_print(__VA_ARGS__)
+//#elif defined(UNIT_TEST)
 #include <stdio.h>
 #define tp_debug_print(...) printf(__VA_ARGS__)
-#else
-#define tp_debug_print(...)
-#endif
+//#else
+//#define tp_debug_print(...)
+//#endif
 
 // Verbose but effective wrappers for building faux-JSON debug output for a function
 #define tp_debug_json_double(varname_) tp_debug_print("%s: %g, ", #varname_, varname_)

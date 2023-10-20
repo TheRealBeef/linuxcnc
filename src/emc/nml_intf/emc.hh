@@ -73,6 +73,7 @@ struct PM_CARTESIAN;
 #define EMC_JOINT_SET_BACKLASH_TYPE                   ((NMLTYPE) 134)
 #define EMC_JOINT_UNHOME_TYPE                         ((NMLTYPE) 135)
 #define EMC_JOG_STOP_TYPE                             ((NMLTYPE) 136)
+#define EMC_JOINT_SET_MAX_JERK_TYPE                   ((NMLTYPE) 137)
 
 #define EMC_JOINT_STAT_TYPE                          ((NMLTYPE) 198)
 #define EMC_AXIS_STAT_TYPE                           ((NMLTYPE) 199)
@@ -295,6 +296,7 @@ extern int emcAxisUpdate(EMC_AXIS_STAT stat[], int numAxes);
 extern int emcJointSetType(int joint, unsigned char jointType);
 extern int emcJointSetUnits(int joint, double units);
 extern int emcJointSetBacklash(int joint, double backlash);
+extern int emcJointSetMaxJerk(int joint, double jerk_max);
 extern int emcJointSetMinPositionLimit(int joint, double limit);
 extern int emcJointSetMaxPositionLimit(int joint, double limit);
 extern int emcJointSetMotorOffset(int joint, double offset);

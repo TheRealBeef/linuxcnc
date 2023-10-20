@@ -198,6 +198,23 @@ class EMC_JOINT_SET_BACKLASH:public EMC_JOINT_CMD_MSG {
     double backlash;
 };
 
+/**
+ * Set the Joint max jerk.
+ * This command sets the max jerk value.
+ */
+class EMC_JOINT_SET_MAX_JERK:public EMC_JOINT_CMD_MSG {
+  public:
+    EMC_JOINT_SET_MAX_JERK():EMC_JOINT_CMD_MSG(EMC_JOINT_SET_MAX_JERK_TYPE,
+                                             sizeof(EMC_JOINT_SET_MAX_JERK))
+    {
+    };
+
+    // For internal NML/CMS use only.
+    void update(CMS * cms);
+
+    double max_jerk;
+};
+
 class EMC_JOINT_SET_MIN_POSITION_LIMIT:public EMC_JOINT_CMD_MSG {
   public:
     EMC_JOINT_SET_MIN_POSITION_LIMIT():EMC_JOINT_CMD_MSG
@@ -408,6 +425,7 @@ class EMC_JOINT_STAT:public EMC_JOINT_STAT_MSG {
     double maxPositionLimit;
     double maxFerror;
     double minFerror;
+    double max_jerk;
 
     // dynamic status
     double ferrorCurrent;	// current following error
@@ -621,7 +639,7 @@ class EMC_TRAJ_LINEAR_MOVE:public EMC_TRAJ_CMD_MSG {
 
     int type;
     EmcPose end;		// end point
-    double vel, ini_maxvel, acc;
+    double vel, ini_maxvel, acc, max_jerk;
     int feed_mode;
     int indexer_jnum;
 };
@@ -641,7 +659,7 @@ class EMC_TRAJ_CIRCULAR_MOVE:public EMC_TRAJ_CMD_MSG {
     PM_CARTESIAN normal;
     int turn;
     int type;
-    double vel, ini_maxvel, acc;
+    double vel, ini_maxvel, acc, max_jerk;
     int feed_mode;
 };
 
@@ -756,7 +774,7 @@ class EMC_TRAJ_PROBE:public EMC_TRAJ_CMD_MSG {
 
     EmcPose pos;
     int type;
-    double vel, ini_maxvel, acc;
+    double vel, ini_maxvel, acc, max_jerk;
     unsigned char probe_type;
 };
 
@@ -770,7 +788,7 @@ class EMC_TRAJ_RIGID_TAP:public EMC_TRAJ_CMD_MSG {
     void update(CMS * cms);
 
     EmcPose pos;
-    double vel, ini_maxvel, acc, scale;
+    double vel, ini_maxvel, acc, scale, max_jerk;
 };
 
 // EMC_TRAJ status base class

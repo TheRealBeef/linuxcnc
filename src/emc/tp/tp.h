@@ -35,6 +35,7 @@ int tpClearDIOs(TP_STRUCT * const tp);
 int tpSetCycleTime(TP_STRUCT * tp, double secs);
 int tpSetVmax(TP_STRUCT * tp, double vmax, double ini_maxvel);
 int tpSetVlimit(TP_STRUCT * tp, double limit);
+int tpSetMaxJerk(TP_STRUCT * tp, double max_jerk);
 int tpSetAmax(TP_STRUCT * tp, double amax);
 int tpSetId(TP_STRUCT * tp, int id);
 int tpGetExecId(TP_STRUCT * tp);
@@ -49,16 +50,16 @@ int tpAddRigidTap(TP_STRUCT * const tp,
         EmcPose end,
         double vel,
         double ini_maxvel,
-        double acc,
+        double acc, double max_jerk,
         unsigned char enables,
         double scale,
         struct state_tag_t tag);
 int tpAddLine(TP_STRUCT * const tp, EmcPose end, int canon_motion_type,
-	      double vel, double ini_maxvel, double acc, unsigned char enables,
+          double vel, double ini_maxvel, double acc, double max_jerk, unsigned char enables,
 	      char atspeed, int indexrotary, struct state_tag_t tag);
 int tpAddCircle(TP_STRUCT * const tp, EmcPose end, PmCartesian center,
 		PmCartesian normal, int turn, int canon_motion_type, double vel,
-		double ini_maxvel, double acc, unsigned char enables,
+        double ini_maxvel, double acc, double max_jerk, unsigned char enables,
 		char atspeed, struct state_tag_t tag);
 int tpGetPos(TP_STRUCT const  * const tp, EmcPose * const pos);
 int tpIsDone(TP_STRUCT * const tp);
@@ -86,5 +87,7 @@ void tpMotData(emcmot_status_t *
               ,emcmot_config_t *
               );
 //---------------------------------------------------------------------
+
+#include <stdbool.h>
 
 #endif				/* TP_H */

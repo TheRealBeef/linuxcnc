@@ -100,7 +100,8 @@ int tcSetupFromTP(TC_STRUCT * const tc, TP_STRUCT const * const tp);
 int tcSetupMotion(TC_STRUCT * const tc,
         double vel,
         double ini_maxvel,
-        double acc);
+        double acc,
+        double max_jerk);
 
 int tcSetupState(TC_STRUCT * const tc, TP_STRUCT const * const tp);
 
