@@ -21,15 +21,25 @@ bool use_no_scurve;
 bool use_scurve_coded_beef;
 bool use_scurve_coded_skynet;
 
+double last_jerk;
+
 //! For every joint this function is called.
 void simple_tp_update(simple_tp_t *tp, double period)
 {
     //! Choose one of these configurations :
-    use_no_scurve=false;            //! Use original lcnc source code, trapezium velocity profile.
-    use_scurve_coded_skynet=true;   //! Scurve jogging example coded by skynet cyberdyne.
-    use_scurve_coded_beef=false;    //! Scurve jogging example coded by beef.
+    use_no_scurve=0;            //! Use original lcnc source code, trapezium velocity profile.
+    use_scurve_coded_skynet=1;  //! Scurve jogging example coded by skynet cyberdyne.
+    use_scurve_coded_beef=0;    //! Scurve jogging example coded by beef.
 
     if(use_scurve_coded_skynet){
+
+        if(tp->max_jerk==0){
+            printf("ruckig jog input error, set max_jerk from 0 to 1000. \n");
+            //! This error is from this function call :
+            //!      simple_tp_update(&(axis->ext_offset_tp), servo_period)
+            //! Where this "axis" has no max_jerk value at this moment.
+            tp->max_jerk=1000;
+        }
 
         //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
         r.period=period;
@@ -54,18 +64,35 @@ void simple_tp_update(simple_tp_t *tp, double period)
 
         r=wrapper_get_pos(r); //! Calculate.
 
-        if(!r.finished){ //! When ruckig is finished, this flag is set to high.
-            //! Update results.
+        //! When ruckig input's are invalid, ruckig will give error message.
+        //! This is also the case when curpos=tarpos.
+        if(r.error){
+            /*
+            if(r.curpos==r.tarpos){ //! This is error code -100.
+                printf("ruckig in position.\n");
+            } else {
+                printf("ruckig error code: %i \n",r.function_return_code);
+                printf("period: %f \n",r.period);
+                printf("tarpos: %f \n",r.tarpos);
+                printf("curpos: %f \n",r.curpos);
+                printf("curvel: %f \n",r.curvel);
+                printf("curacc: %f \n",r.curacc);
+                printf("maxvel: %f \n",r.maxvel);
+                printf("maxacc: %f \n",r.maxacc);
+                printf("maxjerk: %f \n",r.maxjerk);
+            } */
+        }
+
+        if(r.finished){
+            tp->active=false;
+        }
+        if(!r.finished){
             tp->curr_pos = r.curpos;
             tp->curr_vel = r.curvel;
             tp->curr_acc = r.curacc;
-        }
 
-        if(r.error){ //! When ruckig input's are invalid, ruckig will give error message.
-            printf("ruckig jog error. \n");
+            tp->active=true;
         }
-
-        return;
     }
 
     if(use_scurve_coded_beef){
