@@ -61,3 +61,5 @@ docs/help/vi/*
 docs/help/zh_CN/*
 # Ignore the build dir of the cmake project.
 cmake/build
+# Ignore the this file.
+rtlib/lcec_conf
