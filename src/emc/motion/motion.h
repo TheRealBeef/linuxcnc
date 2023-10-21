@@ -164,12 +164,11 @@ extern "C" {
 	EMCMOT_JOINT_UNHOME,            /* unhome a joint or all joints*/
 	EMCMOT_SET_JOINT_POSITION_LIMITS, /* set the joint position +/- limits */
     EMCMOT_SET_JOINT_BACKLASH,      /* set the joint backlash */
-//    EMCMOT_SET_JOINT_MAX_JERK,      /* set the joint max jerk */
+    EMCMOT_SET_JOINT_MAX_JERK,      /* set the joint max jerk */
 	EMCMOT_SET_JOINT_MIN_FERROR,    /* minimum following error, input units */
 	EMCMOT_SET_JOINT_MAX_FERROR,    /* maximum following error, input units */
 	EMCMOT_SET_JOINT_VEL_LIMIT,     /* set the max joint vel */
 	EMCMOT_SET_JOINT_ACC_LIMIT,     /* set the max joint accel */
-    EMCMOT_SET_JOINT_JERK_LIMIT,     /* set the max joint accel */
 	EMCMOT_SET_JOINT_HOMING_PARAMS, /* sets joint homing parameters */
 	EMCMOT_UPDATE_JOINT_HOMING_PARAMS, /* updates some joint homing parameters */
 	EMCMOT_SET_JOINT_MOTOR_OFFSET,  /* set the offset between joint and motor */
@@ -178,7 +177,6 @@ extern "C" {
         EMCMOT_SET_AXIS_POSITION_LIMITS, /* set the axis position +/- limits */
         EMCMOT_SET_AXIS_VEL_LIMIT,      /* set the max axis vel */
         EMCMOT_SET_AXIS_ACC_LIMIT,      /* set the max axis acc */
-        EMCMOT_SET_AXIS_JERK_LIMIT,      /* set the max axis acc */
         EMCMOT_SET_AXIS_LOCKING_JOINT,  /* set the axis locking joint */
 
         EMCMOT_SET_SPINDLE_PARAMS, /* One command to set all spindle params */
@@ -225,10 +223,7 @@ extern "C" {
         int motion_type;        /* this move is because of traverse, feed, arc, or toolchange */
         double spindlesync;     /* user units per spindle revolution, 0 = no sync */
 	double acc;		/* max acceleration */
-    double jerk;    /* max jerk used in axis */
-    // BEEFOTE: I've removed this max_jerk as it doesn't fit with the existing
-    // naming convention (eg. variables like "vel" and "acc" for max vel and max acc
- //   double max_jerk;    /* max jerk used in joints */
+    double max_jerk;    /* max jerk */
 	double backlash;	/* amount of backlash */
 	int id;			/* id for motion */
 	int termCond;		/* termination condition */
@@ -274,7 +269,6 @@ extern "C" {
     double maxFeedScale;
     double ext_offset_vel;	/* velocity for an external axis offset */
     double ext_offset_acc;	/* acceleration for an external axis offset */
-    double ext_offset_jerk;	/* acceleration for an external axis offset */
     struct state_tag_t tag;
     } emcmot_command_t;
 
@@ -451,8 +445,6 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double min_jog_limit;
 	double vel_limit;	/* upper limit of joint speed */
 	double acc_limit;	/* upper limit of joint accel */
-    // Added jerk_limit instead of max_jerk to keep consistent naming convention
-    double jerk_limit;	/* upper limit of joint accel */
 	double min_ferror;	/* zero speed following error limit */
 	double max_ferror;	/* max speed following error limit */
 	double backlash;	/* amount of backlash */
@@ -467,8 +459,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double pos_cmd;		/* commanded joint position */
 	double vel_cmd;		/* commanded joint velocity */
 	double acc_cmd;		/* commanded joint acceleration */
-    // Removed the below as to keep naming convention consistent with vel/acc
- //   double max_jerk;    /* max jerk for scurve motion profile */
+    double max_jerk;    /* max jerk for scurve motion profile */
 	double backlash_corr;	/* correction for backlash */
 	double backlash_filt;	/* filtered backlash correction */
 	double backlash_vel;	/* backlash velocity variable */
@@ -651,7 +642,8 @@ Suggestion: Split this in to an Error and a Status flag register..
 	/* static status-- only changes upon input commands, e.g., config */
 	double vel;		/* scalar max vel */
 	double acc;		/* scalar max accel */
-    double jerk;
+    double max_jerk; /* max jerk for scurve motion profile */
+
 	int motionType;
 	double distance_to_go;  /* in this move */
 	EmcPose dtg;

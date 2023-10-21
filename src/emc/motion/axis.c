@@ -12,7 +12,6 @@ typedef struct {
     double min_pos_limit;           /* lower soft limit on axis pos */
     double vel_limit;               /* upper limit of axis speed */
     double acc_limit;               /* upper limit of axis accel */
-    double jerk_limit;               /* upper limit of axis jerk */
     simple_tp_t teleop_tp;          /* planner for teleop mode motion */
 
     int old_ajog_counts;            /* prior value, used for deltas */
@@ -22,8 +21,6 @@ typedef struct {
 
     double ext_offset_vel_limit;    /* upper limit of axis speed for ext offset */
     double ext_offset_acc_limit;    /* upper limit of axis accel for ext offset */
-    double ext_offset_jerk_limit;    /* upper limit of axis jerk for ext offset */
-
     int old_eoffset_counts;
     simple_tp_t ext_offset_tp;      /* planner for external coordinate offsets*/
 } emcmot_axis_t;
@@ -193,11 +190,6 @@ void axis_set_acc_limit(int axis_num, double acc)
     axis_array[axis_num].acc_limit = acc;
 }
 
-void axis_set_jerk_limit(int axis_num, double jerk)
-{
-    axis_array[axis_num].jerk_limit = jerk;
-}
-
 void axis_set_ext_offset_vel_limit(int axis_num, double vel)
 {
     axis_array[axis_num].ext_offset_vel_limit = vel;
@@ -206,11 +198,6 @@ void axis_set_ext_offset_vel_limit(int axis_num, double vel)
 void axis_set_ext_offset_acc_limit(int axis_num, double acc)
 {
     axis_array[axis_num].ext_offset_acc_limit = acc;
-}
-
-void axis_set_ext_offset_jerk_limit(int axis_num, double jerk)
-{
-    axis_array[axis_num].ext_offset_jerk_limit = jerk;
 }
 
 void axis_set_locking_joint(int axis_num, int joint)
@@ -237,11 +224,6 @@ double axis_get_vel_limit(int axis_num)
 double axis_get_acc_limit(int axis_num)
 {
     return axis_array[axis_num].acc_limit;
-}
-
-double axis_get_jerk_limit(int axis_num)
-{
-    return axis_array[axis_num].jerk_limit;
 }
 
 double axis_get_teleop_vel_cmd(int axis_num)
@@ -289,7 +271,6 @@ void axis_jog_cont(int axis_num, double vel, long servo_period)
 
     axis->teleop_tp.max_vel = fabs(vel);
     axis->teleop_tp.max_acc = axis->acc_limit;
-    axis->teleop_tp.max_jerk = axis->jerk_limit;
     axis->kb_ajog_active = 1;
     axis->teleop_tp.enable = 1;
 }
@@ -311,7 +292,6 @@ void axis_jog_incr(int axis_num, double offset, double vel, long servo_period)
     axis->teleop_tp.pos_cmd = tmp1;
     axis->teleop_tp.max_vel = fabs(vel);
     axis->teleop_tp.max_acc = axis->acc_limit;
-    axis->teleop_tp.max_jerk = axis->jerk_limit;
     axis->kb_ajog_active = 1;
     axis->teleop_tp.enable = 1;
 }
@@ -333,7 +313,6 @@ void axis_jog_abs(int axis_num, double offset, double vel)
     axis->teleop_tp.pos_cmd = tmp1;
     axis->teleop_tp.max_vel = fabs(vel);
     axis->teleop_tp.max_acc = axis->acc_limit;
-    axis->teleop_tp.max_jerk = axis->jerk_limit;
     axis->kb_ajog_active = 1;
     axis->teleop_tp.enable = 1;
 }
@@ -388,21 +367,17 @@ void axis_handle_jogwheels(bool motion_teleop_flag, bool motion_enable_flag, boo
 
     for (axis_num = 0; axis_num < EMCMOT_MAX_AXIS; axis_num++) {
         double aaccel_limit;
-        double ajerk_limit;
         axis = &axis_array[axis_num];
         axis_data = &hal_data->axis[axis_num];
 
         // disallow accel bogus fractions
-        // BEEFNOTE: Come back to this function later
         if (   (*(axis_data->ajog_accel_fraction) > 1)
             || (*(axis_data->ajog_accel_fraction) < 0) ) {
             aaccel_limit = axis->acc_limit;
-//            ajerk_limit = axis->jerk_limit;
         } else {
             aaccel_limit = *(axis_data->ajog_accel_fraction) * axis->acc_limit;
-//            ajerk_limit = *(axis_data->ajog_accel_fraction) * axis->jerk_limit;
         }
-        ajerk_limit = axis->jerk_limit;
+
         new_ajog_counts = *(axis_data->ajog_counts);
         delta = new_ajog_counts - axis->old_ajog_counts;
         axis->old_ajog_counts = new_ajog_counts;
@@ -446,7 +421,6 @@ void axis_handle_jogwheels(bool motion_teleop_flag, bool motion_enable_flag, boo
         axis->teleop_tp.pos_cmd = pos;
         axis->teleop_tp.max_vel = axis->vel_limit;
         axis->teleop_tp.max_acc = aaccel_limit;
-        axis->teleop_tp.max_jerk = ajerk_limit;
         axis->wheel_ajog_active = 1;
         axis->teleop_tp.enable  = 1;
     }
@@ -501,7 +475,6 @@ hal_bit_t axis_plan_external_offsets(double servo_period, bool motion_enable_fla
         // coord,teleop updates done in get_pos_cmds()
         axis->ext_offset_tp.max_vel = axis->ext_offset_vel_limit;
         axis->ext_offset_tp.max_acc = axis->ext_offset_acc_limit;
-        axis->ext_offset_tp.max_jerk = axis->ext_offset_jerk_limit;
 
         axis_data = &hal_data->axis[n];
 

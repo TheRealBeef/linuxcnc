@@ -136,7 +136,6 @@ static int init_comm_buffers(void) {
 	joint->min_pos_limit = -1.0;
 	joint->vel_limit = 1.0;
 	joint->acc_limit = 1.0;
-    joint->jerk_limit = 1.0;
 	joint->min_ferror = 0.01;
 	joint->max_ferror = 1.0;
 
@@ -173,7 +172,6 @@ static int init_comm_buffers(void) {
         axis_set_min_pos_limit(axis_num, -1.0);
         axis_set_vel_limit(axis_num, 1.0);
         axis_set_acc_limit(axis_num, 1.0);
-        axis_set_jerk_limit(axis_num, 1.0);
     }
 
     rtapi_print_msg(RTAPI_MSG_INFO, "MOTION: init_comm_buffers() complete\n");
@@ -212,7 +210,7 @@ void update_joint_status(void) {
 	joint_status->ferror = joint->ferror;
 	joint_status->ferror_high_mark = joint->ferror_high_mark;
     joint_status->backlash = joint->backlash;
-//    joint_status->max_jerk = joint->max_jerk;
+    joint_status->max_jerk = joint->max_jerk;
 	joint_status->max_pos_limit = joint->max_pos_limit;
 	joint_status->min_pos_limit = joint->min_pos_limit;
 	joint_status->min_ferror = joint->min_ferror;
@@ -508,13 +506,9 @@ int main(int argc, char* argv[]) {
                 log_print("SET_JOINT_BACKLASH joint=%d, backlash=%.6g\n", c->joint, c->backlash);
                 break;
 
-//            case EMCMOT_SET_JOINT_JERK_LIMIT:
-//                log_print("SET_JOINT_MAX_JERK joint=%d, max_jerk=%.6g\n", c->joint, c->max_jerk);
-//            break;
-
-            case EMCMOT_SET_AXIS_JERK_LIMIT:
-                log_print("SET_AXIS_JERK_LIMIT axis=%d vel=%.6g\n", c->axis, c->jerk);
-                break;
+            case EMCMOT_SET_JOINT_MAX_JERK:
+                log_print("SET_JOINT_MAX_JERK joint=%d, max_jerk=%.6g\n", c->joint, c->max_jerk);
+            break;
 
             case EMCMOT_SET_JOINT_MIN_FERROR:
                 log_print("SET_JOINT_MIN_FERROR joint=%d, minFerror=%.6g\n", c->joint, c->minFerror);
@@ -546,10 +540,6 @@ int main(int argc, char* argv[]) {
 
             case EMCMOT_SET_JOINT_ACC_LIMIT:
                 log_print("SET_JOINT_ACC_LIMIT joint=%d, acc=%.6g\n", c->joint, c->acc);
-                break;
-
-            case EMCMOT_SET_JOINT_JERK_LIMIT:
-                log_print("SET_JOINT_JERK_LIMIT joint=%d, acc=%.6g\n", c->joint, c->jerk);
                 break;
 
             case EMCMOT_SET_ACC:

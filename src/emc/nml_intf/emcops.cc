@@ -79,7 +79,6 @@ EMC_TRAJ_STAT_MSG(EMC_TRAJ_STAT_TYPE, sizeof(EMC_TRAJ_STAT)),
     acceleration = 1.0;
     maxVelocity = 1.0;
     maxAcceleration = 1.0;
-    maxJerk = 1.0;
 
     ZERO_EMC_POSE(probedPosition);
     probe_tripped = OFF;

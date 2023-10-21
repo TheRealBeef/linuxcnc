@@ -44,7 +44,6 @@ double ext_offset_a_or_v_ratio[EMCMOT_MAX_AXIS]; // all zero
   TYPE <LINEAR ANGULAR>        type of axis (hardcoded: X,Y,Z,U,V,W: LINEAR, A,B,C: ANGULAR)
   MAX_VELOCITY <float>         max vel for axis
   MAX_ACCELERATION <float>     max accel for axis
-  MAX_JERK <float>             max jerk for axis, used with scurve motion profile
   MIN_LIMIT <float>            minimum soft position limit
   MAX_LIMIT <float>            maximum soft position limit
 
@@ -54,7 +53,6 @@ double ext_offset_a_or_v_ratio[EMCMOT_MAX_AXIS]; // all zero
   emcAxisSetMaxPositionLimit(int axis, double limit);
   emcAxisSetMaxVelocity(int axis, double vel, double ext_offset_vel);
   emcAxisSetMaxAcceleration(int axis, double acc, double ext_offset_acc);
-  emcAxisSetMaxJerk(int axis, double jerk, double ext_offset_jerk);
   */
 
 static int loadAxis(int axis, EmcIniFile *axisIniFile)
@@ -63,7 +61,6 @@ static int loadAxis(int axis, EmcIniFile *axisIniFile)
     double limit;
     double maxVelocity;
     double maxAcceleration;
-    double maxJerk;
     int    lockingjnum = -1; // -1 ==> locking joint not used
 
     // compose string to match, axis = 0 -> AXIS_X etc.
@@ -144,19 +141,6 @@ static int loadAxis(int axis, EmcIniFile *axisIniFile)
             return -1;
         }
         old_inihal_data.axis_max_acceleration[axis] = maxAcceleration;
-
-        // set maximum jerk for axis: jerk,ext_offset_jerk
-        maxJerk = DEFAULT_AXIS_MAX_JERK;
-        axisIniFile->Find(&maxJerk, "MAX_JERK", axisString);
-        if (0 != emcAxisSetMaxJerk(axis,
-                                           (1 - ext_offset_a_or_v_ratio[axis]) * maxJerk,
-                                           (    ext_offset_a_or_v_ratio[axis]) * maxJerk)) {
-            if (emc_debug & EMC_DEBUG_CONFIG) {
-                rcs_print_error("bad return from emcAxisSetMaxJerk\n");
-            }
-            return -1;
-        }
-        old_inihal_data.axis_max_jerk[axis] = maxJerk;
 
         axisIniFile->Find(&lockingjnum, "LOCKING_INDEXER_JOINT", axisString);
         if (0 != emcAxisSetLockingJoint(axis, lockingjnum)) {

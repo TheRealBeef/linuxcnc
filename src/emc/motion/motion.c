@@ -236,7 +236,6 @@ static int module_intfc() {
                   ,emcmotGetRotaryIsUnlocked
                   ,axis_get_vel_limit
                   ,axis_get_acc_limit
-                  ,axis_get_jerk_limit
                   );
 
     tpMotData(emcmotStatus
@@ -255,7 +254,7 @@ static int tp_init() {
     tpSetCycleTime(&emcmotInternal->coord_tp,  emcmotConfig->trajCycleTime);
     tpSetVmax(     &emcmotInternal->coord_tp,  emcmotStatus->vel, emcmotStatus->vel);
     tpSetAmax(     &emcmotInternal->coord_tp,  emcmotStatus->acc);
-    tpSetJmax(     &emcmotInternal->coord_tp,  emcmotStatus->jerk);
+    tpSetMaxJerk(  &emcmotInternal->coord_tp,  emcmotStatus->max_jerk);
     tpSetPos(      &emcmotInternal->coord_tp, &emcmotStatus->carte_pos_cmd);
     return 0;
 }
@@ -928,11 +927,10 @@ static int init_comm_buffers(void)
 	joint->min_pos_limit = -1.0;
 	joint->vel_limit = 1.0;
 	joint->acc_limit = 1.0;
-    joint->jerk_limit = 1.0;
 	joint->min_ferror = 0.01;
 	joint->max_ferror = 1.0;
 	joint->backlash = 0.0;
-    // joint->max_jerk = 1.0;
+    joint->max_jerk = 1.0;
 
 	joint->comp.entries = 0;
 	joint->comp.entry = &(joint->comp.array[0]);
