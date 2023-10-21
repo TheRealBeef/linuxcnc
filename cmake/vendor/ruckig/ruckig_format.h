@@ -58,6 +58,8 @@ struct result {
     enum synchronization synchronizationtype;
     enum durationdiscretization durationdiscretizationtype;
     bool finished;
+    bool error;
+    int function_return_code;
 };
 
 #endif	/* RUCKIG_FORMAT_H */

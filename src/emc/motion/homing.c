@@ -269,6 +269,7 @@ static int base_make_joint_home_pins(int id,int njoints)
 static void do_home_all(void)
 {
     if(*home_all->Pin==true){
+
         printf("force home_all without moving the machine motors. \n");
         int joint_num=0;
 
