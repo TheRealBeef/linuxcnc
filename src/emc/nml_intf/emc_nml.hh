@@ -513,6 +513,19 @@ class EMC_TRAJ_SET_MAX_VELOCITY:public EMC_TRAJ_CMD_MSG {
     double velocity;
 };
 
+class EMC_TRAJ_SET_MAX_JERK:public EMC_TRAJ_CMD_MSG {
+public:
+    EMC_TRAJ_SET_MAX_JERK():EMC_TRAJ_CMD_MSG
+    (EMC_TRAJ_SET_MAX_JERK_TYPE,
+     sizeof(EMC_TRAJ_SET_MAX_JERK)) {
+    };
+
+    // For internal NML/CMS use only.
+    void update(CMS * cms);
+
+    double jerk;
+};
+
 class EMC_TRAJ_SET_SCALE:public EMC_TRAJ_CMD_MSG {
   public:
     EMC_TRAJ_SET_SCALE():EMC_TRAJ_CMD_MSG(EMC_TRAJ_SET_SCALE_TYPE,
@@ -639,7 +652,7 @@ class EMC_TRAJ_LINEAR_MOVE:public EMC_TRAJ_CMD_MSG {
 
     int type;
     EmcPose end;		// end point
-    double vel, ini_maxvel, acc, max_jerk;
+    double vel, ini_maxvel, acc, jerk;
     int feed_mode;
     int indexer_jnum;
 };
@@ -659,7 +672,7 @@ class EMC_TRAJ_CIRCULAR_MOVE:public EMC_TRAJ_CMD_MSG {
     PM_CARTESIAN normal;
     int turn;
     int type;
-    double vel, ini_maxvel, acc, max_jerk;
+    double vel, ini_maxvel, acc, jerk;
     int feed_mode;
 };
 
@@ -774,7 +787,7 @@ class EMC_TRAJ_PROBE:public EMC_TRAJ_CMD_MSG {
 
     EmcPose pos;
     int type;
-    double vel, ini_maxvel, acc, max_jerk;
+    double vel, ini_maxvel, acc, jerk;
     unsigned char probe_type;
 };
 
@@ -788,7 +801,7 @@ class EMC_TRAJ_RIGID_TAP:public EMC_TRAJ_CMD_MSG {
     void update(CMS * cms);
 
     EmcPose pos;
-    double vel, ini_maxvel, acc, scale, max_jerk;
+    double vel, ini_maxvel, acc, scale, jerk;
 };
 
 // EMC_TRAJ status base class
@@ -836,6 +849,7 @@ class EMC_TRAJ_STAT:public EMC_TRAJ_STAT_MSG {
     // motions
     double maxVelocity;		// max system velocity
     double maxAcceleration;	// system acceleration
+    double maxJerk;	        // max system jerk
 
     EmcPose probedPosition;	// last position where probe was tripped.
     bool probe_tripped;		// Has the probe been tripped since the last

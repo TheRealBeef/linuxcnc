@@ -140,6 +140,12 @@ struct AccelData{
     double dtot;
 };
 
+struct JerkData{
+    double tmax;
+    double jerk;
+    double dtot;
+};
+
 static PM_QUATERNION quat(1, 0, 0, 0);
 
 static void flush_segments(void);
@@ -730,6 +736,141 @@ static AccelData getStraightAcceleration(CANON_POSITION pos)
             pos.v,
             pos.w);
 }
+
+// BEEFNOTE: Additions for Jerk
+
+/**
+ * Get the limiting jerk for a displacement from the current position to the given position.
+ * returns a single jerk that is the minimum of all axis jerks.
+ */
+static JerkData getStraightJerk(double x, double y, double z,
+                                double a, double b, double c,
+                                double u, double v, double w)
+{
+    double dx, dy, dz, du, dv, dw, da, db, dc;
+    double tx, ty, tz, tu, tv, tw, ta, tb, tc;
+    JerkData out;
+
+    out.jerk = 0.0; // if a move to nowhere
+    out.tmax = 0.0;
+    out.dtot = 0.0;
+
+    // Compute absolute travel distance for each axis:
+    dx = fabs(x - canon.endPoint.x);
+    dy = fabs(y - canon.endPoint.y);
+    dz = fabs(z - canon.endPoint.z);
+    da = fabs(a - canon.endPoint.a);
+    db = fabs(b - canon.endPoint.b);
+    dc = fabs(c - canon.endPoint.c);
+    du = fabs(u - canon.endPoint.u);
+    dv = fabs(v - canon.endPoint.v);
+    dw = fabs(w - canon.endPoint.w);
+
+    applyMinDisplacement(dx, dy, dz, da, db, dc, du, dv, dw);
+
+    if(debug_velacc)
+        printf("getStraightJerk dx %g dy %g dz %g da %g db %g dc %g du %g dv %g dw %g ",
+               dx, dy, dz, da, db, dc, du, dv, dw);
+
+    // Figure out what kind of move we're making.  This is used to determine
+    // the units of vel/acc/jerk.
+    if (dx <= 0.0 && dy <= 0.0 && dz <= 0.0 &&
+        du <= 0.0 && dv <= 0.0 && dw <= 0.0) {
+        canon.cartesian_move = 0;
+    } else {
+        canon.cartesian_move = 1;
+    }
+    if (da <= 0.0 && db <= 0.0 && dc <= 0.0) {
+        canon.angular_move = 0;
+    } else {
+        canon.angular_move = 1;
+    }
+
+    // Pure linear move:
+    if (canon.cartesian_move && !canon.angular_move) {
+        tx = dx? (dx / FROM_EXT_LEN(emcAxisGetMaxJerk(0))): 0.0;
+        ty = dy? (dy / FROM_EXT_LEN(emcAxisGetMaxJerk(1))): 0.0;
+        tz = dz? (dz / FROM_EXT_LEN(emcAxisGetMaxJerk(2))): 0.0;
+        tu = du? (du / FROM_EXT_LEN(emcAxisGetMaxJerk(6))): 0.0;
+        tv = dv? (dv / FROM_EXT_LEN(emcAxisGetMaxJerk(7))): 0.0;
+        tw = dw? (dw / FROM_EXT_LEN(emcAxisGetMaxJerk(8))): 0.0;
+        out.tmax = std::max({tx, ty ,tz});
+        out.tmax = std::max({tu, tv, tw, out.tmax});
+
+        if(dx || dy || dz)
+            out.dtot = sqrt(dx * dx + dy * dy + dz * dz);
+        else
+            out.dtot = sqrt(du * du + dv * dv + dw * dw);
+
+        if (out.tmax > 0.0) {
+            out.jerk = out.dtot / out.tmax;
+        }
+    }
+        // Pure angular move:
+    else if (!canon.cartesian_move && canon.angular_move) {
+        ta = da? (da / FROM_EXT_ANG(emcAxisGetMaxJerk(3))): 0.0;
+        tb = db? (db / FROM_EXT_ANG(emcAxisGetMaxJerk(4))): 0.0;
+        tc = dc? (dc / FROM_EXT_ANG(emcAxisGetMaxJerk(5))): 0.0;
+        out.tmax = std::max({ta, tb, tc});
+
+        out.dtot = sqrt(da * da + db * db + dc * dc);
+        if (out.tmax > 0.0) {
+            out.jerk = out.dtot / out.tmax;
+        }
+    }
+        // Combination angular and linear move:
+    else if (canon.cartesian_move && canon.angular_move) {
+        tx = dx? (dx / FROM_EXT_LEN(emcAxisGetMaxJerk(0))): 0.0;
+        ty = dy? (dy / FROM_EXT_LEN(emcAxisGetMaxJerk(1))): 0.0;
+        tz = dz? (dz / FROM_EXT_LEN(emcAxisGetMaxJerk(2))): 0.0;
+        ta = da? (da / FROM_EXT_ANG(emcAxisGetMaxJerk(3))): 0.0;
+        tb = db? (db / FROM_EXT_ANG(emcAxisGetMaxJerk(4))): 0.0;
+        tc = dc? (dc / FROM_EXT_ANG(emcAxisGetMaxJerk(5))): 0.0;
+        tu = du? (du / FROM_EXT_LEN(emcAxisGetMaxJerk(6))): 0.0;
+        tv = dv? (dv / FROM_EXT_LEN(emcAxisGetMaxJerk(7))): 0.0;
+        tw = dw? (dw / FROM_EXT_LEN(emcAxisGetMaxJerk(8))): 0.0;
+        out.tmax = std::max({tx, ty, tz,
+                             ta, tb, tc,
+                             tu, tv, tw});
+
+        if(debug_velacc)
+            printf("getStraightJerk t^2 tx %g ty %g tz %g ta %g tb %g tc %g tu %g tv %g tw %g\n",
+                   tx, ty, tz, ta, tb, tc, tu, tv, tw);
+/*  According to NIST IR6556 Section 2.1.2.5 Paragraph A
+    a combnation move is handled like a linear move, except
+    that the angular axes are allowed sufficient time to
+    complete their motion coordinated with the motion of
+    the linear axes.
+*/
+        if(dx || dy || dz)
+            out.dtot = sqrt(dx * dx + dy * dy + dz * dz);
+        else
+            out.dtot = sqrt(du * du + dv * dv + dw * dw);
+
+        if (out.tmax > 0.0) {
+            out.jerk = out.dtot / out.tmax;
+        }
+    }
+    if(debug_velacc)
+        printf("cartesian %d ang %d jerk %g\n", canon.cartesian_move, canon.angular_move, out.jerk);
+    return out;
+}
+
+static JerkData getStraightJerk(CANON_POSITION pos)
+{
+
+    return getStraightJerk(pos.x,
+                           pos.y,
+                           pos.z,
+                           pos.a,
+                           pos.b,
+                           pos.c,
+                           pos.u,
+                           pos.v,
+                           pos.w);
+}
+
+
 
 static VelData getStraightVelocity(double x, double y, double z,
 			   double a, double b, double c,
@@ -2569,6 +2710,11 @@ void ARC_FEED(int line_number,
     double a2 = FROM_EXT_LEN(emcAxisGetMaxAcceleration(axis2));
     double a_max_axes = std::min(a1, a2);
 
+    // Get planar jerk bounds
+    double j1 = FROM_EXT_LEN(emcAxisGetMaxJerk(axis1));
+    double j2 = FROM_EXT_LEN(emcAxisGetMaxJerk(axis2));
+    double j_max_axes = std::min(j1, j2);
+
     if(canon.xy_rotation && canon.activePlane != CANON_PLANE::XY) {
         // also consider the third plane's constraint, which may get
         // involved since we're rotated.
@@ -2577,8 +2723,10 @@ void ARC_FEED(int line_number,
         if (axis_valid(axis3)) {
             double v3 = FROM_EXT_LEN(emcAxisGetMaxVelocity(axis3));
             double a3 = FROM_EXT_LEN(emcAxisGetMaxAcceleration(axis3));
+            double j3 = FROM_EXT_LEN(emcAxisGetMaxJerk(axis3));
             v_max_axes = std::min(v3, v_max_axes);
             a_max_axes = std::min(a3, a_max_axes);
+            j_max_axes = std::min(j3, j_max_axes);
         }
     }
 
@@ -2622,6 +2770,8 @@ void ARC_FEED(int line_number,
     double v_max = total_xyz_length / t_max;
     canon_debug("v_max = %f\n", v_max);
 
+
+    //BEEFNOTES: Should there be a compute jerk spot here? ...
 
 //COMPUTE ACCEL
     

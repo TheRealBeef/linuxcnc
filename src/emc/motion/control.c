@@ -1030,6 +1030,7 @@ static void handle_jjogwheels(void)
     double distance, pos, stop_dist;
     static int first_pass = 1;	/* used to set initial conditions */
 
+    // BEEFNOTE: Should we be included jerk here somewhere?
     for (joint_num = 0; joint_num < ALL_JOINTS; joint_num++) {
         double jaccel_limit;
 	/* point to joint data */
@@ -1241,7 +1242,7 @@ static void get_pos_cmds(long period)
             //! Added by skynet to set jerk value for the simple_tp_t struct.
             //! It takes the ini file value and set's it here.
             //! When live jogging you could set the ini pin with halcmd : $ setp ini.0.max_jerk 100
-            joint->free_tp.max_jerk=joint->max_jerk;
+            joint->free_tp.max_jerk=joint->jerk_limit;
 
             simple_tp_update(&(joint->free_tp), servo_period );
             /* copy free TP output to pos_cmd and coarse_pos */
@@ -1637,7 +1638,7 @@ static void compute_screw_comp(void)
     emcmot_joint_t *joint;
     emcmot_comp_t *comp;
     double dpos;
-    double a_max, v_max, v, s_to_go, ds_stop, ds_vel, ds_acc, dv_acc;
+    double a_max, v_max, j_max, v, s_to_go, ds_stop, ds_vel, ds_acc, dv_acc;
 
 
     /* compute the correction */
@@ -1726,6 +1727,8 @@ static void compute_screw_comp(void)
 	 */
         v_max = 0.5 * joint->vel_limit * emcmotStatus->net_feed_scale;
         a_max = 0.5 * joint->acc_limit;
+        // BEEFNOTE: More to add here
+        j_max = 0.5 * joint->jerk_limit;
         v = joint->backlash_vel;
         if (joint->backlash_corr >= joint->backlash_filt) {
             s_to_go = joint->backlash_corr - joint->backlash_filt; /* abs val */
@@ -1994,7 +1997,7 @@ static void output_to_hal(void)
 	*(joint_data->motor_pos_cmd) = joint->motor_pos_cmd;
 	*(joint_data->joint_pos_cmd) = joint->pos_cmd;
     *(joint_data->joint_pos_fb) = joint->pos_fb;
-    *(joint_data->joint_max_jerk) = joint->max_jerk;
+//    *(joint_data->joint_max_jerk) = joint->max_jerk;
 	*(joint_data->amp_enable) = GET_JOINT_ENABLE_FLAG(joint);
 
 	*(joint_data->coarse_pos_cmd) = joint->coarse_pos;
@@ -2079,7 +2082,7 @@ static void update_status(void)
 	joint_status->ferror = joint->ferror;
 	joint_status->ferror_high_mark = joint->ferror_high_mark;
 	joint_status->backlash = joint->backlash;
-    joint_status->max_jerk = joint->max_jerk;
+//    joint_status->max_jerk = joint->max_jerk;
 	joint_status->max_pos_limit = joint->max_pos_limit;
 	joint_status->min_pos_limit = joint->min_pos_limit;
 	joint_status->min_ferror = joint->min_ferror;
