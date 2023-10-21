@@ -15,7 +15,7 @@ cd ..
 echo "run check and set scripts. \n"
 cd src
 ./autogen.sh
-./configure --enable-non-distributable=yes
+./configure --enable-non-distributable=yes --with-realtime=uspace
 cd ..
 
 echo "Copying header files into the include directory to use with halcompile \n"
@@ -51,6 +51,13 @@ make
 make install
 cd ..
 cd ..
+
+# Recreate the Sudo Make Setuid command (needed for running real machines)
+#echo "Running equivalent of Sudo Make Setuid"
+#sudo chown root bin/rtapi_app
+#sudo chmod 4750 bin/rtapi_app
+#sudo chown root bin/linuxcnc_module_helper.so
+#sudo chmod 4750 bin/linuxcnc_module_helper.so
 
 echo "start linuxcnc \n"
 cd scripts

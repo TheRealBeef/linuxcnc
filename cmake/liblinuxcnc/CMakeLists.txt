@@ -45,7 +45,12 @@ ADD_LIBRARY(${PROJECT} STATIC # Mention static.
     ${SRC_DIR}/../../src/emc/ini/inihal.cc
     )
 
-add_definitions(-DULAPI)
+if (BUILD_USPACE)
+    add_definitions(-DULAPI)
+else ()
+    add_definitions(-DRTAPI)
+endif ()
+
 
 # Set include paths for libraries to link.
 target_include_directories(${PROJECT_NAME} PRIVATE ${BUILD_DIR})

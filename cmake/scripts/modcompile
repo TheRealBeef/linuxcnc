@@ -1,4 +1,4 @@
-#!/usr/bin/python3.9
+#!/usr/bin/env python3
 
 #    Build Realtime Modbus modules to use the Mesa FPGA card PktUART
 

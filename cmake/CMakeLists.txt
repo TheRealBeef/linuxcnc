@@ -31,6 +31,9 @@ cmake_minimum_required(VERSION 3.0)
 set(PROJECT "- LINUX_CNC -") # The name of the file excluding .c or .h
 project(${PROJECT} CXX C) # Asm is optional.
 
+# Define "--with-realtime=uspace" flag
+option(BUILD_USPACE "Enable realtime" OFF)
+
 # Set variables.
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -38,6 +41,28 @@ set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 # ~/bin (c++ kernel core code)
 add_subdirectory(${SRC_DIR}/rtapi)
 add_subdirectory(${SRC_DIR}/linuxcnc_module_helper)
+
+# If RPC.H errors
+include_directories("/usr/include/tirpc/")
+
+# Lets sort out the Python / Boost Python versioning
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+string(REPLACE "." "" PYTHON_SUFFIX ${Python3_VERSION})
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _ ${Python3_VERSION})
+set(PYTHON_MAJOR_VERSION ${CMAKE_MATCH_1})
+set(PYTHON_MINOR_VERSION ${CMAKE_MATCH_2})
+set(PYTHON_LIB "python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}")
+set(BOOST_PYTHON_LIB_SUFFIX "${PYTHON_MAJOR_VERSION}${PYTHON_MINOR_VERSION}")
+find_package(Boost REQUIRED COMPONENTS python${BOOST_PYTHON_LIB_SUFFIX})
+#[[
+So we end up with the following
+Script header       #!/usr/bin/env python3
+Includes            include_directories(${Python3_INCLUDE_DIRS})
+Python Library      ${PYTHON_LIB}
+Boost library       Boost::python${BOOST_PYTHON_LIB_SUFFIX}
+]]
+
+include_directories("/usr/include/boost")
 
 # ~/lib (c - c++ code for motion, gcode etc.)
 add_subdirectory(${SRC_DIR}/liblinuxcnchal)
@@ -81,6 +106,7 @@ add_subdirectory(${SRC_DIR}/components/ugenserkins)
 add_subdirectory(${SRC_DIR}/components/scurve)
 add_subdirectory(${SRC_DIR}/components/motmod) # jogging
 add_subdirectory(${SRC_DIR}/components/scope_rt)
+#add_subdirectory(${SRC_DIR}/components/simple_tp)
 
 # Components from here need a halcompile from .comp to .c file.
 #add_subdirectory(${SRC_DIR}/components/ddt)
@@ -133,26 +159,4 @@ add_subdirectory(${SRC_DIR}/gcode_py)
 
 # Experimental scurve motion planner.
 add_subdirectory(${SRC_DIR}/components/sc_tp)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

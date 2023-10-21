@@ -1,4 +1,4 @@
-#!/usr/bin/python3.9
+#!/usr/bin/env python3
 """Copyright (C) 2020 Scott Alford, scottalford75@gmail.com
 Modified for use with QtDragon by Jim Sloot(persei802@gmail.com)
 This program is free software; you can redistribute it and/or modify

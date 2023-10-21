@@ -38,8 +38,8 @@ result Cpp_interface::dofs(result input){
 
     input.finished = otg.update(in,out);
 
-    // One ms forward.
-    out.trajectory.at_time(0.001,pos, vel, acc);
+    // One ms forward (Should it be input.period instead of 0.001?)
+    out.trajectory.at_time(input.period,pos, vel, acc);
 
     input.curpos=pos[i];
     input.curvel=vel[i];
@@ -52,24 +52,4 @@ extern "C" result wrapper_get_pos(result input){
     result r=Cpp_interface().dofs(input);
     return r;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

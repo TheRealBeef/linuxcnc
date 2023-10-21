@@ -11,6 +11,10 @@ rm -rf CMakeLists.txt.user
 
 cd ..
 
+echo "Uncomment these following two if you are running on real hardware and ran the setuid-alike command in build"
+#sudo rm bin/rtapi_app
+#sudo rm bin/linuxcnc_module_helper.so
+
 echo "clean ~/bin folder \n"
 cd bin
 rm -rf *
