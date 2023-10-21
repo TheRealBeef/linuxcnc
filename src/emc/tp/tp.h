@@ -35,7 +35,7 @@ int tpClearDIOs(TP_STRUCT * const tp);
 int tpSetCycleTime(TP_STRUCT * tp, double secs);
 int tpSetVmax(TP_STRUCT * tp, double vmax, double ini_maxvel);
 int tpSetVlimit(TP_STRUCT * tp, double limit);
-int tpSetJmax(TP_STRUCT * tp, double jmax);
+int tpSetMaxJerk(TP_STRUCT * tp, double max_jerk);
 int tpSetAmax(TP_STRUCT * tp, double amax);
 int tpSetId(TP_STRUCT * tp, int id);
 int tpGetExecId(TP_STRUCT * tp);
@@ -81,7 +81,6 @@ void tpMotFunctions(void(*pDioWrite)(int,char)
                    ,int( *pGetRotaryUnlock)(int)
                    ,double(*paxis_get_vel_limit)(int)
                    ,double(*paxis_get_acc_limit)(int)
-                   ,double(*paxis_get_jerk_limit)(int)
                    );
 
 void tpMotData(emcmot_status_t *

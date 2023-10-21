@@ -61,7 +61,6 @@ typedef struct JointConfig_t {
     double Units;
     double MaxVel;
     double MaxAccel;
-    double MaxJerk;
     double MinLimit;
     double MaxLimit;
 } JointConfig_t;
@@ -71,7 +70,6 @@ typedef struct AxisConfig_t {
     unsigned char Type;
     double MaxVel;
     double MaxAccel;
-    double MaxJerk;
     double Home;
     double MinLimit;
     double MaxLimit;
@@ -93,7 +91,6 @@ typedef struct TrajConfig_t {
     int Spindles;
     double MaxAccel;
     double MaxVel;
-    double MaxJerk;
     int AxisMask;
     double LinearUnits;
     double AngularUnits;

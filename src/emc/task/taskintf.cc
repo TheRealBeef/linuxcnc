@@ -142,6 +142,31 @@ int emcJointSetBacklash(int joint, double backlash)
     return retval;
 }
 
+int emcJointSetMaxJerk(int joint, double max_jerk)
+{
+#ifdef ISNAN_TRAP
+    if (std::isnan(max_jerk)) {
+    printf("std::isnan error in emcJointSetMaxJerk()\n");
+    return -1;
+    }
+#endif
+
+    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
+    return 0;
+    }
+
+    emcmotCommand.command = EMCMOT_SET_JOINT_MAX_JERK;
+    emcmotCommand.joint = joint;
+    emcmotCommand.max_jerk = max_jerk;
+
+    int retval = usrmotWriteEmcmotCommand(&emcmotCommand);
+
+    if (emc_debug & EMC_DEBUG_CONFIG) {
+        rcs_print("%s(%d, %.4f) returned %d\n", __FUNCTION__, joint, max_jerk, retval);
+    }
+    return retval;
+}
+
 int emcJointSetMinPositionLimit(int joint, double limit)
 {
 #ifdef ISNAN_TRAP
@@ -413,30 +438,6 @@ int emcJointSetMaxAcceleration(int joint, double acc)
     return retval;
 }
 
-int emcJointSetMaxJerk(int joint, double jerk)
-{
-    CATCH_NAN(std::isnan(jerk));
-
-    if (joint < 0 || joint >= EMCMOT_MAX_JOINTS) {
-        return 0;
-    }
-    if (jerk < 0.0) {
-        jerk = 0.0;
-    }
-    JointConfig[joint].MaxJerk = jerk;
-    //AJ: need functions for setting the AXIS_MAX_JERK (either from the INI, or from kins..)
-    emcmotCommand.command = EMCMOT_SET_JOINT_JERK_LIMIT;
-    emcmotCommand.joint = joint;
-    emcmotCommand.jerk = jerk;
-
-    int retval = usrmotWriteEmcmotCommand(&emcmotCommand);
-
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        rcs_print("%s(%d, %.4g) returned %d\n", __FUNCTION__, joint, jerk, retval);
-    }
-    return retval;
-}
-
 /*! functions involving cartesian Axes (X,Y,Z,A,B,C,U,V,W) */
     
 int emcAxisSetMinPositionLimit(int axis, double limit)
@@ -537,32 +538,6 @@ int emcAxisSetMaxAcceleration(int axis, double acc,double ext_offset_acc)
     return retval;
 }
 
-int emcAxisSetMaxJerk(int axis, double jerk, double ext_offset_jerk)
-{
-    CATCH_NAN(std::isnan(jerk));
-
-    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(TrajConfig.AxisMask & (1 << axis))) {
-        return 0;
-    }
-
-    if (jerk < 0.0) {
-        jerk = 0.0;
-    }
-
-    AxisConfig[axis].MaxJerk = jerk;
-
-    emcmotCommand.command = EMCMOT_SET_AXIS_JERK_LIMIT;
-    emcmotCommand.axis = axis;
-    emcmotCommand.jerk = jerk;
-    emcmotCommand.ext_offset_jerk = ext_offset_jerk;
-    int retval = usrmotWriteEmcmotCommand(&emcmotCommand);
-
-    if (emc_debug & EMC_DEBUG_CONFIG) {
-        rcs_print("%s(%d, %.4f) returned %d\n", __FUNCTION__, axis, jerk, retval);
-    }
-    return retval;
-}
-
 int emcAxisSetLockingJoint(int axis, int joint)
 {
 
@@ -601,15 +576,6 @@ double emcAxisGetMaxAcceleration(int axis)
     }
 
     return AxisConfig[axis].MaxAccel;
-}
-
-double emcAxisGetMaxJerk(int axis)
-{
-    if (axis < 0 || axis >= EMCMOT_MAX_AXIS) {
-        return 0;
-    }
-
-    return AxisConfig[axis].MaxJerk;
 }
 
 int emcAxisUpdate(EMC_AXIS_STAT stat[], int axis_mask)
@@ -1626,7 +1592,6 @@ int emcTrajUpdate(EMC_TRAJ_STAT * stat)
     stat->velocity = emcmotStatus.vel;
     stat->acceleration = emcmotStatus.acc;
     stat->maxAcceleration = TrajConfig.MaxAccel;
-    stat->maxJerk = TrajConfig.MaxJerk;
 
     if (emcmotStatus.motionFlag & EMCMOT_MOTION_ERROR_BIT) {
 	stat->status = RCS_STATUS::ERROR;

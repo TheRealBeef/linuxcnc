@@ -435,12 +435,6 @@ int tpSetAmax(TP_STRUCT * const tp, double aMax)
     return 0;
 }
 
-int tpSetJmax(TP_STRUCT * const tp, double jMax)
-{
-    jm=jMax;
-    return 0;
-}
-
 int tpSetId(TP_STRUCT * const tp, int id)
 {
     //! Sets gcode line nr id for upcoming new line, arc.
@@ -870,7 +864,6 @@ EXPORT_SYMBOL(tpQueueDepth);
 EXPORT_SYMBOL(tpResume);
 EXPORT_SYMBOL(tpRunCycle);
 EXPORT_SYMBOL(tpSetAmax);
-EXPORT_SYMBOL(tpSetJmax);
 EXPORT_SYMBOL(tpSetAout);
 EXPORT_SYMBOL(tpSetCycleTime);
 EXPORT_SYMBOL(tpSetDout);

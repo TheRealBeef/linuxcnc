@@ -45,9 +45,6 @@ extern const char * DEFAULT_EMC_NMLFILE;
 /* default joint acceleration, in user units per second per second */
 #define DEFAULT_JOINT_MAX_ACCELERATION 1.0
 
-/* default joint jerk, in user units per second per second */
-#define DEFAULT_JOINT_MAX_JERK 200.0
-
 /* default axis velocity, in user units per second */
 #define DEFAULT_AXIS_MAX_VELOCITY 1.0
 

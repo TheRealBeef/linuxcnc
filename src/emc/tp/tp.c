@@ -74,7 +74,6 @@ void tpMotFunctions(void(  *pDioWrite)(int,char)
                     ,int (  *pGetRotaryIsUnlocked)(int)
                     ,double(*paxis_get_vel_limit)(int)
                     ,double(*paxis_get_acc_limit)(int)
-                    ,double(*paxis_get_jerk_limit)(int)
                     )
 {
     _DioWrite            = *pDioWrite;
@@ -597,14 +596,14 @@ int tpSetAmax(TP_STRUCT * const tp, double aMax)
     return TP_ERR_OK;
 }
 
-/** Sets the max jerk for the trajectory planner. */
-int tpSetJmax(TP_STRUCT * const tp, double jMax)
+/** Sets the max acceleration for the trajectory planner. */
+int tpSetMaxJerk(TP_STRUCT * const tp, double max_jerk)
 {
-    if (0 == tp || jMax <= 0.0) {
+    if (0 == tp || max_jerk <= 0.0) {
         return TP_ERR_FAIL;
     }
 
-    tp->jMax = jMax;
+    tp->max_jerk = max_jerk;
 
     return TP_ERR_OK;
 }
@@ -3736,7 +3735,6 @@ EXPORT_SYMBOL(tpQueueDepth);
 EXPORT_SYMBOL(tpResume);
 EXPORT_SYMBOL(tpRunCycle);
 EXPORT_SYMBOL(tpSetAmax);
-EXPORT_SYMBOL(tpSetJmax);
 EXPORT_SYMBOL(tpSetAout);
 EXPORT_SYMBOL(tpSetCycleTime);
 EXPORT_SYMBOL(tpSetDout);
