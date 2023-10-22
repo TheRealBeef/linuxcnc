@@ -17,14 +17,85 @@
 
 extern struct result wrapper_get_pos(struct result input);
 struct result r, restore;
-bool use_scurve;
+bool use_no_scurve;
+bool use_scurve_coded_beef;
+bool use_scurve_coded_skynet;
+
+double last_jerk;
 
 //! For every joint this function is called.
 void simple_tp_update(simple_tp_t *tp, double period)
 {
-    use_scurve=true;
+    //! Choose one of these configurations :
+    use_no_scurve=0;            //! Use original lcnc source code, trapezium velocity profile.
+    use_scurve_coded_skynet=1;  //! Scurve jogging example coded by skynet cyberdyne.
+    use_scurve_coded_beef=0;    //! Scurve jogging example coded by beef.
 
-    if(use_scurve){
+    if(use_scurve_coded_skynet){
+
+        if(tp->max_jerk==0){
+            printf("ruckig jog input error, set max_jerk from 0 to 1000. \n");
+            //! This error is from this function call :
+            //!      simple_tp_update(&(axis->ext_offset_tp), servo_period)
+            //! Where this "axis" has no max_jerk value at this moment.
+            tp->max_jerk=1000;
+        }
+
+        //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
+        r.period=period;
+        r.tarpos=tp->pos_cmd;
+        r.curpos=tp->curr_pos;
+        r.curvel=tp->curr_vel;
+        r.curacc=tp->curr_acc;
+        r.maxvel=tp->max_vel;
+        r.maxacc=tp->max_acc;
+        r.enable=1;
+        r.maxjerk=tp->max_jerk;
+        r.synchronizationtype=3;
+        r.durationdiscretizationtype=0;
+        r.taracc=0;
+        r.tarvel=0;
+
+        if(tp->enable){ //! Button pressed, try to move.
+            r.interfacetype=0;
+        } else { //! Button released, try to stop.
+            r.interfacetype=1;
+        }
+
+        r=wrapper_get_pos(r); //! Calculate.
+
+        //! When ruckig input's are invalid, ruckig will give error message.
+        //! This is also the case when curpos=tarpos.
+        if(r.error){
+            /*
+            if(r.curpos==r.tarpos){ //! This is error code -100.
+                printf("ruckig in position.\n");
+            } else {
+                printf("ruckig error code: %i \n",r.function_return_code);
+                printf("period: %f \n",r.period);
+                printf("tarpos: %f \n",r.tarpos);
+                printf("curpos: %f \n",r.curpos);
+                printf("curvel: %f \n",r.curvel);
+                printf("curacc: %f \n",r.curacc);
+                printf("maxvel: %f \n",r.maxvel);
+                printf("maxacc: %f \n",r.maxacc);
+                printf("maxjerk: %f \n",r.maxjerk);
+            } */
+        }
+
+        if(r.finished){
+            tp->active=false;
+        }
+        if(!r.finished){
+            tp->curr_pos = r.curpos;
+            tp->curr_vel = r.curvel;
+            tp->curr_acc = r.curacc;
+
+            tp->active=true;
+        }
+    }
+
+    if(use_scurve_coded_beef){
         // Determine a min distance that we aren't going to worry about
         double tiny_dp = TINY_DP(tp->max_acc, period);
         // printf("period: %f \n", period); // Seems to be : 0.001
@@ -95,16 +166,15 @@ void simple_tp_update(simple_tp_t *tp, double period)
             tp->active=0;
         }
 
-//        if(r.curvel != 0.0) {
-//            tp->active=1;
-//        } else {
-//            tp->active=0;
-//        }
+        //        if(r.curvel != 0.0) {
+        //            tp->active=1;
+        //        } else {
+        //            tp->active=0;
+        //        }
 
+    }
 
-    } else {
-
-        // Use the original linuxcnc code:
+    if(use_no_scurve){ // Use the original linuxcnc code:
 
         double max_dv, tiny_dp, pos_err, vel_req;
 

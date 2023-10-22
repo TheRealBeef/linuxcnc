@@ -14,3 +14,5 @@ git push -f origin master	# this is force, will destroy history.
 git push -u origin master    
 
 git pull 					# To update the local clone 
+
+>> .gitignore				# Add .gitingore file to the project to skip upload of dirs & files.

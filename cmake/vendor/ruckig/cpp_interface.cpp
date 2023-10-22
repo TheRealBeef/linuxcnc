@@ -36,7 +36,18 @@ result Cpp_interface::dofs(result input){
 
     in.enabled[i]=input.enable;
 
-    input.finished = otg.update(in,out);
+    input.function_return_code = otg.update(in,out);
+
+    if(input.function_return_code==1){
+        input.finished=true;
+        input.error=false;
+    } else
+    if(input.function_return_code==0){
+        input.finished=false;
+        input.error=false;
+    } else {
+        input.error=true;
+    }
 
     // One ms forward (Should it be input.period instead of 0.001?)
     out.trajectory.at_time(input.period,pos, vel, acc);

@@ -59,3 +59,10 @@ docs/help/hu/*
 docs/help/nb/*
 docs/help/vi/*
 docs/help/zh_CN/*
+# Ignore the build dir of the cmake project.
+cmake/build
+# Ignore the this file.
+rtlib/*
+bin/*
+# Ignore qt config file.
+cmake/CMakeLists.txt.user

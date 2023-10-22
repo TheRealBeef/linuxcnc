@@ -13,6 +13,11 @@ set ::watchlist {
     pin+halui.mode.joint
     pin+halui.mode.teleop
     pin+ini.0.max_jerk
+    pin+ini.1.max_jerk
+    pin+ini.2.max_jerk
+    pin+ini.x.max_jerk
+    pin+ini.y.max_jerk
+    pin+ini.z.max_jerk
 }
 set ::workmode watchhal
 set ::watchInterval 100
