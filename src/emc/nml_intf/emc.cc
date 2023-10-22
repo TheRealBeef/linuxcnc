@@ -1754,6 +1754,7 @@ void EMC_TRAJ_STAT::update(CMS * cms)
     cms->update(acceleration);
     cms->update(maxVelocity);
     cms->update(maxAcceleration);
+    cms->update(maxJerk);
     EmcPose_update(cms, &probedPosition);
     cms->update(probe_tripped);
     cms->update(probing);
