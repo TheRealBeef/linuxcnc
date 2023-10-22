@@ -1,30 +1,3 @@
-```
-This linuxcnc fork has a cmake project under the hood.
-To build linuxcnc with cmake, visit ~/linuxcnc/cmake/ then execute the script : ./build_all
-
-To open and edit linuxcnc source code in a designer like qt, open the ~/linuxcnc/cmake/cmakelists.txt
-After building linuxcnc inside qt, don't forget to do a "make install". 
-```
-
-```
-In the ~/linuxcnc/component/motdot i have added code for scurve jogging.
-This jogging already works and can be reviewed. 
-A ini value for jerk_max has to be added to the source code.
-See the file simple_tp.c for more information.
-
-```
-
-```
-In the ~/linuxcnc/component/homemod i have added code to home the machine without moving motors.
-There is a hal pin : joint.home_all, set this pin to high, then press the home all button.
-The machine is then homed on all axis without moving any machine motor. 
-
-```
-```
-before a github push, perform the ~linuxcnc/cmake/./clean_all command.
-
-```
-
 [![Badge GPL2]][License]
 [![Badge LGPL]][License]
 
