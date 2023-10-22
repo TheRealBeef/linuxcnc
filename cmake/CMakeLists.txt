@@ -80,7 +80,7 @@ add_subdirectory(${SRC_DIR}/hal_lib)
 add_subdirectory(${SRC_DIR}/components/test)
 add_subdirectory(${SRC_DIR}/components/tp)
 add_subdirectory(${SRC_DIR}/components/tpmod)
-#add_subdirectory(${SRC_DIR}/components/tpmod_scurve) # test & try out new motion component for scurve.
+add_subdirectory(${SRC_DIR}/components/tpmod_scurve) # test & try out new motion component for scurve.
 add_subdirectory(${SRC_DIR}/components/homemod)
 add_subdirectory(${SRC_DIR}/components/threads)
 add_subdirectory(${SRC_DIR}/components/ethercat)

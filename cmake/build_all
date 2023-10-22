@@ -63,4 +63,6 @@ echo "start linuxcnc \n"
 cd scripts
 ./rip-environment linuxcnc ../configs/sim/axis/axis_mm.ini
 
+# Example to start with custom trajectory planner or use in ini file : [TRAJ]TPMOD=user_tpcomp
+# ./rip-environment linuxcnc -t tpmod_scurve ../configs/sim/axis/axis_mm.ini
 

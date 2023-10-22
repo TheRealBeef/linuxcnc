@@ -398,6 +398,12 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
     return 0;
 }
 
+int tpSetMaxJerk(TP_STRUCT * const tp)
+{
+    // Test function added.
+    return 0;
+}
+
 int tpClear(TP_STRUCT * const tp)
 {
     printf("clear. \n");
@@ -847,6 +853,7 @@ int tcqFull(TC_QUEUE_STRUCT const * const tcq)
 EXPORT_SYMBOL(tpMotFunctions);
 EXPORT_SYMBOL(tpMotData);
 
+EXPORT_SYMBOL(tpSetMaxJerk); //! Added to get it to run.
 EXPORT_SYMBOL(tpAbort);
 EXPORT_SYMBOL(tpActiveDepth);
 EXPORT_SYMBOL(tpAddCircle);

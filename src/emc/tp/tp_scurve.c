@@ -1,4 +1,4 @@
-/********************************************************************
+﻿/********************************************************************
 * Description: tp.c
 *   Trajectory planner based on TC elements
 *
@@ -92,6 +92,10 @@ void tpMotData(emcmot_status_t *pstatus
     emcmotConfig = pconfig;
 }
 //=========================================================
+
+#include "ruckig_format.h"
+extern struct result wrapper_get_pos(struct result input);
+struct result r;
 
 /** static function primitives (ugly but less of a pain than moving code around)*/
 STATIC int tpComputeBlendVelocity(
@@ -495,6 +499,9 @@ int tpInit(TP_STRUCT * const tp)
     //Velocity limits
     tp->vLimit = 0.0;
     tp->ini_maxvel = 0.0;
+    tp->max_jerk = 0.0;
+    tp->cur_acc = 0.0;
+
     //Accelerations
     tp->aLimit = 0.0;
     PmCartesian acc_bound;
@@ -588,6 +595,19 @@ int tpSetAmax(TP_STRUCT * const tp, double aMax)
 
     return TP_ERR_OK;
 }
+
+/** Sets the max acceleration for the trajectory planner. */
+int tpSetMaxJerk(TP_STRUCT * const tp, double max_jerk)
+{
+    if (0 == tp || max_jerk <= 0.0) {
+        return TP_ERR_FAIL;
+    }
+
+    tp->max_jerk = max_jerk;
+
+    return TP_ERR_OK;
+}
+
 
 /**
  * Sets the id that will be used for the next appended motions.
@@ -2443,8 +2463,38 @@ void tpCalculateTrapezoidalAccel(TP_STRUCT const * const tp, TC_STRUCT * const t
     // Calculate acceleration needed to reach newvel, bounded by machine maximum
     double dt = fmax(tc->cycle_time, TP_TIME_EPSILON);
     double maxnewaccel = (newvel - tc->currentvel) / dt;
+
+
+    r.tarvel=tc->finalvel;
+    r.maxvel=tc_target_vel;
+    r.maxacc=maxaccel;
+    r.curpos=0;
+    // r.curacc=tc->cur_acc;
+    r.tarpos=dx;
+    r.taracc=0;
+    // printf("max jerk: %f \n \n",tc->max_jerk); // ok.
+    r.maxjerk=tc->max_jerk;
+    r.period=tc->cycle_time;
+    r.durationdiscretizationtype=0;
+    r.interfacetype=0;
+
+    r=wrapper_get_pos(r);
+
+    //*acc=r.curacc;
+    //*vel_desired=r.curvel;
+
+    // printf("doing scurve, vel: %f \n", r.curvel);
+    // printf("doing scurve, finished: %i \n", r.finished);
+
     *acc = saturate(maxnewaccel, maxaccel);
     *vel_desired = maxnewvel;
+
+    // printf("acc: %f \n", *acc);
+    // printf("vel_desired: %f \n", *vel_desired);
+
+    printf("tp max_jerk %f \n",tp->max_jerk);
+    printf("tc max_jerk %f \n",tc->max_jerk);
+
 }
 
 /**
@@ -3672,6 +3722,7 @@ int tpIsMoving(TP_STRUCT const * const tp)
 EXPORT_SYMBOL(tpMotFunctions);
 EXPORT_SYMBOL(tpMotData);
 
+EXPORT_SYMBOL(tpSetMaxJerk);
 EXPORT_SYMBOL(tpAbort);
 EXPORT_SYMBOL(tpActiveDepth);
 EXPORT_SYMBOL(tpAddCircle);
