@@ -1,4 +1,4 @@
-VERSION = '1.236.292'
+VERSION = '1.236.296'
 
 '''
 qtplasmac_handler.py
@@ -227,6 +227,9 @@ class HandlerClass:
         self.yLen = self.yMax - self.yMin
         self.thcFeedRate = float(self.iniFile.find('AXIS_Z', 'MAX_VELOCITY')) * \
                            float(self.iniFile.find('AXIS_Z', 'OFFSET_AV_RATIO')) * 60
+        self.offsetFeedRate = min(float(self.iniFile.find('AXIS_X', 'MAX_VELOCITY')) * 30, \
+                                  float(self.iniFile.find('AXIS_Y', 'MAX_VELOCITY')) * 30, \
+                                  float(self.iniFile.find('TRAJ', 'MAX_LINEAR_VELOCITYs') or 100000))
         self.maxHeight = self.zMax - self.zMin
         self.maxPidP = self.thcFeedRate / self.unitsPerMm * 0.1
         self.tmpPath = '/tmp/qtplasmac/'
@@ -330,6 +333,9 @@ class HandlerClass:
 
 # called by qtvcp.py
     def initialized__(self):
+        ucFile = os.path.join(self.PATHS.CONFIGPATH, 'qtplasmac_custom.py')
+        if os.path.isfile(ucFile):
+            exec(compile(open(ucFile, 'rb').read(), ucFile, 'exec'))
         # ensure we get all startup errors
         STATUS.connect('error', self.error_update)
         STATUS.connect('graphics-gcode-error', lambda o, e:self.error_update(o, linuxcnc.OPERATOR_ERROR, e))
@@ -842,6 +848,7 @@ class HandlerClass:
         CALL(['halcmd', 'net', 'plasmac:ohmic-probe-offset', 'qtplasmac.ohmic_probe_offset-f', 'plasmac.ohmic-probe-offset'])
         CALL(['halcmd', 'net', 'plasmac:ohmic-max-attempts', 'qtplasmac.ohmic_max_attempts-s', 'plasmac.ohmic-max-attempts'])
         CALL(['halcmd', 'net', 'plasmac:skip-ihs-distance', 'qtplasmac.skip_ihs_distance-f', 'plasmac.skip-ihs-distance'])
+        CALL(['halcmd', 'net', 'plasmac:offset-feed-rate', 'qtplasmac.offset_feed_rate-f', 'plasmac.offset-feed-rate'])
         #safety parameters
         CALL(['halcmd', 'net', 'plasmac:safe-height', 'qtplasmac.safe_height-f', 'plasmac.safe-height'])
         #scribe parameters
@@ -941,7 +948,7 @@ class HandlerClass:
         self.w.color_disabled.setStyleSheet('background-color: {}'.format(self.PREFS.getpref('Disabled', '#b0b0b0', str, 'COLOR_OPTIONS')))
         self.w.color_preview.setStyleSheet('background-color: {}'.format(self.PREFS.getpref('Preview', '#000000', str, 'COLOR_OPTIONS')))
         self.lastLoadedProgram = self.w.PREFS_.getpref('RecentPath_0', 'None', str,'BOOK_KEEPING')
-        TOOLTIPS.tool_tips_changed(self.w)
+        TOOLTIPS.tool_tips_changed(self, self.w)
         self.soft_keyboard()
         self.cone_size_changed(self.w.cone_size.value())
         self.grid_size_changed(self.w.grid_size.value())
@@ -1149,8 +1156,13 @@ class HandlerClass:
             self.probeOffsetY = self.PREFS.getpref('Y axis', 0.0, float, 'OFFSET_PROBING')
             self.probeDelay = self.PREFS.getpref('Delay', 0.0, float, 'OFFSET_PROBING')
         except:
+            self.w.offset_feed_rate.hide()
+            self.w.offset_feed_rate_lbl.hide()
             msg0 = _translate('HandlerClass', 'Invalid entry for probe offset')
             STATUS.emit('error', linuxcnc.OPERATOR_ERROR, '{}:\n{}\n'.format(head, msg0))
+        if not self.probeOffsetX and not self.probeOffsetY:
+            self.w.offset_feed_rate.hide()
+            self.w.offset_feed_rate_lbl.hide()
 
 # called by the modified closeEvent function in this handler
     def closing_cleanup__(self):
@@ -1326,20 +1338,12 @@ class HandlerClass:
     def estop_state(self, state):
         if state:
             self.w.power.setChecked(False)
-            self.w.power.setStyleSheet(' \
-                    QPushButton {{ color: {2}; background: {1}; border-color: {2} }} \
-                    QPushButton:pressed {{ color: {2}; background: {1}; border-color: {0} }}' \
-                    .format(self.foreColor, self.backColor, self.disabledColor))
+            self.w.power.setEnabled(False)
             if not self.firstRun:
                 log = _translate('HandlerClass', 'Emergency stop pressed')
                 STATUS.emit('update-machine-log', log, 'TIME')
         else:
-            self.w.power.setStyleSheet(' \
-                    QPushButton {{ color: {0}; background: {1}; border-color: {0} }} \
-                    QPushButton:pressed {{ color: {1}; background: {3}; border-color: {0} }} \
-                    QPushButton:checked {{ color: {1}; background: {3}; border-color: {0} }} \
-                    QPushButton:checked:pressed {{ color: {0}; background: {1}; border-color: {0} }}' \
-                    .format(self.foreColor, self.backColor, self.disabledColor, self.fore1Color))
+            self.w.power.setEnabled(True)
             if not self.firstRun:
                 log = _translate('HandlerClass', 'Emergency stop cleared')
                 STATUS.emit('update-machine-log', log, 'TIME')
@@ -1876,7 +1880,6 @@ class HandlerClass:
                     # load rfl file
                     if ACTION.prefilter_path or self.lastLoadedProgram != 'None':
                         self.preRflFile = ACTION.prefilter_path or self.lastLoadedProgram
-                    self.remove_temp_materials()
                     ACTION.OPEN_PROGRAM(rflFile)
                     ACTION.prefilter_path = self.preRflFile
                     self.set_run_button_state()
@@ -2696,6 +2699,7 @@ class HandlerClass:
         self.PREFS.putpref('Float Switch Travel', self.w.float_switch_travel.value(), float, 'PLASMA_PARAMETERS')
         self.PREFS.putpref('Height Per Volt', self.w.height_per_volt.value(), float, 'PLASMA_PARAMETERS')
         self.PREFS.putpref('Void Sense Slope', self.w.voidlock_slope.value(), int, 'PLASMA_PARAMETERS')
+        self.PREFS.putpref('Offset Feed Rate', self.w.offset_feed_rate.value(), float, 'PLASMA_PARAMETERS')
         self.PREFS.putpref('Ohmic Maximum Attempts', self.w.ohmic_max_attempts.value(), int, 'PLASMA_PARAMETERS')
         self.PREFS.putpref('Ohmic Probe Offset', self.w.ohmic_probe_offset.value(), float, 'PLASMA_PARAMETERS')
         self.PREFS.putpref('Pid P Gain', self.w.pid_p_gain.value(), float, 'PLASMA_PARAMETERS')
@@ -2717,8 +2721,6 @@ class HandlerClass:
         self.PREFS.putpref('THC Threshold', self.w.thc_threshold.value(), float, 'PLASMA_PARAMETERS')
 
     def load_plasma_parameters(self):
-        self.w.setup_feed_rate.setValue(self.PREFS.getpref('Setup Feed Rate', self.thcFeedRate * 0.8, float, 'PLASMA_PARAMETERS'))
-        self.w.probe_feed_rate.setMaximum(self.w.setup_feed_rate.value())
         self.w.arc_fail_delay.setValue(self.PREFS.getpref('Arc Fail Timeout', 3.0, float, 'PLASMA_PARAMETERS'))
         self.w.arc_ok_high.setValue(self.PREFS.getpref('Arc OK High', 250.0, float, 'PLASMA_PARAMETERS'))
         self.w.arc_ok_low.setValue(self.PREFS.getpref('Arc OK Low', 60.0, float, 'PLASMA_PARAMETERS'))
@@ -2728,7 +2730,7 @@ class HandlerClass:
         self.w.cornerlock_threshold.setValue(self.PREFS.getpref('Velocity Anti Dive Threshold', 90.0, float, 'PLASMA_PARAMETERS'))
         self.w.float_switch_travel.setValue(self.PREFS.getpref('Float Switch Travel', round(1.5 * self.unitsPerMm, 2), float, 'PLASMA_PARAMETERS'))
         self.w.height_per_volt.setValue(self.PREFS.getpref('Height Per Volt', round(0.1 * self.unitsPerMm, 3), float, 'PLASMA_PARAMETERS'))
-        self.w.voidlock_slope.setValue(self.PREFS.getpref('Void Sense Slope', 500, int, 'PLASMA_PARAMETERS'))
+        self.w.offset_feed_rate.setValue(self.PREFS.getpref('Offset Feed Rate', self.offsetFeedRate * 0.8, float, 'PLASMA_PARAMETERS'))
         self.w.ohmic_max_attempts.setValue(self.PREFS.getpref('Ohmic Maximum Attempts', 0, int, 'PLASMA_PARAMETERS'))
         self.w.ohmic_probe_offset.setValue(self.PREFS.getpref('Ohmic Probe Offset', 0.0, float, 'PLASMA_PARAMETERS'))
         self.w.pid_p_gain.setValue(self.PREFS.getpref('Pid P Gain', 10.0, float, 'PLASMA_PARAMETERS'))
@@ -2748,6 +2750,7 @@ class HandlerClass:
         self.w.thc_sample_counts.setValue(self.PREFS.getpref('THC Sample Counts', 50, int, 'PLASMA_PARAMETERS'))
         self.w.thc_sample_threshold.setValue(self.PREFS.getpref('THC Sample Threshold', 1.0, float, 'PLASMA_PARAMETERS'))
         self.w.thc_threshold.setValue(self.PREFS.getpref('THC Threshold', 1.0, float, 'PLASMA_PARAMETERS'))
+        self.w.voidlock_slope.setValue(self.PREFS.getpref('Void Sense Slope', 500, int, 'PLASMA_PARAMETERS'))
 
     def set_signal_connections(self):
         self.w.power.pressed.connect(lambda:self.power_button("pressed", True))
@@ -3084,6 +3087,9 @@ class HandlerClass:
             self.w.probe_start_height.setRange(0.1, int(self.maxHeight))
             self.w.probe_start_height.setDecimals(2)
             self.w.probe_start_height.setSingleStep(0.01)
+            self.w.offset_feed_rate.setRange(4.0, int(self.offsetFeedRate))
+            self.w.offset_feed_rate.setDecimals(1)
+            self.w.offset_feed_rate.setSingleStep(0.1)
             self.w.float_switch_travel.setRange(-1.0, 1.0)
             self.w.float_switch_travel.setDecimals(3)
             self.w.float_switch_travel.setSingleStep(0.001)
@@ -3113,6 +3119,7 @@ class HandlerClass:
             self.w.safe_height.setMaximum(int(self.maxHeight))
             self.w.probe_feed_rate.setMaximum(int(self.thcFeedRate))
             self.w.probe_start_height.setMaximum(int(self.maxHeight))
+            self.w.offset_feed_rate.setMaximum(int(self.offsetFeedRate))
 
     def set_probe_offset_pins(self):
         hal.set_p('plasmac.offset-probe-x', '{}'.format(self.probeOffsetX))
