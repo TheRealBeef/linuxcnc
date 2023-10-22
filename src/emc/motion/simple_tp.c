@@ -87,6 +87,19 @@ void simple_tp_update(simple_tp_t *tp, double period)
             tp->active=false;
         }
         if(!r.finished){
+            // Ensure that ruckig doesn't somehow give too high vel values
+            if (r.curvel > tp->max_vel) {
+                r.curvel = tp->max_vel;
+            } else if (r.curvel < -tp->max_vel) {
+                r.curvel = -tp->max_vel;
+            }
+            // Ensure that ruckig doesn't somehow give too high accel  values
+            if (r.curacc > tp->max_acc) {
+                r.curacc = tp->max_acc;
+            } else if (r.curacc < -tp->max_acc) {
+                r.curacc = -tp->max_acc;
+            }
+
             tp->curr_pos = r.curpos;
             tp->curr_vel = r.curvel;
             tp->curr_acc = r.curacc;
