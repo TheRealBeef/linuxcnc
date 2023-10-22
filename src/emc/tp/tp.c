@@ -2483,14 +2483,18 @@ void tpCalculateTrapezoidalAccel(TP_STRUCT const * const tp, TC_STRUCT * const t
     //*acc=r.curacc;
     //*vel_desired=r.curvel;
 
-    printf("doing scurve, vel: %f \n", r.curvel);
-    printf("doing scurve, finished: %i \n", r.finished);
+    // printf("doing scurve, vel: %f \n", r.curvel);
+    // printf("doing scurve, finished: %i \n", r.finished);
 
     *acc = saturate(maxnewaccel, maxaccel);
     *vel_desired = maxnewvel;
 
-    printf("acc: %f \n", *acc);
-    printf("vel_desired: %f \n", *vel_desired);
+    // printf("acc: %f \n", *acc);
+    // printf("vel_desired: %f \n", *vel_desired);
+
+    printf("tp max_jerk %f \n",tp->max_jerk);
+    printf("tc max_jerk %f \n",tc->max_jerk);
+
 }
 
 /**

@@ -893,6 +893,7 @@ static void set_operating_mode(void)
 	    /* point to joint data */
 	    joint = &joints[joint_num];
 	    joint->free_tp.curr_pos = joint->pos_cmd;
+        joint->free_tp.max_jerk = joint->max_jerk;
 	    if (GET_JOINT_ACTIVE_FLAG(joint)) {
 		SET_JOINT_ENABLE_FLAG(joint, 1);
 		do_cancel_homing(joint_num);
@@ -1247,6 +1248,7 @@ static void get_pos_cmds(long period)
             /* copy free TP output to pos_cmd and coarse_pos */
             joint->pos_cmd = joint->free_tp.curr_pos;
             joint->vel_cmd = joint->free_tp.curr_vel;
+            joint->max_jerk = joint->free_tp.max_jerk;
             //no acceleration output form simple_tp, but the pin will
             //still show the acceleration from the interpolation.
             //it's delayed, but that's ok during jogging or homing.

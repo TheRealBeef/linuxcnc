@@ -7,6 +7,7 @@
 
 typedef struct {
     double pos_cmd;                 /* commanded axis position */
+    double max_jerk;
     double teleop_vel_cmd;          /* commanded axis velocity */
     double max_pos_limit;           /* upper soft limit on axis pos */
     double min_pos_limit;           /* lower soft limit on axis pos */
@@ -27,6 +28,7 @@ typedef struct {
 
 typedef struct {
     hal_float_t *pos_cmd;           /* RPI: commanded position */
+    // hal_float_t *max_jerk;
     hal_float_t *teleop_vel_cmd;    /* RPI: commanded velocity */
     hal_float_t *teleop_pos_cmd;    /* RPI: teleop traj planner pos cmd */
     hal_float_t *teleop_vel_lim;    /* RPI: teleop traj planner vel limit */
@@ -127,6 +129,7 @@ int axis_init_hal_io(int mot_comp_id)
         char c = "xyzabcuvw"[n];
         axis_hal_t *axis_data = &(hal_data->axis[n]);
         CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->pos_cmd, mot_comp_id, "axis.%c.pos-cmd", c));
+        // CALL_CHECK(hal_pin_float_newf(HAL_IN, &axis_data->max_jerk, mot_comp_id, "axis.%c.max_jerk", c));
         CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->teleop_vel_cmd, mot_comp_id, "axis.%c.teleop-vel-cmd", c));
         CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->teleop_pos_cmd, mot_comp_id, "axis.%c.teleop-pos-cmd", c));
         CALL_CHECK(hal_pin_float_newf(HAL_OUT, &axis_data->teleop_vel_lim, mot_comp_id, "axis.%c.teleop-vel-lim", c));
@@ -163,6 +166,7 @@ void axis_output_to_hal(double *pcmd_p[])
         *(axis_data->teleop_tp_enable)  = axis->teleop_tp.enable;
         *(axis_data->kb_ajog_active)    = axis->kb_ajog_active;
         *(axis_data->wheel_ajog_active) = axis->wheel_ajog_active;
+        // *(axis_data->max_jerk) = axis->max_jerk;
 
         // hal pins: axis.L.pos-cmd reported without applied offsets:
         *(axis_data->pos_cmd) = *pcmd_p[n]
@@ -183,6 +187,11 @@ void axis_set_min_pos_limit(int axis_num, double minLimit)
 void axis_set_vel_limit(int axis_num, double vel)
 {
     axis_array[axis_num].vel_limit = vel;
+}
+
+void axis_set_max_jerk(int axis_num, double max_jerk)
+{
+    axis_array[axis_num].max_jerk = max_jerk;
 }
 
 void axis_set_acc_limit(int axis_num, double acc)
@@ -575,6 +584,10 @@ int axis_update_coord_with_bound(double *pcmd_p[], double servo_period)
         axis = &axis_array[n];
         save_pos_cmd[n]     = *pcmd_p[n];
         save_offset_cmd[n]  = axis->ext_offset_tp.pos_cmd;
+
+        //! Copy max jerk value.
+        // axis->ext_offset_tp.max_jerk=axis->teleop_tp.max_jerk;
+
         simple_tp_update(&(axis->ext_offset_tp), servo_period);
     }
     axis_apply_ext_offsets_to_carte_pos(+1, pcmd_p); // add external offsets
@@ -627,6 +640,7 @@ static int update_teleop_with_check(int axis_num, simple_tp_t *the_tp, double se
     emcmot_axis_t *axis = &axis_array[axis_num];
 
     save_curr_pos = the_tp->curr_pos;
+
     simple_tp_update(the_tp, servo_period);
 
     //workaround: axis letters not in [TRAJ]COORDINATES
@@ -659,6 +673,10 @@ int axis_calc_motion(double servo_period)
 
     for (axis_num = 0; axis_num < EMCMOT_MAX_AXIS; axis_num++) {
         axis = &axis_array[axis_num];
+
+        axis->teleop_tp.max_jerk=axis->max_jerk;
+        axis->ext_offset_tp.max_jerk=axis->max_jerk;
+
         // teleop_tp.max_vel is always positive
         if (axis->teleop_tp.max_vel > axis->vel_limit) {
             axis->teleop_tp.max_vel = axis->vel_limit;

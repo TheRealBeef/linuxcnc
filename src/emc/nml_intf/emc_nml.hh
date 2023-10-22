@@ -158,6 +158,7 @@ class EMC_AXIS_STAT:public EMC_AXIS_STAT_MSG {
     double minPositionLimit;
     double maxPositionLimit;
     double velocity;		// current velocity
+    double max_jerk;
 };
 
 // declarations for EMC_JOINT classes
@@ -179,6 +180,17 @@ class EMC_JOINT_CMD_MSG:public RCS_CMD_MSG {
     void update(CMS * cms);
 
     int joint;
+};
+
+class EMC_AXIS_CMD_MSG:public RCS_CMD_MSG {
+  public:
+    EMC_AXIS_CMD_MSG(NMLTYPE t, size_t s):RCS_CMD_MSG(t, s) {
+    };
+
+    // For internal NML/CMS use only.
+    void update(CMS * cms);
+
+    int axis;
 };
 
 /**
@@ -206,6 +218,23 @@ class EMC_JOINT_SET_MAX_JERK:public EMC_JOINT_CMD_MSG {
   public:
     EMC_JOINT_SET_MAX_JERK():EMC_JOINT_CMD_MSG(EMC_JOINT_SET_MAX_JERK_TYPE,
                                              sizeof(EMC_JOINT_SET_MAX_JERK))
+    {
+    };
+
+    // For internal NML/CMS use only.
+    void update(CMS * cms);
+
+    double max_jerk;
+};
+
+/**
+ * Set the Axis max jerk.
+ * This command sets the max jerk value.
+ */
+class EMC_AXIS_SET_MAX_JERK:public EMC_JOINT_CMD_MSG {
+  public:
+    EMC_AXIS_SET_MAX_JERK():EMC_JOINT_CMD_MSG(EMC_AXIS_SET_MAX_JERK_TYPE,
+                                             sizeof(EMC_AXIS_SET_MAX_JERK))
     {
     };
 

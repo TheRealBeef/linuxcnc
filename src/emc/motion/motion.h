@@ -178,6 +178,7 @@ extern "C" {
         EMCMOT_SET_AXIS_VEL_LIMIT,      /* set the max axis vel */
         EMCMOT_SET_AXIS_ACC_LIMIT,      /* set the max axis acc */
         EMCMOT_SET_AXIS_LOCKING_JOINT,  /* set the axis locking joint */
+        EMCMOT_SET_AXIS_MAX_JERK,
 
         EMCMOT_SET_SPINDLE_PARAMS, /* One command to set all spindle params */
 
@@ -555,6 +556,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double teleop_vel_cmd;		/* commanded axis velocity */
 	double max_pos_limit;	/* upper soft limit on axis pos */
 	double min_pos_limit;	/* lower soft limit on axis pos */
+    double max_jerk;
     } emcmot_axis_status_t;
 
 /*********************************

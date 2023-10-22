@@ -26,6 +26,7 @@ bool axis_jog_is_active(void);
 
 void axis_output_to_hal(double *pcmd_p[]);
 
+void axis_set_max_jerk(int axis_num, double max_jerk);
 void axis_set_max_pos_limit(int axis_num, double maxLimit);
 void axis_set_min_pos_limit(int axis_num, double minLimit);
 void axis_set_vel_limit(int axis_num, double vel);

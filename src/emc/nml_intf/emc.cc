@@ -79,7 +79,7 @@ int emcFormat(NMLTYPE type, void *buffer, CMS * cms)
 	((EMC_JOINT_SET_BACKLASH *) buffer)->update(cms);
     break;
     case EMC_JOINT_SET_MAX_JERK_TYPE:
-    ((EMC_JOINT_SET_BACKLASH *) buffer)->update(cms);
+    ((EMC_JOINT_SET_MAX_JERK *) buffer)->update(cms);
     break;
     case EMC_JOINT_SET_HOMING_PARAMS_TYPE:
 	((EMC_JOINT_SET_HOMING_PARAMS *) buffer)->update(cms);

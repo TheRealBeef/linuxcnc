@@ -70,6 +70,7 @@ typedef struct AxisConfig_t {
     unsigned char Type;
     double MaxVel;
     double MaxAccel;
+    double max_jerk;
     double Home;
     double MinLimit;
     double MaxLimit;

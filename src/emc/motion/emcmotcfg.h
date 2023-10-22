@@ -54,6 +54,7 @@
 /* initial velocity, accel used for coordinated moves */
 #define DEFAULT_VELOCITY 1.0
 #define DEFAULT_ACCELERATION 10.0
+#define DEFAULT_MAX_JERK 200.0
 
 /* maximum and minimum limit defaults for all axes */
 #define DEFAULT_MAX_LIMIT 1000

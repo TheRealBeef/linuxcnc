@@ -112,6 +112,7 @@ static int init_comm_buffers(void) {
     emcmotStatus->vel = DEFAULT_VELOCITY;
     emcmotConfig->limitVel = DEFAULT_VELOCITY;
     emcmotStatus->acc = DEFAULT_ACCELERATION;
+    emcmotStatus->max_jerk = DEFAULT_MAX_JERK;
     emcmotStatus->feed_scale = 1.0;
     emcmotStatus->rapid_scale = 1.0;
     for (int n = 0; n < EMCMOT_MAX_SPINDLES; n++) emcmotStatus->spindle_status[n].scale = 1.0;

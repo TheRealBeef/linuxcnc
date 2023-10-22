@@ -538,6 +538,32 @@ int emcAxisSetMaxAcceleration(int axis, double acc,double ext_offset_acc)
     return retval;
 }
 
+int emcAxisSetMaxJerk(int axis, double max_jerk)
+{
+    CATCH_NAN(std::isnan(max_jerk));
+
+    if (axis < 0 || axis >= EMCMOT_MAX_AXIS || !(TrajConfig.AxisMask & (1 << axis))) {
+    return 0;
+    }
+
+    if (max_jerk < 0.0) {
+    max_jerk = 0.0;
+    }
+
+    AxisConfig[axis].max_jerk = max_jerk;
+
+    emcmotCommand.command = EMCMOT_SET_MAX_JERK;
+    emcmotCommand.axis = axis;
+    emcmotCommand.max_jerk = max_jerk;
+
+    int retval = usrmotWriteEmcmotCommand(&emcmotCommand);
+
+    if (emc_debug & EMC_DEBUG_CONFIG) {
+        rcs_print("%s(%d, %.4f) returned %d\n", __FUNCTION__, axis, max_jerk, retval);
+    }
+    return retval;
+}
+
 int emcAxisSetLockingJoint(int axis, int joint)
 {
 
@@ -590,6 +616,7 @@ int emcAxisUpdate(EMC_AXIS_STAT stat[], int axis_mask)
         stat[axis_num].velocity = axis->teleop_vel_cmd;
         stat[axis_num].minPositionLimit = axis->min_pos_limit;
         stat[axis_num].maxPositionLimit = axis->max_pos_limit;
+        stat[axis_num].max_jerk = axis->max_jerk;
     }
     return 0;
 }

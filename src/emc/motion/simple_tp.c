@@ -2,7 +2,9 @@
 * Description: simple_tp.c
 *   A simple single axis trajectory planner.  See simple_tp.h for API.
 *
-* Author: jmkasunich & skynet cyberdyne for scurve tests 2023.
+* Authors:  jmkasunich
+*           TheRealBeef
+*           Skynet Cyberdyne alias Grotius
 * License: GPL Version 2
 * Created on:
 * System: Linux
@@ -18,10 +20,7 @@
 extern struct result wrapper_get_pos(struct result input);
 struct result r, restore;
 bool use_no_scurve;
-bool use_scurve_coded_beef;
 bool use_scurve_coded_skynet;
-
-double last_jerk;
 
 //! For every joint this function is called.
 void simple_tp_update(simple_tp_t *tp, double period)
@@ -29,17 +28,10 @@ void simple_tp_update(simple_tp_t *tp, double period)
     //! Choose one of these configurations :
     use_no_scurve=0;            //! Use original lcnc source code, trapezium velocity profile.
     use_scurve_coded_skynet=1;  //! Scurve jogging example coded by skynet cyberdyne.
-    use_scurve_coded_beef=0;    //! Scurve jogging example coded by beef.
 
     if(use_scurve_coded_skynet){
 
-        if(tp->max_jerk==0){
-            printf("ruckig jog input error, set max_jerk from 0 to 1000. \n");
-            //! This error is from this function call :
-            //!      simple_tp_update(&(axis->ext_offset_tp), servo_period)
-            //! Where this "axis" has no max_jerk value at this moment.
-            tp->max_jerk=1000;
-        }
+        // printf("jerk: %f \n",tp->max_jerk);
 
         //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
         r.period=period;
@@ -67,6 +59,10 @@ void simple_tp_update(simple_tp_t *tp, double period)
         //! When ruckig input's are invalid, ruckig will give error message.
         //! This is also the case when curpos=tarpos.
         if(r.error){
+
+            if(r.curpos!=r.tarpos){
+                 printf("simple_tp.c => ruckig input error: %i \n",r.function_return_code);
+            }
             /*
             if(r.curpos==r.tarpos){ //! This is error code -100.
                 printf("ruckig in position.\n");
@@ -92,86 +88,9 @@ void simple_tp_update(simple_tp_t *tp, double period)
             tp->curr_acc = r.curacc;
 
             tp->active=true;
+
+            // printf("simple_tp active with max_jerk: %f \n",tp->max_jerk);
         }
-    }
-
-    if(use_scurve_coded_beef){
-        // Determine a min distance that we aren't going to worry about
-        double tiny_dp = TINY_DP(tp->max_acc, period);
-        // printf("period: %f \n", period); // Seems to be : 0.001
-        // printf("max_jerk: %f \n", tp->max_jerk);
-
-        //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
-        //! Does it looks for machine limits?
-
-        r.period=period;
-        r.curpos=tp->curr_pos;
-        r.curvel=tp->curr_vel;
-        r.curacc=tp->curr_acc;
-        r.maxvel=tp->max_vel;
-        r.maxacc=tp->max_acc;
-        r.enable=1;
-        r.maxjerk=tp->max_jerk;
-        r.synchronizationtype=3;
-        r.durationdiscretizationtype=0;
-        r.taracc=0;
-        r.tarvel=0;
-
-        restore=r;
-
-        if(tp->enable){ //! Button pressed, try to move.
-            // For the target position, check if the error is less than tiny_dp
-            // and if so, set target position to current position to stop
-            if (fabs(tp->pos_cmd - tp->curr_pos) <= tiny_dp) {
-                r.tarpos = tp->curr_pos;
-            } else {
-                r.tarpos=tp->pos_cmd;
-            }
-            r.interfacetype=0;
-        } else { //! Button released, try to stop.
-            r.tarpos=tp->curr_pos;
-            r.interfacetype=1;
-        }
-
-        r=wrapper_get_pos(r); //! Calculate.
-
-        //! When a nan uccur's, restore values.
-        // It appears that  nan's appear more frequently when period is too short...but may be another cause
-        if(isnan(r.curpos)){
-            printf("recieved nan value, fixing. \n");
-            r=restore;
-        }
-
-        // If the desired position is further than
-        if(fabs(r.tarpos - r.curpos) > tiny_dp) {
-            // Ensure that ruckig doesn't somehow give too high vel values
-            if (r.curvel > tp->max_vel) {
-                r.curvel = tp->max_vel;
-            } else if (r.curvel < -tp->max_vel) {
-                r.curvel = -tp->max_vel;
-            }
-            // Ensure that ruckig doesn't somehow give too high accel  values
-            if (r.curacc > tp->max_acc) {
-                r.curacc = tp->max_acc;
-            } else if (r.curacc < -tp->max_acc) {
-                r.curacc = -tp->max_acc;
-            }
-
-            //! Update results.
-            tp->curr_pos = r.curpos;
-            tp->curr_vel = r.curvel;
-            tp->curr_acc = r.curacc;
-            tp->active=1;
-        } else {
-            tp->active=0;
-        }
-
-        //        if(r.curvel != 0.0) {
-        //            tp->active=1;
-        //        } else {
-        //            tp->active=0;
-        //        }
-
     }
 
     if(use_no_scurve){ // Use the original linuxcnc code:

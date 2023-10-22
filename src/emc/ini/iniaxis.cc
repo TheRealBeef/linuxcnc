@@ -142,6 +142,16 @@ static int loadAxis(int axis, EmcIniFile *axisIniFile)
         }
         old_inihal_data.axis_max_acceleration[axis] = maxAcceleration;
 
+        limit = 200;	                // default
+        axisIniFile->Find(&limit, "MAX_JERK", axisString);
+        if (0 != emcAxisSetMaxJerk(axis, limit)) {
+            if (emc_debug & EMC_DEBUG_CONFIG) {
+                rcs_print_error("bad return from emcAxisSetMaxJerk\n");
+            }
+            return -1;
+        }
+        old_inihal_data.axis_max_jerk[axis] = limit;
+
         axisIniFile->Find(&lockingjnum, "LOCKING_INDEXER_JOINT", axisString);
         if (0 != emcAxisSetLockingJoint(axis, lockingjnum)) {
             if (emc_debug & EMC_DEBUG_CONFIG) {
