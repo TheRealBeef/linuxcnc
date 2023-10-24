@@ -27,13 +27,6 @@
 //Debug output
 #include "tp_debug.h"
 
-#include "ruckig_format.h"
-extern struct result wrapper_get_pos(struct result input);
-
-void ruckig_calc(){
-
-}
-
 double tcGetMaxTargetVel(TC_STRUCT const * const tc,
         double max_scale)
 {

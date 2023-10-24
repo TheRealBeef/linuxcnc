@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
-set(PROJECT "motmod")
+set(PROJECT "motmod_scurve")
+set(CMAKE_CXX_STANDARD 20) # Needed by ruckig.
 project(${PROJECT} CXX C)
 
 # Set variables.
@@ -15,6 +16,7 @@ include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
 include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/tp)
 include_directories(${SRC_DIR}/../../../src/libnml/posemath)
+include_directories(${SRC_DIR}/../../vendor/ruckig)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -28,14 +30,38 @@ add_definitions(-DRTAPI -DUSPACE -D_GNU_SOURCE -D__MODULE__ )
 ADD_LIBRARY(${PROJECT} SHARED 
     ${SRC_DIR}/../../../src/emc/kinematics/cubic.c
     ${SRC_DIR}/../../../src/emc/motion/axis.c
-    ${SRC_DIR}/../../../src/emc/motion/motion.c
+    ${SRC_DIR}/../../../src/emc/motion/motion_scurve.c
     ${SRC_DIR}/../../../src/emc/motion/command.c
     ${SRC_DIR}/../../../src/emc/motion/control.c
     ${SRC_DIR}/../../../src/emc/motion/simple_tp.h
-    ${SRC_DIR}/../../../src/emc/motion/simple_tp.c
+    ${SRC_DIR}/../../../src/emc/motion/simple_tp_scurve.c
     ${SRC_DIR}/../../../src/emc/motion/emcmotutil.c
     ${SRC_DIR}/../../../src/emc/motion/stashf.c
     ${SRC_DIR}/../../../src/emc/motion/dbuf.c
+    ${SRC_DIR}/../../vendor/ruckig/ruckig_format.h
+    ${SRC_DIR}/../../vendor/ruckig/cpp_interface.h
+    ${SRC_DIR}/../../vendor/ruckig/cpp_interface.cpp
+    ${SRC_DIR}/../../vendor/ruckig/brake.hpp
+    ${SRC_DIR}/../../vendor/ruckig/brake.cpp
+    ${SRC_DIR}/../../vendor/ruckig/position-step1.cpp
+    ${SRC_DIR}/../../vendor/ruckig/position-step2.cpp
+    ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
+    ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
+
+    #${SRC_DIR}/../sc_tp_src/ruckig/block.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/calculator.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/calculator_online.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/calculator_target.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/input_parameter.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/output_parameter.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/position.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/profile.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/reflexxes_comparison.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/roots.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/ruckig.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/trajectory.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/utils.hpp
+    #${SRC_DIR}/../sc_tp_src/ruckig/velocity.hpp
 )
 
 # Set path to eigen3, for install $ sudo apt-get install libeigen3-dev
@@ -58,4 +84,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal)
 install(TARGETS ${PROJECT} DESTINATION ${BUILD_DIR}/../../../../rtlib)
 
 # Notes.
+
 

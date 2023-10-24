@@ -104,7 +104,8 @@ add_subdirectory(${SRC_DIR}/components/genhexkins)
 add_subdirectory(${SRC_DIR}/components/rosekins)
 add_subdirectory(${SRC_DIR}/components/ugenserkins)
 add_subdirectory(${SRC_DIR}/components/scurve)
-add_subdirectory(${SRC_DIR}/components/motmod) # jogging
+add_subdirectory(${SRC_DIR}/components/motmod) # jogging trapezium
+add_subdirectory(${SRC_DIR}/components/motmod_scurve) # jogging scurve
 add_subdirectory(${SRC_DIR}/components/scope_rt)
 #add_subdirectory(${SRC_DIR}/components/simple_tp)
 

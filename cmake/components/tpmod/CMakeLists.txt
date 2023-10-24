@@ -30,6 +30,7 @@ SET(GCC_COVERAGE_COMPILE_FLAGS "-I. -I${RTAPI_DIR} -I${HAL_DIR} \
 add_definitions(-DRTAPI -DUSPACE -D_GNU_SOURCE -D__MODULE__ )
     
 ADD_LIBRARY(${PROJECT} SHARED 
+    ${SRC_DIR}/../../../src/emc/tp/tp_debug.h
     ${SRC_DIR}/../../../src/emc/tp/tpmod.c
     ${SRC_DIR}/../../../src/emc/tp/tc.h
     ${SRC_DIR}/../../../src/emc/tp/tc.c

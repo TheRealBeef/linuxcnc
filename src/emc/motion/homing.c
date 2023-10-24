@@ -33,15 +33,6 @@ static int extra_joints;   // motmod num_extrajoints
 static void(*SetRotaryUnlock)(int,int);
 static int (*GetRotaryIsUnlocked)(int);
 
-#include "stdio.h"
-//! Pin added by Skynet to do a force home_all without moving
-//! the machine motors.
-typedef struct {
-    hal_bit_t *Pin;
-} bit_data_t;
-bit_data_t
-*home_all;
-
 void homeMotFunctions(void(*pSetRotaryUnlock)(int,int)
                       ,int (*pGetRotaryIsUnlocked)(int)
                       )
@@ -246,9 +237,6 @@ static int base_make_joint_home_pins(int id,int njoints)
         return -1;
     }
 
-    home_all = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
-    retval +=hal_pin_bit_new("joint.home_all",HAL_IN,&(home_all->Pin), id);
-
     for (jno = 0; jno < njoints; jno++) {
         addr = &(joint_home_data->jhd[jno]);
 
@@ -268,25 +256,6 @@ static int base_make_joint_home_pins(int id,int njoints)
 
 static void do_home_all(void)
 {
-    if(*home_all->Pin==true){
-
-        printf("force home_all without moving the machine motors. \n");
-        int joint_num=0;
-
-        for (joint_num = 0; joint_num < all_joints; joint_num++) {
-
-            H[joint_num].homing = 0;
-            H[joint_num].homed = 1; // finished
-            H[joint_num].home_state = HOME_IDLE;
-            if ( ! (H[joint_num].home_flags & HOME_ABSOLUTE_ENCODER)) {
-                joints[joint_num].free_tp.curr_pos = H[joint_num].home;
-            }
-            H[joint_num].joint_in_sequence = 0;
-        }
-
-        return;
-    }
-
     if (!get_homing_is_active() ) {
         sequence_state = HOME_SEQUENCE_START;
     }

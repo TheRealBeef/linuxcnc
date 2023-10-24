@@ -21,12 +21,28 @@
 #include "spherical_arc.h"
 #include "blendmath.h"
 #include "axis.h"
+
 //KLUDGE Don't include all of emc.hh here, just hand-copy the TERM COND
 //definitions until we can break the emc constants out into a separate file.
 //#include "emc.hh"
 #define EMC_TRAJ_TERM_COND_STOP  0
 #define EMC_TRAJ_TERM_COND_EXACT 1
 #define EMC_TRAJ_TERM_COND_BLEND 2
+
+#define STATIC static
+
+//! Print information. Outcomment like this : #define tp_debug_print(...) // printf(__VA_ARGS__)
+#include <stdio.h>
+#define tp_debug_print(...) printf(__VA_ARGS__)
+#define tc_debug_print(...) printf(__VA_ARGS__)
+#define tp_posemath_debug(...) printf(__VA_ARGS__)
+#define tp_info_print(...) printf(__VA_ARGS__)
+
+// Verbose but effective wrappers for building faux-JSON debug output for a function
+#define tp_debug_json_double(varname_) tp_debug_print("%s: %g, ", #varname_, varname_)
+#define tp_debug_json_start(fname_) tp_debug_print("%s: {", #fname_)
+#define tp_debug_json_end() tp_debug_print("}\n")
+
 
 /**
  * @section tpdebugflags TP debugging flags
@@ -36,8 +52,6 @@
  * though, it's an easy way to selectively compile functions as static or not,
  * and selectively compile in assertions and debug printing.
  */
-
-#include "tp_debug.h"
 
 // FIXME: turn off this feature, which causes blends between rapids to
 // use the feed override instead of the rapid override
@@ -96,6 +110,7 @@ void tpMotData(emcmot_status_t *pstatus
 #include "ruckig_format.h"
 extern struct result wrapper_get_pos(struct result input);
 struct result r;
+
 
 /** static function primitives (ugly but less of a pain than moving code around)*/
 STATIC int tpComputeBlendVelocity(
