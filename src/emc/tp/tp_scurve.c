@@ -111,7 +111,6 @@ void tpMotData(emcmot_status_t *pstatus
 extern struct result wrapper_get_pos(struct result input);
 struct result r;
 
-
 /** static function primitives (ugly but less of a pain than moving code around)*/
 STATIC int tpComputeBlendVelocity(
         TC_STRUCT const *tc,
