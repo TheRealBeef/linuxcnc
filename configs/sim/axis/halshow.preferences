@@ -1,22 +1,12 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 700x436+244+250
+wm geometry . 778x436+328+70
 placeFrames 0.42005813953488375
 set ::ratio 0.42005813953488375
 set ::old_w_leftf 160
 set ::watchlist {
-    pin+joint.home_all
-    pin+joint.0.free-pos-cmd
-    pin+joint.0.free-tp-enable
-    pin+joint.0.homed
-    pin+halui.home-all
-    pin+halui.mode.joint
-    pin+halui.mode.teleop
-    pin+ini.0.max_jerk
-    pin+ini.x.max_jerk
-    pin+ini.y.max_jerk
-    pin+ini.z.max_jerk
-    pin+axis.x.max_jerk
+    pin+tp_mod_scurve.queuedepth
+    param+tp_mod_scurve.remove_segment
 }
 set ::workmode watchhal
 set ::watchInterval 100

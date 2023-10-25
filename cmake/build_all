@@ -40,6 +40,13 @@ cd scripts
 ./rip-environment halcompile --install ../src/hal/components/or2.comp
 ./rip-environment halcompile --install ../src/hal/components/comp.comp
 ./rip-environment halcompile --install ../src/hal/components/and2.comp
+./rip-environment halcompile --install ../src/hal/components/wcomp.comp
+./rip-environment halcompile --install ../src/hal/components/match8.comp
+./rip-environment halcompile --install ../src/hal/components/mux2.comp
+./rip-environment halcompile --install ../src/hal/components/mux4.comp
+./rip-environment halcompile --install ../src/hal/components/mux8.comp
+./rip-environment halcompile --install ../src/hal/components/mux16.comp
+./rip-environment halcompile --install ../src/hal/components/sim_home_switch.comp
 cd ..
 
 echo "building linuxcnc with cmake. \n"

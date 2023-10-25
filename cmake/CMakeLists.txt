@@ -107,6 +107,7 @@ add_subdirectory(${SRC_DIR}/components/scurve)
 add_subdirectory(${SRC_DIR}/components/motmod) # jogging trapezium
 add_subdirectory(${SRC_DIR}/components/motmod_scurve) # jogging scurve
 add_subdirectory(${SRC_DIR}/components/scope_rt)
+add_subdirectory(${SRC_DIR}/components/pid)
 #add_subdirectory(${SRC_DIR}/components/simple_tp)
 
 # Components from here need a halcompile from .comp to .c file.

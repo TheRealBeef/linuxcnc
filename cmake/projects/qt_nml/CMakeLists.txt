@@ -24,6 +24,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #    endif()
 #endif()
 
+# Qt
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_PREFIX_PATH "/opt/qt-creator/5.15.1/gcc_64/lib/cmake")
+include_directories("/opt/qt-creator/5.15.1/gcc_64/include/QtWidgets")
+include_directories("/opt/qt-creator/5.15.1/gcc_64/include/QtGui")
+include_directories("/opt/qt-creator/5.15.1/gcc_64/include")
+include_directories("/opt/qt-creator/5.15.1/gcc_64/include/QtCore")
+
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 

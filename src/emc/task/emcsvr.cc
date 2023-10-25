@@ -38,7 +38,7 @@ static int iniLoad(const char *filename)
 
     // open it
     if (inifile.Open(filename) == false) {
-	return -1;
+    return -1;
     }
 
     if (NULL != (inistring = inifile.Find("DEBUG", "EMC"))) {
@@ -48,7 +48,7 @@ static int iniLoad(const char *filename)
 	}
     } else {
 	// not found, use default
-	emc_debug = 0;
+    emc_debug = 0;
     }
     if (emc_debug & EMC_DEBUG_RCS) {
 	set_rcs_print_flag(PRINT_EVERYTHING);
