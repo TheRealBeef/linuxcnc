@@ -12,9 +12,13 @@
 #include "emcpose.h"
 #include "motion.h"
 #include "tc.h"
-#include "tp.h"
-#include "tp_debug.h"
-#include "math.h"
+#include "tp_scurve.h"
+#include "tp_vector.h"
+#include "tp_conversion.h"
+#include "tp_arcs.h"
+#include "tp_lines.h"
+
+#include "ruckig_format.h"
 
 /* module information */
 MODULE_AUTHOR("Skynet_Cyberdyne");
@@ -31,14 +35,11 @@ skynet_t *skynet;
 typedef struct {
     hal_float_t *Pin;
 } float_data_t;
-float_data_t *queuedepth;
 
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t
-*module;
 
 typedef struct { //! Int.
     hal_s32_t *Pin;
@@ -59,7 +60,6 @@ typedef struct { //! Param Uint.
 typedef struct {
     hal_port_t *Pin;
 } port_data_t;
-port_data_t *port;
 
 //! Params
 typedef struct {
@@ -69,8 +69,7 @@ typedef struct {
 typedef struct {
     hal_bit_t Pin;
 } param_bit_data_t;
-param_bit_data_t
-*done;
+param_bit_data_t *done;
 
 static int comp_idx; /* component ID */
 
@@ -100,22 +99,19 @@ void rtapi_app_exit(void){
 
 //! Perforn's every ms.
 static void the_function(){
-    *module->Pin=1;
+
 }
 
+//! Setup hal pins.
 static int setup_pins(){
     int r=0;
-    module = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
-    r+=hal_pin_bit_new("tp_mod_scurve.module",HAL_OUT,&(module->Pin),comp_idx);
 
+    //! Parameter bit.
+    //!
+    //! In halshow set this pin high to load gcode line's.
+    //!
     done = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
-    r+=hal_param_bit_new("tp_mod_scurve.remove_segment",HAL_RW,&(done->Pin),comp_idx);
-
-
-
-
-    queuedepth = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tp_mod_scurve.queuedepth",HAL_OUT,&(queuedepth->Pin),comp_idx);
+    r+=hal_param_bit_new("tpmod_scurve.done",HAL_RW,&(done->Pin),comp_idx);
 
     return r;
 }
@@ -158,399 +154,243 @@ void tpMotData(emcmot_status_t *pstatus
     emcmotConfig = pconfig;
 }
 
+inline void update_gui();
 
+//! To use functions from tp_vector.cpp we need to declare them here:
+extern struct tp_vector* vector_init_ptr();
+extern int vector_size(struct tp_vector *ptr);
+extern void vector_clear(struct tp_vector *ptr);
+extern int vector_at_id(struct tp_vector *ptr, int n);
+extern struct tp_segment vector_at(struct tp_vector *ptr, int index);
+extern void vector_add_segment(struct tp_vector *ptr, struct tp_segment b);
 
-/* space for trajectory planner queues, plus 10 more for safety */
-/*! \todo FIXME-- default is used; dynamic is not honored */
-TC_STRUCT queueTcSpace[DEFAULT_TC_QUEUE_SIZE + 10];
+extern double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end);
+extern double line_lenght_c(struct sc_pnt start, struct sc_pnt end);
+extern void interpolate_line_c(struct sc_pnt p0, struct sc_pnt p1, double progress, struct  sc_pnt *pi);
+extern void interpolate_dir_c(struct sc_dir p0, struct sc_dir p1, double progress, struct sc_dir *pi);
+extern void interpolate_ext_c(struct sc_ext p0, struct sc_ext p1, double progress, struct sc_ext *pi);
+extern void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, double progress, struct sc_pnt *pi);
+extern void sc_arc_get_mid_waypoint_c(struct sc_pnt start, struct sc_pnt center, struct sc_pnt end, struct sc_pnt *waypoint);
+extern void vector_interpolate_traject_c(struct tp_vector *ptr, double traject_progress, double traject_lenght, double *curve_progress, int *curve_nr);
 
-/**
- * Add a newly created motion segment to the tp queue.
- * Returns an error code if the queue operation fails, otherwise adds a new
- * segment to the queue and updates the end point of the trajectory planner.
- */
-STATIC inline int tpAddSegmentToQueue(TP_STRUCT * const tp, TC_STRUCT * const tc, int inc_id) {
+//! Gcode vector dynamic.
+struct tp_vector *vector_ptr;
 
-    tc->id = tp->nextId;
-    if (tcqPut(&tp->queue, tc) == -1) {
-        rtapi_print_msg(RTAPI_MSG_ERR, "tcqPut failed.\n");
-        return TP_ERR_FAIL;
-    }
-    if (inc_id) {
-        tp->nextId++;
-    }
+//! Ruckig scurve.
+extern struct result wrapper_get_pos(struct result input);
+struct result r={};
 
-    // Store end of current move as new final goal of TP
-    // KLUDGE: endpoint is garbage for rigid tap since it's supposed to retract past the start point.
-    if (tc->motion_type != TC_RIGIDTAP) {
-        tcGetEndpoint(tc, &tp->goalPos);
-    }
-    tp->done = 0;
-    tp->depth = tcqLen(&tp->queue);
-    //Fixing issue with duplicate id's?
-    tp_debug_print("Adding TC id %d of type %d, total length %0.08f\n",tc->id,tc->motion_type,tc->target);
+void update_gui(TP_STRUCT * const tp);
+void update_ruckig(TP_STRUCT * const tp);
 
-    return TP_ERR_OK;
-}
+struct sc_pnt xyz;
+struct sc_dir abc;
+struct sc_ext uvw;
 
-STATIC int tpGetMachineAccelBounds(PmCartesian  * const acc_bound) {
-    if (!acc_bound) {
-        return TP_ERR_FAIL;
-    }
-
-    acc_bound->x = _axis_get_acc_limit(0); //0==>x
-    acc_bound->y = _axis_get_acc_limit(1); //1==>y
-    acc_bound->z = _axis_get_acc_limit(2); //2==>z
-    return TP_ERR_OK;
-}
-
-STATIC int tpGetMachineActiveLimit(double * const act_limit, PmCartesian const * const bounds) {
-    if (!act_limit) {
-        return TP_ERR_FAIL;
-    }
-    //Start with max accel value
-    *act_limit = fmax(fmax(bounds->x,bounds->y),bounds->z);
-
-    // Compare only with active axes
-    if (bounds->x > 0) {
-        *act_limit = fmin(*act_limit, bounds->x);
-    }
-    if (bounds->y > 0) {
-        *act_limit = fmin(*act_limit, bounds->y);
-    }
-    if (bounds->z > 0) {
-        *act_limit = fmin(*act_limit, bounds->z);
-    }
-    tp_debug_print(" arc blending a_max=%f\n", *act_limit);
-    return TP_ERR_OK;
-}
-
-STATIC int tpGetMachineVelBounds(PmCartesian  * const vel_bound) {
-    if (!vel_bound) {
-        return TP_ERR_FAIL;
-    }
-
-    vel_bound->x = _axis_get_vel_limit(0); //0==>x
-    vel_bound->y = _axis_get_vel_limit(1); //1==>y
-    vel_bound->z = _axis_get_vel_limit(2); //2==>z
-    return TP_ERR_OK;
-}
-
-/**
- * Clears any potential DIO toggles and anychanged.
- * If any DIOs need to be changed: dios[i] = 1, DIO needs to get turned on, -1
- * = off
- */
-int tpClearDIOs(TP_STRUCT * const tp) {
-
-    printf("tpClearDIOs \n");
-
-    //XXX: All IO's will be flushed on next synced aio/dio! Is it ok?
-    int i;
-    tp->syncdio.anychanged = 0;
-    tp->syncdio.dio_mask = 0;
-    tp->syncdio.aio_mask = 0;
-    for (i = 0; i < emcmotConfig->numDIO; i++) {
-        tp->syncdio.dios[i] = 0;
-    }
-    for (i = 0; i < emcmotConfig->numAIO; i++) {
-        tp->syncdio.aios[i] = 0;
-    }
-
-    return TP_ERR_OK;
-}
-
-/**
- *    "Soft initialize" the trajectory planner tp.
- *    This is a "soft" initialization in that TP_STRUCT configuration
- *    parameters (cycleTime, vMax, and aMax) are left alone, but the queue is
- *    cleared, and the flags are set to an empty, ready queue. The currentPos
- *    is left alone, and goalPos is set to this position.  This function is
- *    intended to put the motion queue in the state it would be if all queued
- *    motions finished at the current position.
- */
-int tpClear(TP_STRUCT * const tp)
-{
-    printf("tpClear \n");
-
-    tcqInit(&tp->queue);
-    tp->queueSize = 0;
-    tp->goalPos = tp->currentPos;
-    // Clear out status ID's
-    tp->nextId = 0;
-    tp->execId = 0;
-    struct state_tag_t tag = {0};
-    tp->execTag = tag;
-    tp->motionType = 0;
-    tp->termCond = TC_TERM_COND_PARABOLIC;
-    tp->tolerance = 0.0;
-    tp->done = 1;
-    tp->depth = tp->activeDepth = 0;
-    tp->aborting = 0;
-    tp->pausing = 0;
-    tp->reverse_run = 0;
-    tp->synchronized = 0;
-    tp->uu_per_rev = 0.0;
-    emcmotStatus->current_vel = 0.0;
-    emcmotStatus->requested_vel = 0.0;
-    emcmotStatus->distance_to_go = 0.0;
-    ZERO_EMC_POSE(emcmotStatus->dtg);
-
-    // equivalent to: SET_MOTION_INPOS_FLAG(1):
-    emcmotStatus->motionFlag |= EMCMOT_MOTION_INPOS_BIT;
-
-    return tpClearDIOs(tp);
-}
-
-/**
- * Fully initialize the tp structure.
- * Sets tp configuration to default values and calls tpClear to create a fresh,
- * empty queue.
- */
+//! Create a empty queue.
 int tpInit(TP_STRUCT * const tp)
 {
-    printf("tpInit \n");
+    printf("tpInit, create a empty queue. \n");
+    //! Reset data.
+    vector_ptr=NULL;
 
-    tp->cycleTime = 0.0;
-    //Velocity limits
-    tp->vLimit = 0.0;
-    tp->ini_maxvel = 0.0;
-    tp->max_jerk = 0.0;
-    tp->cur_acc = 0.0;
-
-    //Accelerations
-    tp->aLimit = 0.0;
-    PmCartesian acc_bound;
-    //FIXME this acceleration bound isn't valid (nor is it used)
-    if (emcmotStatus == 0) {
-        rtapi_print("!!!tpInit: NULL emcmotStatus, bye\n\n");
-        return -1;
-    }
-    tpGetMachineAccelBounds(&acc_bound);
-    tpGetMachineActiveLimit(&tp->aMax, &acc_bound);
-    //Angular limits
-    tp->wMax = 0.0;
-    tp->wDotMax = 0.0;
-
-    tp->spindle.offset = 0.0;
-    tp->spindle.revs = 0.0;
-    tp->spindle.waiting_for_index = MOTION_INVALID_ID;
-    tp->spindle.waiting_for_atspeed = MOTION_INVALID_ID;
-
-    tp->reverse_run = TC_DIR_FORWARD;
-
-    ZERO_EMC_POSE(tp->currentPos);
-
-    PmCartesian vel_bound;
-    tpGetMachineVelBounds(&vel_bound);
-    tpGetMachineActiveLimit(&tp->vMax, &vel_bound);
-
-    return tpClear(tp);
+    return 0;
 }
 
-int tpCreate(TP_STRUCT * const tp, int _queueSize,int id){
+int tpRunCycle(TP_STRUCT * const tp, long period)
+{
+    //! printf("tpRunCycle. \n");
+    tp->cycleTime=period;
 
-    printf("tpCreate \n");
+    //! Plan motion if the segment vector > 0
+    update_ruckig(tp);
 
-    if (0 == tp) {
-        return TP_ERR_FAIL;
+    //! Interpolate tp position.
+    update_gui(tp);
+
+    //! Simulate we are done with the path.
+    //! Clean vector.
+    if(done->Pin){
+        vector_clear(vector_ptr);
+        tp->vector_size=0;
+        tp->traject_lenght=0;
+        tp->vector_current_exec=0;
+
+        printf("vector size: %i \n",vector_size(vector_ptr));
     }
 
+    return 0;
+}
+
+//! The first function call.
+int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
+{
     if (_queueSize <= 0) {
         tp->queueSize = TP_DEFAULT_QUEUE_SIZE;
     } else {
         tp->queueSize = _queueSize;
     }
-    TC_STRUCT * const tcSpace = queueTcSpace;
 
-    /* create the queue */
-    if (-1 == tcqCreate(&tp->queue, tp->queueSize, tcSpace)) {
-        return TP_ERR_FAIL;
-    }
+    //! Load new gcode at startup.
+    done->Pin=1;
 
-    /* init the rest of our data */
-    return tpInit(tp);
-}
+    //! Set the queue size to the c++ vector.
+    vector_ptr=vector_init_ptr();
 
-int tpRunCycle(TP_STRUCT * const tp, long period){
-
-    //! Set halpin with halshow to see how the interpreter gives new lines & arcs.
-    //! When done is true, the intepreter gives new meat if there is.
-    //! This can be one segment, but can also be 100+ segments.
-    if(done->Pin==true){
-
-        tp->goalPos = tp->currentPos;
-        tp->done = 1;
-        tp->depth = tp->activeDepth = 0;
-        tp->aborting = 0;
-        tp->execId = 0;
-        tp->motionType = 0;
-        printf("done. \n");
-
-        //! All segments are executed, empty queue. Reset queue depth to 0.
-        tcqInit(&tp->queue);
-
-        done->Pin=false;
-    }
+    printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
 
     return 0;
 }
 
 int tpSetMaxJerk(TP_STRUCT * const tp, double max_jerk)
 {
-    printf("tpSetMaxJerk \n");
+    if (!tp || max_jerk <= 0.0) {
+        return -1;
+    }
+
+    tp->max_jerk=max_jerk;
+
+    printf("tpSetMaxJerk to: %f \n",max_jerk);
+    return 0;
+}
+
+int tpClear(TP_STRUCT * const tp)
+{
+    printf("tpClear. \n");
+    // done->Pin = 1;
     return 0;
 }
 
 int tpSetCycleTime(TP_STRUCT * const tp, double secs)
 {
-    printf("tpSetCycleTime \n");
+    if (!tp || secs <= 0.0) {
+        return -1;
+    }
+
+    tp->cycleTime = secs;
+    printf("tpSetCycleTime to: %f \n",tp->cycleTime);
     return 0;
 }
 
 int tpSetVmax(TP_STRUCT * const tp, double vMax, double ini_maxvel)
 {
-    printf("tpSetVmax \n");
+    if (!tp || vMax <= 0.0 || ini_maxvel <= 0.0) {
+        return -1;
+    }
+
+    tp->vMax = vMax;
+    tp->ini_maxvel = ini_maxvel;
+
+    printf("tpSetVmax to: %f ",tp->vMax);
+    printf(" , ini_maxvel to: %f \n",tp->ini_maxvel);
     return 0;
 }
 
 int tpSetVlimit(TP_STRUCT * const tp, double vLimit)
 {
-    printf("tpSetVlimit \n");
+    if(!tp){ return -1;}
+
+    if (vLimit < 0.0){
+        tp->vLimit = 0.;
+    } else {
+        tp->vLimit = vLimit;
+    }
+
+    printf("tpSetVlimit. to: %f \n",tp->vLimit);
     return 0;
 }
 
 int tpSetAmax(TP_STRUCT * const tp, double aMax)
 {
-    printf("tpSetAmax \n");
+    if (!tp || aMax <= 0.0) {
+        return -1;
+    }
+
+    tp->aMax=aMax;
+    printf("tpSetAmax to: %f \n",tp->aMax);
     return 0;
 }
 
 int tpSetId(TP_STRUCT * const tp, int id)
 {
-    printf("tpSetId \n");
+    if (!tp) {
+        return -1;
+    }
+
+    //! printf("tpSetId. \n");
+
+    //! Set gcode line nr for upcoming new line, arc.
+    tp->gcode_upcoming_line_nr=id;
+
     return 0;
 }
 
 int tpGetExecId(TP_STRUCT * const tp)
 {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-    // printf("tpGetExecId %i \n",tp->execId);
-    return tp->execId;
+    // printf("tpGetExecId. \n");
+
+    //! This is the executed gcode line nr. The gui's gcode preview
+    //! uses this to set the line.
+
+    return tp->gcode_current_executed_line_nr;
 }
 
-/**
- * Sets the termination condition for all subsequent queued moves.
- * If cond is TC_TERM_COND_STOP, motion comes to a stop before a subsequent move
- * begins. If cond is TC_TERM_COND_PARABOLIC, the following move is begun when the
- * current move slows below a calculated blend velocity.
- */
 int tpSetTermCond(TP_STRUCT * const tp, int cond, double tolerance)
 {
-    if (!tp) {
-        return TP_ERR_FAIL;
-    }
-
-    switch (cond) {
-    //Purposeful waterfall for now
-    case TC_TERM_COND_PARABOLIC:
-    case TC_TERM_COND_TANGENT:
-    case TC_TERM_COND_EXACT:
-    case TC_TERM_COND_STOP:
-        tp->termCond = cond;
-        tp->tolerance = tolerance;
-        break;
-    default:
-        //Invalid condition
-        return  -1;
-    }
-
-    return TP_ERR_OK;
+    return 0;
 }
 
-/**
- * Used to tell the tp the initial position.
- * It sets the current position AND the goal position to be the same.  Used
- * only at TP initialization and when switching modes.
- */
 int tpSetPos(TP_STRUCT * const tp, EmcPose const * const pos)
 {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-
-    int res_invalid = tpSetCurrentPos(tp, pos);
-    if (res_invalid) {
-        return TP_ERR_FAIL;
-    }
-
-    tp->goalPos = *pos;
-    return TP_ERR_OK;
+    printf("tpSetPos. \n");
+    //! For loading the gcode line by line, the startpoint of the
+    //! first gcode line is *pos. From there the sequence is updated.
+    tp->currentPos=*pos;
+    return 0;
 }
 
-/**
- * Check for valid tp before queueing additional moves.
- */
+int tpSetCurrentPos(TP_STRUCT * const tp, EmcPose const * const pos)
+{
+    printf("tpSetCurrentPos. \n");
+    tp->currentPos=*pos;
+    return 0;
+}
+
+int tpAddCurrentPos(TP_STRUCT * const tp, EmcPose const * const disp)
+{
+    printf("tpAddCurrentPos. \n");
+    return 0;
+}
+
 int tpErrorCheck(TP_STRUCT const * const tp) {
 
-    if (!tp) {
-        rtapi_print_msg(RTAPI_MSG_ERR, "TP is null\n");
-        return TP_ERR_FAIL;
-    }
-    if (tp->aborting) {
-        rtapi_print_msg(RTAPI_MSG_ERR, "TP is aborting\n");
-        return TP_ERR_FAIL;
-    }
-    return TP_ERR_OK;
+    return 0;
 }
 
 int tpSetSpindleSync(TP_STRUCT * const tp, int spindle, double sync, int mode) {
-    if(sync) {
-        if (mode) {
-            tp->synchronized = TC_SYNC_VELOCITY;
-        } else {
-            tp->synchronized = TC_SYNC_POSITION;
-        }
-        tp->uu_per_rev = sync;
-        tp->spindle.spindle_num = spindle;
-    } else
-        tp->synchronized = 0;
-
-    return TP_ERR_OK;
+    return 0;
 }
 
 int tpPause(TP_STRUCT * const tp)
 {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-    tp->pausing = 1;
-    return TP_ERR_OK;
+    tp->pause=1;
+    printf("tpPause. \n");
+    return 0;
 }
 
 int tpResume(TP_STRUCT * const tp)
 {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-    tp->pausing = 0;
-    return TP_ERR_OK;
+    tp->pause=0;
+    tp->abort=0;
+    printf("tpResume, reset abort. \n");
+    return 0;
 }
 
 int tpAbort(TP_STRUCT * const tp)
 {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-
-    if (!tp->aborting) {
-        /* const to abort, signal a pause and set our abort flag */
-        tpPause(tp);
-        tp->aborting = 1;
-    }
-    return TP_ERR_OK;
+    printf("tpAbort. \n");
+    tp->abort=1;
+    return 0;
 }
 
 int tpGetMotionType(TP_STRUCT * const tp)
@@ -560,83 +400,37 @@ int tpGetMotionType(TP_STRUCT * const tp)
 
 int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
 {
-    if (0 == tp) {
-        ZERO_EMC_POSE((*pos));
-        return TP_ERR_FAIL;
-    } else {
-        *pos = tp->currentPos;
-    }
-    // printf("tpGetPos x %f %f %f \n", tp->currentPos.tran.x ,tp->currentPos.tran.y ,tp->currentPos.tran.z);
-    return TP_ERR_OK;
+    //! The gui toolposition tp is updated from here.
+    *pos=tp->currentPos;
+    return 0;
 }
 
 int tpIsDone(TP_STRUCT * const tp)
 {
-    if (0 == tp) {
-        return TP_ERR_OK;
-    }
-    // printf("tpIsDone %i \n",tp->done);
-    return tp->done;
+    return done->Pin;
 }
 
-int tpQueueDepth(TP_STRUCT * const tp){
-
-    if (0 == tp) {
-        return TP_ERR_OK;
-    }
-    // printf("tpQueueDepth %i \n",tp->depth);
-    *queuedepth->Pin=tp->depth;
-    return tp->depth;
+int tpQueueDepth(TP_STRUCT * const tp)
+{
+    return 0;
 }
 
-int tpActiveDepth(TP_STRUCT * const tp){
-
-    if (0 == tp) {
-        return TP_ERR_OK;
-    }
-    // printf("tpActiveDepth %i \n",tp->activeDepth);
-    return tp->activeDepth;
+int tpActiveDepth(TP_STRUCT * const tp)
+{
+    return 0;
 }
 
 int tpSetAout(TP_STRUCT * const tp, unsigned char index, double start, double end) {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-    tp->syncdio.anychanged = 1; //something has changed
-    tp->syncdio.aio_mask |= (1 << index);
-    tp->syncdio.aios[index] = start;
-    return TP_ERR_OK;
+    return 0;
 }
 
 int tpSetDout(TP_STRUCT * const tp, int index, unsigned char start, unsigned char end) {
-    if (0 == tp) {
-        return TP_ERR_FAIL;
-    }
-    tp->syncdio.anychanged = 1; //something has changed
-    tp->syncdio.dio_mask |= (1 << index);
-    if (start > 0)
-        tp->syncdio.dios[index] = 1; // the end value can't be set from canon currently, and has the same value as start
-    else
-        tp->syncdio.dios[index] = -1;
-    return TP_ERR_OK;
+    return 0;
 }
 
 int tpSetRunDir(TP_STRUCT * const tp, tc_direction_t dir)
 {
-    // Can't change direction while moving
-    if (tpIsMoving(tp)) {
-        return TP_ERR_FAIL;
-    }
-
-    switch (dir) {
-    case TC_DIR_FORWARD:
-    case TC_DIR_REVERSE:
-        tp->reverse_run = dir;
-        return TP_ERR_OK;
-    default:
-        rtapi_print_msg(RTAPI_MSG_ERR,"Invalid direction flag in SetRunDir");
-        return TP_ERR_FAIL;
-    }
+    return 0;
 }
 
 int tpAddRigidTap(TP_STRUCT * const tp,
@@ -644,12 +438,12 @@ int tpAddRigidTap(TP_STRUCT * const tp,
                   double vel,
                   double ini_maxvel,
                   double acc,
-                  double max_jerk,
                   unsigned char enables,
                   double scale,
                   struct state_tag_t tag) {
 
-    //! Leave this for now.
+    printf("tpAddRigidTap \n");
+
     return 0;
 }
 
@@ -660,166 +454,293 @@ int tpAddLine(TP_STRUCT *
               double vel,
               double ini_maxvel,
               double acc,
-              double max_jerk,
               unsigned char enables,
               char atspeed,
               int indexer_jnum,
-              struct state_tag_t tag){
+              struct state_tag_t tag)
 
+
+{
     printf("tpAddLine \n");
 
-    if (tpErrorCheck(tp) < 0) {
-        return TP_ERR_FAIL;
+    if(tp->vector_size==0){
+        tp->gcode_lastPos=tp->currentPos;
     }
 
-    // Initialize new tc struct for the line segment
-    TC_STRUCT tc = {0};
-    tcInit(&tc,
-           TC_LINEAR,
-           canon_motion_type,
-           tp->cycleTime,
-           enables,
-           atspeed);
-    tc.tag = tag;
+    struct tp_segment b;
+    b.primitive_id=sc_line;
+    b.type=canon_motion_type;
+    b.pnt_s=emc_pose_to_sc_pnt(tp->gcode_lastPos);
+    b.pnt_w.x=0;
+    b.pnt_w.y=0;
+    b.pnt_w.z=0;
+    b.pnt_c.x=0;
+    b.pnt_c.y=0;
+    b.pnt_c.z=0;
+    b.angle_end_deg=0;
 
-    // Copy over state data from the trajectory planner
-    tcSetupState(&tc, tp);
+    b.pnt_e=emc_pose_to_sc_pnt(end);
 
-    // Copy in motion parameters
-    tcSetupMotion(&tc,
-                  vel,
-                  ini_maxvel,
-                  acc,
-                  max_jerk);
+    b.dir_s=emc_pose_to_sc_dir(tp->gcode_lastPos);
+    b.dir_e=emc_pose_to_sc_dir(end);
 
-    // Setup line geometry
-    pmLine9Init(&tc.coords.line,
-                &tp->goalPos,
-                &end);
-    tc.target = pmLine9Target(&tc.coords.line);
-    if (tc.target < TP_POS_EPSILON) {
-        rtapi_print_msg(RTAPI_MSG_DBG,"failed to create line id %d, zero-length segment\n",tp->nextId);
-        return TP_ERR_ZERO_LENGTH;
-    }
-    tc.nominal_length = tc.target;
-    tcClampVelocityByLength(&tc);
+    b.ext_s=emc_pose_to_sc_ext(tp->gcode_lastPos);
+    b.ext_e=emc_pose_to_sc_ext(end);
 
-    // For linear move, set joint corresponding to a locking indexer axis
-    tc.indexer_jnum = indexer_jnum;
+    b.gcode_line_nr=tp->gcode_upcoming_line_nr;
 
-    //TODO refactor this into its own function
-    TC_STRUCT *prev_tc;
-    prev_tc = tcqLast(&tp->queue);
+    b.vo=0;
+    b.vm=0;
+    b.ve=0;
 
-    tcFinalizeLength(prev_tc);
-    tcFlagEarlyStop(prev_tc, &tc);
+    b.path_lenght=line_lenght_c(b.pnt_s,b.pnt_e);
 
-    int retval = tpAddSegmentToQueue(tp, &tc, true);
+    vector_add_segment(vector_ptr,b);
+    tp->vector_size=vector_size(vector_ptr);
+    printf("vector size: %i \n",tp->vector_size);
 
-    printf("depth: %i \n",tp->depth);
+    //! Update last pose to end of gcode block.
+    tp->gcode_lastPos=end;
 
-    return retval;
+    tp->traject_lenght+=b.path_lenght;
+    printf("lengt of this segment: %f \n",b.path_lenght);
+    printf("traject lenght now: %f \n",tp->traject_lenght);
+
+    done->Pin=0;
+
+    return 0;
 }
 
-/**
- * Adds a circular (circle, arc, helix) move from the end of the
- * last move to this new position.
- *
- * @param end is the xyz/abc point of the destination.
- *
- * see pmCircleInit for further details on how arcs are specified. Note that
- * degenerate arcs/circles are not allowed. We are guaranteed to have a move in
- * xyz so the target is always the circle/arc/helical length.
- */
 int tpAddCircle(TP_STRUCT * const tp,
                 EmcPose end,
                 PmCartesian center,
                 PmCartesian normal,
                 int turn,
-                int canon_motion_type,
+                int canon_motion_type, //! arc_3->lin_2->GO_1
                 double vel,
                 double ini_maxvel,
                 double acc,
-                double max_jerk,
                 unsigned char enables,
                 char atspeed,
                 struct state_tag_t tag)
 {
-    if (tpErrorCheck(tp)<0) {
-        return TP_ERR_FAIL;
+    printf("tpAddCircle. \n");
+
+    if(tp->vector_size==0){
+        tp->gcode_lastPos=tp->currentPos;
     }
 
-    printf("tpAddCircle \n");
+    struct tp_segment b;
+    b.primitive_id=sc_arc;
+    b.type=canon_motion_type;
+    b.pnt_s=emc_pose_to_sc_pnt(tp->gcode_lastPos);
 
-    TC_STRUCT tc = {0};
+    b.dir_s=emc_pose_to_sc_dir(tp->gcode_lastPos);
+    b.dir_e=emc_pose_to_sc_dir(end);
 
-    tcInit(&tc,
-           TC_CIRCULAR,
-           canon_motion_type,
-           tp->cycleTime,
-           enables,
-           atspeed);
-    tc.tag = tag;
-    // Setup any synced IO for this move
-    // tpSetupSyncedIO(tp, &tc);
+    b.ext_s=emc_pose_to_sc_ext(tp->gcode_lastPos);
+    b.ext_e=emc_pose_to_sc_ext(end);
 
-    // Copy over state data from the trajectory planner
-    tcSetupState(&tc, tp);
+    //! Create a 3d arc using waypoint technique.
+    sc_arc_get_mid_waypoint_c(emc_pose_to_sc_pnt(tp->gcode_lastPos),
+                              emc_cart_to_sc_pnt(center),
+                              emc_pose_to_sc_pnt(end),&b.pnt_w);
 
-    // Setup circle geometry
-    int res_init = pmCircle9Init(&tc.coords.circle,
-                                 &tp->goalPos,
-                                 &end,
-                                 &center,
-                                 &normal,
-                                 turn);
+    b.pnt_e=emc_pose_to_sc_pnt(end);
 
-    if (res_init) return res_init;
+    b.gcode_line_nr=tp->gcode_upcoming_line_nr;
 
-    // Update tc target with existing circular segment
-    tc.target = pmCircle9Target(&tc.coords.circle);
-    if (tc.target < TP_POS_EPSILON) {
-        return TP_ERR_ZERO_LENGTH;
-    }
-    tp_debug_print("tc.target = %f\n",tc.target);
-    tc.nominal_length = tc.target;
+    b.vo=0;
+    b.vm=0;
+    b.ve=0;
 
-    // Copy in motion parameters
-    tcSetupMotion(&tc,
-                  vel,
-                  ini_maxvel,
-                  acc,
-                  max_jerk);
+    b.path_lenght=arc_lenght_c(b.pnt_s,b.pnt_w,b.pnt_e);
 
-    //Reduce max velocity to match sample rate
-    tcClampVelocityByLength(&tc);
+    vector_add_segment(vector_ptr,b);
+    tp->vector_size=vector_size(vector_ptr);
+    printf("vector size: %i \n",tp->vector_size);
 
-    TC_STRUCT *prev_tc;
-    prev_tc = tcqLast(&tp->queue);
+    //! Update last pose to end of gcode block.
+    tp->gcode_lastPos=end;
 
-    // handleModeChange(prev_tc, &tc);
-    // if (emcmotConfig->arcBlendEnable){
-    ////    tpHandleBlendArc(tp, &tc);
-    //     findSpiralArcLengthFit(&tc.coords.circle.xyz, &tc.coords.circle.fit);
-    // }
-    tcFinalizeLength(prev_tc);
-    tcFlagEarlyStop(prev_tc, &tc);
+    tp->traject_lenght+=b.path_lenght;
+    printf("lengt of this segment: %f \n",b.path_lenght);
+    printf("traject lenght now: %f \n",tp->traject_lenght);
 
-    int retval = tpAddSegmentToQueue(tp, &tc, true);
+    done->Pin=0;
 
-    printf("depth: %i \n",tp->depth);
+    return 0;
+}
 
-    // tpRunOptimization(tp);
-    return retval;
+void tpToggleDIOs(TC_STRUCT * const tc) {
+
 }
 
 struct state_tag_t tpGetExecTag(TP_STRUCT * const tp)
 {
-    if (0 == tp) {
-        struct state_tag_t empty = {0};
-        return empty;
+
+}
+
+//! This function is responsible for long startup delay if return=1.
+int tcqFull(TC_QUEUE_STRUCT const * const tcq)
+{
+    return 0;
+}
+
+inline void update_gui(TP_STRUCT * const tp){
+
+    if(tp->vector_size>0){
+
+        int id=tp->vector_current_exec;
+
+        if(vector_at_id(vector_ptr,id)==sc_line){
+            interpolate_line_c(vector_at(vector_ptr,id).pnt_s,
+                               vector_at(vector_ptr,id).pnt_e,
+                               tp->segment_progress,
+                               &xyz);
+        }
+        if(vector_at_id(vector_ptr,id)==sc_arc){
+            interpolate_arc_c(vector_at(vector_ptr,id).pnt_s,
+                              vector_at(vector_ptr,id).pnt_w,
+                              vector_at(vector_ptr,id).pnt_e,
+                              tp->segment_progress,
+                              &xyz);
+        }
+        tp->currentPos.tran.x=xyz.x;
+        tp->currentPos.tran.y=xyz.y;
+        tp->currentPos.tran.z=xyz.z;
+
+        interpolate_dir_c(vector_at(vector_ptr,id).dir_s,
+                          vector_at(vector_ptr,id).dir_e,
+                          tp->segment_progress,
+                          &abc);
+        tp->currentPos.a=abc.a;
+        tp->currentPos.b=abc.b;
+        tp->currentPos.c=abc.c;
+
+        interpolate_ext_c(vector_at(vector_ptr,id).ext_s,
+                          vector_at(vector_ptr,id).ext_e,
+                          tp->segment_progress,
+                          &uvw);
+        tp->currentPos.u=uvw.u;
+        tp->currentPos.v=uvw.v;
+        tp->currentPos.w=uvw.w;
+
+        //! Update emc with some values.
+        emcmotConfig->trajCycleTime=tp->cycleTime;
+
+        //! Dtg in this move.
+        emcmotStatus->distance_to_go=tp->tar_pos-tp->cur_pos;
+
+        //! What this part of code does is unclear for me now.
+        EmcPose pose;
+        pose.tran.x=vector_at(vector_ptr,id).pnt_e.x-xyz.x;
+        pose.tran.y=vector_at(vector_ptr,id).pnt_e.y-xyz.y;
+        pose.tran.z=vector_at(vector_ptr,id).pnt_e.z-xyz.z;
+        emcmotStatus->dtg=pose;
+
+        emcmotStatus->current_vel=tp->cur_vel;
     }
-    return tp->execTag;
+
+    if(tp->vector_size==0){
+
+
+
+    }
+}
+
+inline void update_ruckig(TP_STRUCT * const tp){
+
+
+    // Check the vector. Load first segment into the ruckig planner.
+    if(tp->vector_size>0){
+
+        //! Gcode exec line nr.
+        //! Used by funtion tpGetExecId to set the gui's current executed gcode line.
+        tp->gcode_current_executed_line_nr=vector_at(vector_ptr,tp->vector_current_exec).gcode_line_nr;
+        tp->tar_pos=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
+
+        //! Calculate ruckig's next step.
+
+        r.curacc=tp->cur_acc;
+        r.curpos=tp->cur_pos;
+        r.curvel=tp->cur_vel;
+
+        // printf("tp->aMax: %f \n",tp->aMax);
+        // printf("tp->max_jerk: %f \n",tp->max_jerk);
+        // printf("tp->vLimit: %f \n",tp->vLimit);
+
+        r.maxacc=tp->aMax;
+        r.maxjerk=tp->max_jerk;
+        r.maxvel=tp->vLimit;
+
+        r.enable=1;
+        r.durationdiscretizationtype=Continuous;
+        r.synchronizationtype=None;
+
+        //! MENTION: tp->cycletime is not set to 0.001.
+        //! We set it fixed for now.
+        r.period=0.001;
+
+        r.taracc=0;
+        r.tarvel=0;
+        r.tarpos=tp->tar_pos;
+
+        //! When pausing, goto velocity 0. See the component motdot
+        //! how a jog stop is done.
+        //!
+        //! If abort, goto velocity 0.
+        if(tp->pause){
+            r.interfacetype=velocity;
+        } else {
+            r.interfacetype=position;
+        }
+
+        r=wrapper_get_pos(r);
+
+        if(!r.error){
+            tp->cur_pos=r.curpos;
+            tp->cur_acc=r.curacc;
+            tp->cur_vel=r.curvel;
+        }
+
+        //! printf("curvel: %f \n",tp->cur_vel);
+        //! printf("curpos: %f \n",tp->cur_pos);
+        //! printf("curacc: %f \n",tp->cur_acc);
+
+        if(r.error){
+            // printf("ruckig error. %i \n",r.function_return_code);
+        }
+
+        if(tp->pause){
+            tp->segment_progress=tp->cur_pos/tp->tar_pos;
+            return;
+        }
+
+        if(r.finished){
+            // printf("ruckig finished. \n");
+
+            //! Set next gcode segment if we are not at the end yet.
+            if(tp->vector_current_exec<tp->vector_size-1){
+
+                //! Todo : check if moving forward or moving reverse.
+                tp->vector_current_exec++;
+                tp->cur_pos=0;
+                tp->tar_pos=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
+            }
+
+            //! We are finished and completed the last gcode segment. Traject is done !
+            if(tp->vector_current_exec==tp->vector_size-1){
+                done->Pin=true;
+            }
+
+        }
+
+        tp->segment_progress=tp->cur_pos/tp->tar_pos;
+
+    }
+
+
 }
 
 EXPORT_SYMBOL(tpMotFunctions);

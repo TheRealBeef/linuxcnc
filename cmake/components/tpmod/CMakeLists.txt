@@ -18,7 +18,6 @@ include_directories(${SRC_DIR}/../../../src/emc/motion)
 include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
 include_directories(${SRC_DIR}/../components/tpmod)
-include_directories(${SRC_DIR}/../../vendor/ruckig)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -42,14 +41,6 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../../src/emc/nml_intf/emcpose.c
     ${SRC_DIR}/../../../src/libnml/posemath/_posemath.c
     ${SRC_DIR}/../../../src/libnml/posemath/sincos.c
-    ${SRC_DIR}/../../vendor/ruckig/cpp_interface.h
-    ${SRC_DIR}/../../vendor/ruckig/cpp_interface.cpp
-    ${SRC_DIR}/../../vendor/ruckig/brake.hpp
-    ${SRC_DIR}/../../vendor/ruckig/brake.cpp
-    ${SRC_DIR}/../../vendor/ruckig/position-step1.cpp
-    ${SRC_DIR}/../../vendor/ruckig/position-step2.cpp
-    ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
-    ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
 )
 
 # Set include paths for libraries to link.

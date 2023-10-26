@@ -106,6 +106,20 @@ typedef struct {
                                    subsequent moves */
     double max_jerk;            /* max jerk for scurve motion profile */
     double cur_acc;             /* current acceleration used with scurve motion profile */
+    double cur_vel;
+    double cur_pos;
+    double tar_pos;
+    double traject_pos;
+    int vector_size;
+    int vector_current_exec;
+    double traject_lenght;
+    double traject_progress;
+    double segment_progress;
+    EmcPose gcode_lastPos;
+    bool pause;
+    bool abort;
+    int gcode_upcoming_line_nr;
+    int gcode_current_executed_line_nr;
     double vLimit;		/* absolute upper limit on all vels */
 
     double aMax;        /* max accel (unused) */

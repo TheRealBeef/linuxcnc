@@ -10,6 +10,7 @@ set(RTLINK "liblinuxcnchal")
 
 # Set includepaths.
 include_directories(${SRC_DIR})
+
 include_directories(${SRC_DIR}/../../../src/rtapi)
 include_directories(${SRC_DIR}/../../../src/hal)
 include_directories(${SRC_DIR}/../../../src/libnml/posemath)
@@ -17,8 +18,11 @@ include_directories(${SRC_DIR}/../../../src/emc/tp)
 include_directories(${SRC_DIR}/../../../src/emc/motion)
 include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
-include_directories(${SRC_DIR}/../components/tpmod)
+include_directories(${SRC_DIR}/../tpmod_scurve_src)
 include_directories(${SRC_DIR}/../../vendor/ruckig)
+
+# Set path to eigen3, for install $ sudo apt-get install libeigen3-dev
+include_directories("/usr/include/eigen3/Eigen")
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -30,16 +34,26 @@ SET(GCC_COVERAGE_COMPILE_FLAGS "-I. -I${RTAPI_DIR} -I${HAL_DIR} \
 add_definitions(-DRTAPI -DUSPACE -D_GNU_SOURCE -D__MODULE__ )
 
 ADD_LIBRARY(${PROJECT} SHARED
+    ${SRC_DIR}/../../../src/emc/tp/tp_conversion.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_conversion.c
+    ${SRC_DIR}/../../../src/emc/tp/tp_vector.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_vector.cpp
+    ${SRC_DIR}/../../../src/emc/tp/tp_arcs.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_arcs.cpp
+    ${SRC_DIR}/../../../src/emc/tp/tp_lines.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_lines.cpp
     ${SRC_DIR}/../../../src/emc/tp/tc.h
     ${SRC_DIR}/../../../src/emc/tp/tc.c
-    ${SRC_DIR}/../../../src/emc/tp/tcq.c
     ${SRC_DIR}/../../../src/emc/tp/tp.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_scurve.h
     ${SRC_DIR}/../../../src/emc/tp/tp_scurve.c
+    ${SRC_DIR}/../../../src/emc/tp/tp_types.h
     ${SRC_DIR}/../../../src/emc/tp/spherical_arc.c
     ${SRC_DIR}/../../../src/emc/tp/blendmath.c
     ${SRC_DIR}/../../../src/emc/nml_intf/emcpose.c
     ${SRC_DIR}/../../../src/libnml/posemath/_posemath.c
     ${SRC_DIR}/../../../src/libnml/posemath/sincos.c
+    ${SRC_DIR}/../../vendor/ruckig/ruckig_format.h
     ${SRC_DIR}/../../vendor/ruckig/cpp_interface.h
     ${SRC_DIR}/../../vendor/ruckig/cpp_interface.cpp
     ${SRC_DIR}/../../vendor/ruckig/brake.hpp
@@ -48,14 +62,14 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../vendor/ruckig/position-step2.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
-)
+    )
 
 # Set include paths for libraries to link.
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED
 set_target_properties(linuxcnchal PROPERTIES
-  IMPORTED_LOCATION "${SRC_DIR}/../../build/liblinuxcnchal/liblinuxcnchal.so"
-  INTERFACE_INCLUDE_DIRECTORIES "${SRC_DIR}/../../liblinuxcnchal/"
-)
+    IMPORTED_LOCATION "${SRC_DIR}/../../build/liblinuxcnchal/liblinuxcnchal.so"
+    INTERFACE_INCLUDE_DIRECTORIES "${SRC_DIR}/../../liblinuxcnchal/"
+    )
 
 # Link to libraries.
 target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal)

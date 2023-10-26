@@ -1,11 +1,11 @@
-#include "sc_arcs.h"
+#include "tp_arcs.h"
 
-sc_arcs::sc_arcs()
+tp_arcs::tp_arcs()
 {
 
 }
 
-void sc_arcs::sc_interpolate_arc(sc_pnt p0_,
+void tp_arcs::sc_interpolate_arc(sc_pnt p0_,
                                  sc_pnt p1_,
                                  sc_pnt p2_,
                                  double progress,
@@ -19,21 +19,21 @@ void sc_arcs::sc_interpolate_arc(sc_pnt p0_,
 
     Eigen::Vector3d v1 = p2-p1;
     Eigen::Vector3d v2 = p3-p1;
-    T v1v1, v2v2, v1v2;
+    double v1v1, v2v2, v1v2;
     v1v1 = v1.dot(v1);
     v2v2 = v2.dot(v2);
     v1v2 = v1.dot(v2);
 
-    T base = 0.5/(v1v1*v2v2-v1v2*v1v2);
-    T k1 = base*v2v2*(v1v1-v1v2);
-    T k2 = base*v1v1*(v2v2-v1v2);
+    double base = 0.5/(v1v1*v2v2-v1v2*v1v2);
+    double k1 = base*v2v2*(v1v1-v1v2);
+    double k2 = base*v1v1*(v2v2-v1v2);
 
     //! Center of arc.
     Eigen::Vector3d pc = p1 + v1*k1 + v2*k2;
     arc.center={pc.x(),pc.y(),pc.z()};
     //! std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
 
-    T radius = (pc-p1).norm();
+    double radius = (pc-p1).norm();
     arc.radius=radius;
     //! std::cout<<"radius: "<<radius<<std::endl;
     arc.diameter=radius*2;
@@ -56,7 +56,7 @@ void sc_arcs::sc_interpolate_arc(sc_pnt p0_,
     //! std::cout<<"axis trough arc origin normalized x:"<<an.x()<<" y:"<<an.y()<<" z:"<<an.z()<<std::endl;
 
     //! This can be a negative angle if angle > 180 degrrees. Solution is below.
-    T angle=acos(va.dot(vb));
+    double angle=acos(va.dot(vb));
 
     //! https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane
     //! Without checking if dot<0, angles > 180 degrees will fail.
@@ -66,11 +66,11 @@ void sc_arcs::sc_interpolate_arc(sc_pnt p0_,
     //!     If (dot product of V3, Vn) is negative, theta is negative. Otherwise, theta is positive.
     //!
     Eigen::Vector3d vab=va.cross(vb);
-    T dot=vab.dot(an);
+    double dot=vab.dot(an);
     //! std::cout<<"sign of the angle <0 or >0:"<<dot<<std::endl;
     arc.arcAngleNegative=false; //! Reset flag.
     if(dot<0){
-        T diff=M_PI-angle;
+        double diff=M_PI-angle;
         angle=M_PI+diff;
         arc.arcAngleNegative=true; //! Set flag so user can see there is something going on.
     }
@@ -92,16 +92,16 @@ void sc_arcs::sc_interpolate_arc(sc_pnt p0_,
     pi=sc_rotate_point_around_line({p1.x(),p1.y(),p1.z()},progress*angle,{pc.x(),pc.y(),pc.z()},{pc.x()+an.x(),pc.y()+an.y(),pc.z()+an.z()});
 }
 
-extern "C" V interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, T progress, struct sc_pnt *pi){
+extern "C" void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, double progress, struct sc_pnt *pi){
     sc_pnt p;
-    sc_arcs().sc_interpolate_arc(p0,p1,p2,progress,p);
+    tp_arcs().sc_interpolate_arc(p0,p1,p2,progress,p);
     *pi=p;
 }
 
-V sc_arcs::sc_arc_radius(sc_pnt p0,
+void tp_arcs::sc_arc_radius(sc_pnt p0,
                          sc_pnt p1,
                          sc_pnt p2,
-                         T &radius){
+                         double &radius){
 
     Eigen::Vector3d pa,pb,pc;
     pa.x()=p0.x;
@@ -120,14 +120,14 @@ V sc_arcs::sc_arc_radius(sc_pnt p0,
 
     Eigen::Vector3d v1 = pb-pa;
     Eigen::Vector3d v2 = pc-pa;
-    T v1v1, v2v2, v1v2;
+    double v1v1, v2v2, v1v2;
     v1v1 = v1.dot(v1);
     v2v2 = v2.dot(v2);
     v1v2 = v1.dot(v2);
 
-    T base = 0.5/(v1v1*v2v2-v1v2*v1v2);
-    T k1 = base*v2v2*(v1v1-v1v2);
-    T k2 = base*v1v1*(v2v2-v1v2);
+    double base = 0.5/(v1v1*v2v2-v1v2*v1v2);
+    double k1 = base*v2v2*(v1v1-v1v2);
+    double k2 = base*v1v1*(v2v2-v1v2);
 
     //! Center of arc.
     Eigen::Vector3d pcenter = pa + v1*k1 + v2*k2;
@@ -137,7 +137,7 @@ V sc_arcs::sc_arc_radius(sc_pnt p0,
     radius = (pcenter-pa).norm();
 }
 
-T sc_arcs::sc_arc_lenght(sc_pnt p0,
+double tp_arcs::sc_arc_lenght(sc_pnt p0,
                          sc_pnt p1,
                          sc_pnt p2){
 
@@ -158,21 +158,21 @@ T sc_arcs::sc_arc_lenght(sc_pnt p0,
 
     Eigen::Vector3d v1 = pb-pa;
     Eigen::Vector3d v2 = pc-pa;
-    T v1v1, v2v2, v1v2;
+    double v1v1, v2v2, v1v2;
     v1v1 = v1.dot(v1);
     v2v2 = v2.dot(v2);
     v1v2 = v1.dot(v2);
 
-    T base = 0.5/(v1v1*v2v2-v1v2*v1v2);
-    T k1 = base*v2v2*(v1v1-v1v2);
-    T k2 = base*v1v1*(v2v2-v1v2);
+    double base = 0.5/(v1v1*v2v2-v1v2*v1v2);
+    double k1 = base*v2v2*(v1v1-v1v2);
+    double k2 = base*v1v1*(v2v2-v1v2);
 
     //! Center of arc.
     Eigen::Vector3d pcenter = pa + v1*k1 + v2*k2;
     arc.center={pcenter.x(),pcenter.y(),pcenter.z()};
     //! std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
 
-    T radius = (pcenter-pa).norm();
+    double radius = (pcenter-pa).norm();
     arc.radius=radius;
     //! std::cout<<"radius: "<<radius<<std::endl;
     arc.diameter=radius*2;
@@ -195,7 +195,7 @@ T sc_arcs::sc_arc_lenght(sc_pnt p0,
     //! std::cout<<"axis trough arc origin normalized x:"<<an.x()<<" y:"<<an.y()<<" z:"<<an.z()<<std::endl;
 
     //! This can be a negative angle if angle > 180 degrrees. Solution is below.
-    T angle=acos(va.dot(vb));
+    double angle=acos(va.dot(vb));
 
     //! https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane
     //! Without checking if dot<0, angles > 180 degrees will fail.
@@ -205,11 +205,11 @@ T sc_arcs::sc_arc_lenght(sc_pnt p0,
     //!     If (dot product of V3, Vn) is negative, theta is negative. Otherwise, theta is positive.
     //!
     Eigen::Vector3d vab=va.cross(vb);
-    T dot=vab.dot(an);
+    double dot=vab.dot(an);
     //! std::cout<<"sign of the angle <0 or >0:"<<dot<<std::endl;
     arc.arcAngleNegative=false; //! Reset flag.
     if(dot<0){
-        T diff=M_PI-angle;
+        double diff=M_PI-angle;
         angle=M_PI+diff;
         arc.arcAngleNegative=true; //! Set flag so user can see there is something going on.
     }
@@ -228,8 +228,8 @@ T sc_arcs::sc_arc_lenght(sc_pnt p0,
     return arc.arcLenght;
 }
 
-extern "C" T arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end){
-    return sc_arcs().sc_arc_lenght(start,way,end);
+extern "C" double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end){
+    return tp_arcs().sc_arc_lenght(start,way,end);
 }
 
 //! http://paulbourke.net/geometry/rotate/
@@ -240,10 +240,10 @@ extern "C" T arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt 
 //!     towards the origin.
 //!     Assume right hand coordinate system.
 //!
-sc_pnt sc_arcs::sc_rotate_point_around_line(sc_pnt thePointToRotate,T theta,sc_pnt theLineP1,sc_pnt theLineP2)
+sc_pnt tp_arcs::sc_rotate_point_around_line(sc_pnt thePointToRotate, double theta,sc_pnt theLineP1,sc_pnt theLineP2)
 {
     sc_pnt q = {0.0,0.0,0.0};
-    T costheta,sintheta;
+    double costheta,sintheta;
     sc_pnt r;
 
     r.x = theLineP2.x - theLineP1.x;
@@ -284,27 +284,27 @@ sc_pnt sc_arcs::sc_rotate_point_around_line(sc_pnt thePointToRotate,T theta,sc_p
 
 //! Calculate 3d arc waypoints, given 3 arc circumfence points.
 //! https://stackoverflow.com/questions/13977354/build-circle-from-3-points-in-3d-space-implementation-in-c-or-c
-sc_arcs::sc_arc sc_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d p3, T division){
+tp_arcs::sc_arc tp_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d p3, double division){
 
     sc_arc arc;
 
     Eigen::Vector3d v1 = p2-p1;
     Eigen::Vector3d v2 = p3-p1;
-    T v1v1, v2v2, v1v2;
+    double v1v1, v2v2, v1v2;
     v1v1 = v1.dot(v1);
     v2v2 = v2.dot(v2);
     v1v2 = v1.dot(v2);
 
-    T base = 0.5/(v1v1*v2v2-v1v2*v1v2);
-    T k1 = base*v2v2*(v1v1-v1v2);
-    T k2 = base*v1v1*(v2v2-v1v2);
+    double base = 0.5/(v1v1*v2v2-v1v2*v1v2);
+    double k1 = base*v2v2*(v1v1-v1v2);
+    double k2 = base*v1v1*(v2v2-v1v2);
 
     //! Center of arc.
     Eigen::Vector3d pc = p1 + v1*k1 + v2*k2;
     arc.center={pc.x(),pc.y(),pc.z()};
     //! std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
 
-    T radius = (pc-p1).norm();
+    double radius = (pc-p1).norm();
     arc.radius=radius;
     //! std::cout<<"radius: "<<radius<<std::endl;
     arc.diameter=radius*2;
@@ -327,7 +327,7 @@ sc_arcs::sc_arc sc_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, E
     //! std::cout<<"axis trough arc origin normalized x:"<<an.x()<<" y:"<<an.y()<<" z:"<<an.z()<<std::endl;
 
     //! This can be a negative angle if angle > 180 degrrees. Solution is below.
-    T angle=acos(va.dot(vb));
+    double angle=acos(va.dot(vb));
 
     //! https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane
     //! Without checking if dot<0, angles > 180 degrees will fail.
@@ -337,11 +337,11 @@ sc_arcs::sc_arc sc_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, E
     //!     If (dot product of V3, Vn) is negative, theta is negative. Otherwise, theta is positive.
     //!
     Eigen::Vector3d vab=va.cross(vb);
-    T dot=vab.dot(an);
+    double dot=vab.dot(an);
     //! std::cout<<"sign of the angle <0 or >0:"<<dot<<std::endl;
     arc.arcAngleNegative=false; //! Reset flag.
     if(dot<0){
-        T diff=M_PI-angle;
+        double diff=M_PI-angle;
         angle=M_PI+diff;
         arc.arcAngleNegative=true; //! Set flag so user can see there is something going on.
     }
@@ -360,8 +360,8 @@ sc_arcs::sc_arc sc_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, E
     arc.pointOnArcAxis={pc.x()+an.x(),pc.y()+an.y(),pc.z()+an.z()};
 
     std::vector<sc_pnt> pvec;
-    T step=angle/division;
-    for(T i=0; i<angle; i+=step){
+    double step=angle/division;
+    for(double i=0; i<angle; i+=step){
         //!         Point to rotate.             Arc center             Point on arc center line. (Arc center + Axis vector)
         sc_pnt res=sc_rotate_point_around_line({p1.x(),p1.y(),p1.z()},i,{pc.x(),pc.y(),pc.z()},{pc.x()+an.x(),pc.y()+an.y(),pc.z()+an.z()});
         //! std::cout<<"res x:"<<res.x<<" y:"<<res.y<<" z:"<<res.z<<std::endl;
@@ -373,7 +373,7 @@ sc_arcs::sc_arc sc_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, E
     return arc;
 }
 
-V sc_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
+void tp_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
                                    sc_pnt p1, //! Center.
                                    sc_pnt p2, //! End.
                                    sc_pnt &pi){
@@ -393,7 +393,7 @@ V sc_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
     Eigen::Vector3d vp2;
     vp2={p2.x, p2.y, p2.z};
 
-    T radius = (vp1-vp0).norm();
+    double radius = (vp1-vp0).norm();
     arc.radius=radius;
     //! std::cout<<"radius: "<<radius<<std::endl;
     arc.diameter=radius*2;
@@ -426,7 +426,7 @@ V sc_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
     //! std::cout<<"axis trough arc origin normalized x:"<<an.x()<<" y:"<<an.y()<<" z:"<<an.z()<<std::endl;
 
     //! This can be a negative angle if angle > 180 degrrees. Solution is below.
-    T angle=acos(va.dot(vb));
+    double angle=acos(va.dot(vb));
 
     //! https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane
     //! Without checking if dot<0, angles > 180 degrees will fail.
@@ -436,12 +436,12 @@ V sc_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
     //!     If (dot product of V3, Vn) is negative, theta is negative. Otherwise, theta is positive.
     //!
     Eigen::Vector3d vab=va.cross(vb);
-    T dot=vab.dot(an);
+    double dot=vab.dot(an);
     //! std::cout<<"sign of the angle <0 or >0:"<<dot<<std::endl;
 
     arc.arcAngleNegative=false; //! Reset flag.
     if(dot<0){
-        T diff=M_PI-angle;
+        double diff=M_PI-angle;
         angle=M_PI+diff;
         arc.arcAngleNegative=true; //! Set flag so user can see there is something going on.
     }
@@ -460,16 +460,16 @@ V sc_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
     arc.pointOnArcAxis={vp1.x()+an.x(),vp1.y()+an.y(),vp1.z()+an.z()};
 
 
-    T i=angle/2;
+    double i=angle/2;
 
     //!         Point to rotate.             Arc center             Point on arc center line. (Arc center + Axis vector)
     pi=sc_rotate_point_around_line(p0,i,p1,{vp1.x()+an.x(),vp1.y()+an.y(),vp1.z()+an.z()});
 
 }
 
-extern "C" V sc_arc_get_mid_waypoint_c(sc_pnt start, sc_pnt center, sc_pnt end, sc_pnt *waypoint){
+extern "C" void sc_arc_get_mid_waypoint_c(sc_pnt start, sc_pnt center, sc_pnt end, sc_pnt *waypoint){
     sc_pnt pi;
-    sc_arcs().sc_arc_get_mid_waypoint(start,center,end,pi);
+    tp_arcs().sc_arc_get_mid_waypoint(start,center,end,pi);
     *waypoint=pi;
 }
 
