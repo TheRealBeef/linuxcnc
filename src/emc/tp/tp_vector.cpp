@@ -14,7 +14,7 @@ extern "C" void vector_add_segment(tp_vector *ptr, struct tp_segment b){
     ptr->pvec.push_back(b);
 }
 
-extern "C" int vector_size(tp_vector *ptr){
+extern "C" int vector_size_c(tp_vector *ptr){
     return ptr->pvec.size();
 }
 

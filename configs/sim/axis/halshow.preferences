@@ -1,11 +1,24 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 778x436+292+0
+wm geometry . 778x803+21+570
 placeFrames 0.42005813953488375
 set ::ratio 0.42005813953488375
 set ::old_w_leftf 160
 set ::watchlist {
-    param+tpmod_scurve.done
+    pin+tpmod_template.time
+    pin+tpmod_template.tpCurrentPosX
+    pin+tpmod_template.tpCurrentPosY
+    pin+tpmod_template.tpCurrentPosZ
+    pin+tpmod_template.tpGetPos
+    pin+tpmod_template.tpRunCycle
+    pin+tpmod_template.simulate_tp_move_x
+    pin+tpmod_template.simulate_tp_move_y
+    pin+tpmod_template.simulate_tp_move_z
+    param+tpmod_template.tpDone
+    pin+tpmod_template.reset_vector_to_zero
+    param+tpmod_template.tmax-increased
+    param+tpmod_template.tmax
+    param+tpmod_template.reset_vector_to_zero
 }
 set ::workmode watchhal
 set ::watchInterval 100

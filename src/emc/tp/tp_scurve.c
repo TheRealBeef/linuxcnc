@@ -35,6 +35,7 @@ skynet_t *skynet;
 typedef struct {
     hal_float_t *Pin;
 } float_data_t;
+float_data_t *vector_size;
 
 //! Pins
 typedef struct {
@@ -113,6 +114,9 @@ static int setup_pins(){
     done = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
     r+=hal_param_bit_new("tpmod_scurve.done",HAL_RW,&(done->Pin),comp_idx);
 
+    vector_size = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve.vector_size",HAL_OUT,&(vector_size->Pin),comp_idx);
+
     return r;
 }
 
@@ -154,11 +158,9 @@ void tpMotData(emcmot_status_t *pstatus
     emcmotConfig = pconfig;
 }
 
-inline void update_gui();
-
 //! To use functions from tp_vector.cpp we need to declare them here:
 extern struct tp_vector* vector_init_ptr();
-extern int vector_size(struct tp_vector *ptr);
+extern int vector_size_c(struct tp_vector *ptr);
 extern void vector_clear(struct tp_vector *ptr);
 extern int vector_at_id(struct tp_vector *ptr, int n);
 extern struct tp_segment vector_at(struct tp_vector *ptr, int index);
@@ -182,6 +184,7 @@ struct result r={};
 
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
+void update_hal(TP_STRUCT * const tp);
 
 struct sc_pnt xyz;
 struct sc_dir abc;
@@ -190,9 +193,8 @@ struct sc_ext uvw;
 //! Create a empty queue.
 int tpInit(TP_STRUCT * const tp)
 {
-    printf("tpInit, create a empty queue. \n");
-    //! Reset data.
-    vector_ptr=NULL;
+    printf("tpInit. \n");
+
 
     return 0;
 }
@@ -205,9 +207,6 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     //! Plan motion if the segment vector > 0
     update_ruckig(tp);
 
-    //! Interpolate tp position.
-    update_gui(tp);
-
     //! Simulate we are done with the path.
     //! Clean vector.
     if(done->Pin){
@@ -215,9 +214,13 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
         tp->vector_size=0;
         tp->traject_lenght=0;
         tp->vector_current_exec=0;
-
-        printf("vector size: %i \n",vector_size(vector_ptr));
+        //! printf("vector size: %i \n",vector_size(vector_ptr));
     }
+
+    //! Interpolate tp position.
+    update_gui(tp);
+
+    update_hal(tp);
 
     return 0;
 }
@@ -327,7 +330,7 @@ int tpSetId(TP_STRUCT * const tp, int id)
 
 int tpGetExecId(TP_STRUCT * const tp)
 {
-    // printf("tpGetExecId. \n");
+    //! printf("tpGetExecId. \n");
 
     //! This is the executed gcode line nr. The gui's gcode preview
     //! uses this to set the line.
@@ -340,25 +343,70 @@ int tpSetTermCond(TP_STRUCT * const tp, int cond, double tolerance)
     return 0;
 }
 
+/**
+ * Used to tell the tp the initial position.
+ * It sets the current position AND the goal position to be the same.  Used
+ * only at TP initialization and when switching modes.
+ */
 int tpSetPos(TP_STRUCT * const tp, EmcPose const * const pos)
 {
-    printf("tpSetPos. \n");
-    //! For loading the gcode line by line, the startpoint of the
-    //! first gcode line is *pos. From there the sequence is updated.
+    if (0 == tp) {
+        return -1;
+    }
+
+    // printf("tpSetPos. \n");
+    // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
+
     tp->currentPos=*pos;
+    tp->gcode_lastPos=*pos;
+    tp->goalPos = *pos;
+
     return 0;
 }
 
 int tpSetCurrentPos(TP_STRUCT * const tp, EmcPose const * const pos)
 {
-    printf("tpSetCurrentPos. \n");
+    // printf("tpSetCurrentPos. \n");
     tp->currentPos=*pos;
+    tp->gcode_lastPos=*pos;
     return 0;
 }
 
 int tpAddCurrentPos(TP_STRUCT * const tp, EmcPose const * const disp)
 {
     printf("tpAddCurrentPos. \n");
+
+    if (!tp || !disp) {
+        return TP_ERR_MISSING_INPUT;
+    }
+
+    if (emcPoseValid(disp)) {
+        emcPoseSelfAdd(&tp->currentPos, disp);
+        return TP_ERR_OK;
+    } else {
+        rtapi_print_msg(RTAPI_MSG_ERR, "Tried to set invalid pose in tpAddCurrentPos on id %d!"
+                "disp is %.12g, %.12g, %.12g\n",
+                        tp->execId,
+                        disp->tran.x,
+                        disp->tran.y,
+                        disp->tran.z);
+        return TP_ERR_INVALID;
+    }
+}
+
+int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
+{
+    // printf("tpGetPos. \n");
+    // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
+
+    //! The gui toolposition tp is updated from here.
+    if (0 == tp) {
+        ZERO_EMC_POSE((*pos));
+        return TP_ERR_FAIL;
+    } else {
+        *pos = tp->currentPos;
+    }
+
     return 0;
 }
 
@@ -373,36 +421,42 @@ int tpSetSpindleSync(TP_STRUCT * const tp, int spindle, double sync, int mode) {
 
 int tpPause(TP_STRUCT * const tp)
 {
-    tp->pause=1;
     printf("tpPause. \n");
+
+    if(!tp->abort){
+          tp->pause=1;
+    } else {
+        return -1;
+    }
+
     return 0;
 }
 
 int tpResume(TP_STRUCT * const tp)
 {
-    tp->pause=0;
-    tp->abort=0;
     printf("tpResume, reset abort. \n");
+
+    tp->pause=0;
+
     return 0;
 }
 
 int tpAbort(TP_STRUCT * const tp)
 {
     printf("tpAbort. \n");
-    tp->abort=1;
+
+    if(!tp->pause){
+         tp->abort=1;
+    } else {
+        return -1;
+    }
+
     return 0;
 }
 
 int tpGetMotionType(TP_STRUCT * const tp)
 {
     return tp->motionType;
-}
-
-int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
-{
-    //! The gui toolposition tp is updated from here.
-    *pos=tp->currentPos;
-    return 0;
 }
 
 int tpIsDone(TP_STRUCT * const tp)
@@ -496,7 +550,7 @@ int tpAddLine(TP_STRUCT *
     b.path_lenght=line_lenght_c(b.pnt_s,b.pnt_e);
 
     vector_add_segment(vector_ptr,b);
-    tp->vector_size=vector_size(vector_ptr);
+    tp->vector_size=vector_size_c(vector_ptr);
     printf("vector size: %i \n",tp->vector_size);
 
     //! Update last pose to end of gcode block.
@@ -557,7 +611,7 @@ int tpAddCircle(TP_STRUCT * const tp,
     b.path_lenght=arc_lenght_c(b.pnt_s,b.pnt_w,b.pnt_e);
 
     vector_add_segment(vector_ptr,b);
-    tp->vector_size=vector_size(vector_ptr);
+    tp->vector_size=vector_size_c(vector_ptr);
     printf("vector size: %i \n",tp->vector_size);
 
     //! Update last pose to end of gcode block.
@@ -578,7 +632,12 @@ void tpToggleDIOs(TC_STRUCT * const tc) {
 
 struct state_tag_t tpGetExecTag(TP_STRUCT * const tp)
 {
+    if (0 == tp) {
+        struct state_tag_t empty = {0};
+        return empty;
+    }
 
+    return tp->execTag;
 }
 
 //! This function is responsible for long startup delay if return=1.
@@ -641,16 +700,9 @@ inline void update_gui(TP_STRUCT * const tp){
 
         emcmotStatus->current_vel=tp->cur_vel;
     }
-
-    if(tp->vector_size==0){
-
-
-
-    }
 }
 
 inline void update_ruckig(TP_STRUCT * const tp){
-
 
     // Check the vector. Load first segment into the ruckig planner.
     if(tp->vector_size>0){
@@ -717,6 +769,12 @@ inline void update_ruckig(TP_STRUCT * const tp){
             return;
         }
 
+        if(tp->abort){
+            // printf("tp->abort is true. \n");
+            done->Pin=1;
+            tp->abort=0;
+        }
+
         if(r.finished){
             // printf("ruckig finished. \n");
 
@@ -731,16 +789,20 @@ inline void update_ruckig(TP_STRUCT * const tp){
 
             //! We are finished and completed the last gcode segment. Traject is done !
             if(tp->vector_current_exec==tp->vector_size-1){
-                done->Pin=true;
+                done->Pin=1;
             }
-
+        }
+        if(!r.finished){
+            // printf("ruckig busy. \n");
         }
 
         tp->segment_progress=tp->cur_pos/tp->tar_pos;
-
     }
+}
 
+inline void update_hal(TP_STRUCT * const tp){
 
+    *vector_size->Pin=tp->vector_size;
 }
 
 EXPORT_SYMBOL(tpMotFunctions);
