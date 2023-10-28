@@ -195,31 +195,21 @@ int tpInit(TP_STRUCT * const tp)
 {
     printf("tpInit. \n");
 
-
     return 0;
 }
 
 int tpRunCycle(TP_STRUCT * const tp, long period)
 {
     //! printf("tpRunCycle. \n");
-    tp->cycleTime=period;
+    // tp->cycleTime=period;
 
     //! Plan motion if the segment vector > 0
     update_ruckig(tp);
 
-    //! Simulate we are done with the path.
-    //! Clean vector.
-    if(done->Pin){
-        vector_clear(vector_ptr);
-        tp->vector_size=0;
-        tp->traject_lenght=0;
-        tp->vector_current_exec=0;
-        //! printf("vector size: %i \n",vector_size(vector_ptr));
-    }
-
     //! Interpolate tp position.
     update_gui(tp);
 
+    //! Update hal pins.
     update_hal(tp);
 
     return 0;
@@ -233,9 +223,6 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
     } else {
         tp->queueSize = _queueSize;
     }
-
-    //! Load new gcode at startup.
-    done->Pin=1;
 
     //! Set the queue size to the c++ vector.
     vector_ptr=vector_init_ptr();
@@ -260,7 +247,10 @@ int tpSetMaxJerk(TP_STRUCT * const tp, double max_jerk)
 int tpClear(TP_STRUCT * const tp)
 {
     printf("tpClear. \n");
-    // done->Pin = 1;
+
+    vector_clear(vector_ptr);
+    vector_ptr=NULL;
+
     return 0;
 }
 
@@ -354,21 +344,20 @@ int tpSetPos(TP_STRUCT * const tp, EmcPose const * const pos)
         return -1;
     }
 
-    // printf("tpSetPos. \n");
+    printf("tpSetPos. \n");
     // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
 
     tp->currentPos=*pos;
-    tp->gcode_lastPos=*pos;
-    tp->goalPos = *pos;
 
     return 0;
 }
 
 int tpSetCurrentPos(TP_STRUCT * const tp, EmcPose const * const pos)
 {
-    // printf("tpSetCurrentPos. \n");
+    printf("tpSetCurrentPos. \n");
+
     tp->currentPos=*pos;
-    tp->gcode_lastPos=*pos;
+
     return 0;
 }
 
@@ -397,15 +386,10 @@ int tpAddCurrentPos(TP_STRUCT * const tp, EmcPose const * const disp)
 int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
 {
     // printf("tpGetPos. \n");
-    // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
 
     //! The gui toolposition tp is updated from here.
-    if (0 == tp) {
-        ZERO_EMC_POSE((*pos));
-        return TP_ERR_FAIL;
-    } else {
-        *pos = tp->currentPos;
-    }
+    *pos = tp->currentPos;
+    // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
 
     return 0;
 }
@@ -423,18 +407,14 @@ int tpPause(TP_STRUCT * const tp)
 {
     printf("tpPause. \n");
 
-    if(!tp->abort){
-          tp->pause=1;
-    } else {
-        return -1;
-    }
+    tp->pause=1;
 
     return 0;
 }
 
 int tpResume(TP_STRUCT * const tp)
 {
-    printf("tpResume, reset abort. \n");
+    printf("tpResume. \n");
 
     tp->pause=0;
 
@@ -445,11 +425,8 @@ int tpAbort(TP_STRUCT * const tp)
 {
     printf("tpAbort. \n");
 
-    if(!tp->pause){
-         tp->abort=1;
-    } else {
-        return -1;
-    }
+    vector_clear(vector_ptr);
+    tp->vector_size=0;
 
     return 0;
 }
@@ -461,7 +438,14 @@ int tpGetMotionType(TP_STRUCT * const tp)
 
 int tpIsDone(TP_STRUCT * const tp)
 {
-    return done->Pin;
+    if(tp->vector_size==0){
+        tp->vector_current_exec=0;
+        tp->segment_progress=0;
+        tp->cur_pos=0;
+        tp->tar_pos=0;
+        return 1;
+    }
+    return 0;
 }
 
 int tpQueueDepth(TP_STRUCT * const tp)
@@ -560,7 +544,11 @@ int tpAddLine(TP_STRUCT *
     printf("lengt of this segment: %f \n",b.path_lenght);
     printf("traject lenght now: %f \n",tp->traject_lenght);
 
-    done->Pin=0;
+    //! Clear.
+    tp->vector_current_exec=0;
+    tp->segment_progress=0;
+    tp->cur_pos=0;
+    tp->tar_pos=0;
 
     return 0;
 }
@@ -621,7 +609,10 @@ int tpAddCircle(TP_STRUCT * const tp,
     printf("lengt of this segment: %f \n",b.path_lenght);
     printf("traject lenght now: %f \n",tp->traject_lenght);
 
-    done->Pin=0;
+    tp->vector_current_exec=0;
+    tp->segment_progress=0;
+    tp->cur_pos=0;
+    tp->tar_pos=0;
 
     return 0;
 }
@@ -769,12 +760,6 @@ inline void update_ruckig(TP_STRUCT * const tp){
             return;
         }
 
-        if(tp->abort){
-            // printf("tp->abort is true. \n");
-            done->Pin=1;
-            tp->abort=0;
-        }
-
         if(r.finished){
             // printf("ruckig finished. \n");
 
@@ -789,7 +774,13 @@ inline void update_ruckig(TP_STRUCT * const tp){
 
             //! We are finished and completed the last gcode segment. Traject is done !
             if(tp->vector_current_exec==tp->vector_size-1){
-                done->Pin=1;
+                vector_clear(vector_ptr);
+                tp->vector_size=0;
+
+                tp->vector_current_exec=0;
+                tp->segment_progress=0;
+                tp->cur_pos=0;
+                tp->tar_pos=0;
             }
         }
         if(!r.finished){
