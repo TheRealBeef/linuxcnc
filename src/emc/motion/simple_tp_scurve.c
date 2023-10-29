@@ -24,6 +24,8 @@ bool use_scurve_coded_skynet;
 //! For every joint this function is called.
 void simple_tp_update(simple_tp_t *tp, double period)
 {
+    // printf("simple_tp_update. \n");
+
     // printf("jerk: %f \n",tp->max_jerk);
 
     //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
@@ -52,28 +54,15 @@ void simple_tp_update(simple_tp_t *tp, double period)
     //! When ruckig input's are invalid, ruckig will give error message.
     //! This is also the case when curpos=tarpos.
     if(r.error){
-
-        if(r.curpos!=r.tarpos){
-            printf("simple_tp.c => ruckig input error: %i \n",r.function_return_code);
-        }
-        /*
-            if(r.curpos==r.tarpos){ //! This is error code -100.
-                printf("ruckig in position.\n");
-            } else {
-                printf("ruckig error code: %i \n",r.function_return_code);
-                printf("period: %f \n",r.period);
-                printf("tarpos: %f \n",r.tarpos);
-                printf("curpos: %f \n",r.curpos);
-                printf("curvel: %f \n",r.curvel);
-                printf("curacc: %f \n",r.curacc);
-                printf("maxvel: %f \n",r.maxvel);
-                printf("maxacc: %f \n",r.maxacc);
-                printf("maxjerk: %f \n",r.maxjerk);
-            } */
+        // printf("ruckig error code: %i \n",r.function_return_code);
+        r.finished=true;
     }
 
     if(r.finished){
         tp->active=false;
+        //! Repaired a error when homed in auto without using jogging, after program stop, machine position
+        //! set to x0 y0 z0.
+        tp->pos_cmd = tp->curr_pos;
     }
     if(!r.finished){
         tp->curr_pos = r.curpos;

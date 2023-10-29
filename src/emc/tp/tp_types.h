@@ -116,7 +116,6 @@ typedef struct {
     double traject_progress;
     double segment_progress;
     EmcPose gcode_lastPos;
-    bool pause;
 
     int gcode_upcoming_line_nr;
     int gcode_current_executed_line_nr;

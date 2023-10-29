@@ -432,7 +432,7 @@ int tpPause(TP_STRUCT * const tp)
 {
     printf("tpPause. \n");
 
-    tp->pause=1;
+    tp->pausing=1;
 
     return 0;
 }
@@ -441,7 +441,7 @@ int tpResume(TP_STRUCT * const tp)
 {
     printf("tpResume, reset abort. \n");
 
-    tp->pause=0;
+    tp->pausing=0;
 
     return 0;
 }

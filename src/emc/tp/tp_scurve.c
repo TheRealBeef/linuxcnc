@@ -35,8 +35,7 @@ skynet_t *skynet;
 typedef struct {
     hal_float_t *Pin;
 } float_data_t;
-float_data_t *vector_size;
-
+float_data_t *tp_curvel, *tp_curacc;
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
@@ -107,15 +106,12 @@ static void the_function(){
 static int setup_pins(){
     int r=0;
 
-    //! Parameter bit.
-    //!
-    //! In halshow set this pin high to load gcode line's.
-    //!
-    done = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
-    r+=hal_param_bit_new("tpmod_scurve.done",HAL_RW,&(done->Pin),comp_idx);
+    //! Pins to be motitored by halscope.
+    tp_curvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve.curvel",HAL_OUT,&(tp_curvel->Pin),comp_idx);
 
-    vector_size = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve.vector_size",HAL_OUT,&(vector_size->Pin),comp_idx);
+    tp_curacc = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve.curacc",HAL_OUT,&(tp_curacc->Pin),comp_idx);
 
     return r;
 }
@@ -184,7 +180,6 @@ struct result r={};
 
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
-void update_hal(TP_STRUCT * const tp);
 
 struct sc_pnt xyz;
 struct sc_dir abc;
@@ -208,9 +203,6 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
 
     //! Interpolate tp position.
     update_gui(tp);
-
-    //! Update hal pins.
-    update_hal(tp);
 
     return 0;
 }
@@ -344,52 +336,27 @@ int tpSetPos(TP_STRUCT * const tp, EmcPose const * const pos)
         return -1;
     }
 
-    printf("tpSetPos. \n");
-    // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
+    // printf("tpSetPos. \n");
+    printf("tpSetPos x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
 
     tp->currentPos=*pos;
 
-    return 0;
-}
-
-int tpSetCurrentPos(TP_STRUCT * const tp, EmcPose const * const pos)
-{
-    printf("tpSetCurrentPos. \n");
-
-    tp->currentPos=*pos;
+    // printf("vector size: %i \n",vector_size_c(vector_ptr));
+    // printf("tpCurrentPos x: %f y: %f z: %f \n",tp->currentPos.tran.x,tp->currentPos.tran.y,tp->currentPos.tran.z);
 
     return 0;
-}
-
-int tpAddCurrentPos(TP_STRUCT * const tp, EmcPose const * const disp)
-{
-    printf("tpAddCurrentPos. \n");
-
-    if (!tp || !disp) {
-        return TP_ERR_MISSING_INPUT;
-    }
-
-    if (emcPoseValid(disp)) {
-        emcPoseSelfAdd(&tp->currentPos, disp);
-        return TP_ERR_OK;
-    } else {
-        rtapi_print_msg(RTAPI_MSG_ERR, "Tried to set invalid pose in tpAddCurrentPos on id %d!"
-                "disp is %.12g, %.12g, %.12g\n",
-                        tp->execId,
-                        disp->tran.x,
-                        disp->tran.y,
-                        disp->tran.z);
-        return TP_ERR_INVALID;
-    }
 }
 
 int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
 {
-    // printf("tpGetPos. \n");
+    if (0 == tp) {
+        return -1;
+    }
 
     //! The gui toolposition tp is updated from here.
     *pos = tp->currentPos;
-    // printf("x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
+    printf("tpGetPos x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
+
 
     return 0;
 }
@@ -407,7 +374,7 @@ int tpPause(TP_STRUCT * const tp)
 {
     printf("tpPause. \n");
 
-    tp->pause=1;
+    tp->pausing=1;
 
     return 0;
 }
@@ -416,7 +383,7 @@ int tpResume(TP_STRUCT * const tp)
 {
     printf("tpResume. \n");
 
-    tp->pause=0;
+    tp->pausing=0;
 
     return 0;
 }
@@ -466,8 +433,11 @@ int tpSetDout(TP_STRUCT * const tp, int index, unsigned char start, unsigned cha
     return 0;
 }
 
-int tpSetRunDir(TP_STRUCT * const tp, tc_direction_t dir)
-{
+int tpSetRunDir(TP_STRUCT * const tp, tc_direction_t dir){
+
+    printf("tpSetRunDir, motion reverse : %i \n",dir);
+
+    tp->reverse_run=dir;
     return 0;
 }
 
@@ -528,7 +498,7 @@ int tpAddLine(TP_STRUCT *
     b.gcode_line_nr=tp->gcode_upcoming_line_nr;
 
     b.vo=0;
-    b.vm=0;
+    b.vm=vel;
     b.ve=0;
 
     b.path_lenght=line_lenght_c(b.pnt_s,b.pnt_e);
@@ -593,7 +563,7 @@ int tpAddCircle(TP_STRUCT * const tp,
     b.gcode_line_nr=tp->gcode_upcoming_line_nr;
 
     b.vo=0;
-    b.vm=0;
+    b.vm=vel;
     b.ve=0;
 
     b.path_lenght=arc_lenght_c(b.pnt_s,b.pnt_w,b.pnt_e);
@@ -627,7 +597,6 @@ struct state_tag_t tpGetExecTag(TP_STRUCT * const tp)
         struct state_tag_t empty = {0};
         return empty;
     }
-
     return tp->execTag;
 }
 
@@ -637,6 +606,8 @@ int tcqFull(TC_QUEUE_STRUCT const * const tcq)
     return 0;
 }
 
+//! A Inline functinn is compiled in between the upper-level function. So
+//! its not called every time, but compiled inbetween. This makes it faster.
 inline void update_gui(TP_STRUCT * const tp){
 
     if(tp->vector_size>0){
@@ -693,6 +664,8 @@ inline void update_gui(TP_STRUCT * const tp){
     }
 }
 
+//! A Inline functinn is compiled in between the upper-level function. So
+//! its not called every time, but compiled inbetween. This makes it faster.
 inline void update_ruckig(TP_STRUCT * const tp){
 
     // Check the vector. Load first segment into the ruckig planner.
@@ -703,37 +676,42 @@ inline void update_ruckig(TP_STRUCT * const tp){
         tp->gcode_current_executed_line_nr=vector_at(vector_ptr,tp->vector_current_exec).gcode_line_nr;
         tp->tar_pos=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
 
+
         //! Calculate ruckig's next step.
 
         r.curacc=tp->cur_acc;
         r.curpos=tp->cur_pos;
         r.curvel=tp->cur_vel;
 
-        // printf("tp->aMax: %f \n",tp->aMax);
-        // printf("tp->max_jerk: %f \n",tp->max_jerk);
-        // printf("tp->vLimit: %f \n",tp->vLimit);
-
         r.maxacc=tp->aMax;
         r.maxjerk=tp->max_jerk;
-        r.maxvel=tp->vLimit;
+
+        double gcode_vel=vector_at(vector_ptr,tp->vector_current_exec).vm;
+        if(gcode_vel>tp->vLimit){
+            gcode_vel=tp->vLimit;
+        }
+
+        r.maxvel = gcode_vel;
 
         r.enable=1;
         r.durationdiscretizationtype=Continuous;
         r.synchronizationtype=None;
 
-        //! MENTION: tp->cycletime is not set to 0.001.
+        //! MENTION: tp->cycletime is not set to 0.001, or it has a long to double conversion error.
         //! We set it fixed for now.
         r.period=0.001;
-
+        r.tarpos=tp->tar_pos;
         r.taracc=0;
         r.tarvel=0;
-        r.tarpos=tp->tar_pos;
+
+        //! Change to motion reverse. Set tarpos to begin of segment.
+        if(tp->reverse_run){
+            r.tarpos=0;
+        }
 
         //! When pausing, goto velocity 0. See the component motdot
         //! how a jog stop is done.
-        //!
-        //! If abort, goto velocity 0.
-        if(tp->pause){
+        if(tp->pausing){
             r.interfacetype=velocity;
         } else {
             r.interfacetype=position;
@@ -745,22 +723,29 @@ inline void update_ruckig(TP_STRUCT * const tp){
             tp->cur_pos=r.curpos;
             tp->cur_acc=r.curacc;
             tp->cur_vel=r.curvel;
+
+            //! Update hal pins for monitoring by halscope.
+            *tp_curvel->Pin=r.curvel;
+            *tp_curacc->Pin=r.curacc;
         }
 
         //! printf("curvel: %f \n",tp->cur_vel);
         //! printf("curpos: %f \n",tp->cur_pos);
         //! printf("curacc: %f \n",tp->cur_acc);
 
+        //! Ruckig error. For example error 101 is not readlly a error.
+        //! We get error 101 when slow down in pause, interfacetype::velocity.
         if(r.error){
             // printf("ruckig error. %i \n",r.function_return_code);
         }
 
-        if(tp->pause){
+        if(tp->pausing){
             tp->segment_progress=tp->cur_pos/tp->tar_pos;
             return;
         }
 
-        if(r.finished){
+        //! Ruckig is finished, motion is forward.
+        if(r.finished && !tp->reverse_run){
             // printf("ruckig finished. \n");
 
             //! Set next gcode segment if we are not at the end yet.
@@ -783,17 +768,40 @@ inline void update_ruckig(TP_STRUCT * const tp){
                 tp->tar_pos=0;
             }
         }
+
+        //! Ruckig is finished, motion is forward.
+        if(r.finished && tp->reverse_run){
+            // printf("ruckig finished. \n");
+
+            //! Set next gcode segment if we are not at zero.
+            if(tp->vector_current_exec>0){
+
+                //! Todo : check if moving forward or moving reverse.
+                tp->vector_current_exec--;
+                tp->cur_pos=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
+                tp->tar_pos=0;
+            }
+
+            //! We are finished and completed the last gcode segment. Traject is done !
+            if(tp->vector_current_exec==0){
+                vector_clear(vector_ptr);
+                tp->vector_size=0;
+
+                tp->vector_current_exec=0;
+                tp->segment_progress=0;
+                tp->cur_pos=0;
+                tp->tar_pos=0;
+            }
+        }
+
+        //! Ruckig is not finsihed, Just for info.
         if(!r.finished){
             // printf("ruckig busy. \n");
         }
 
+        //! Progress 0-1.
         tp->segment_progress=tp->cur_pos/tp->tar_pos;
     }
-}
-
-inline void update_hal(TP_STRUCT * const tp){
-
-    *vector_size->Pin=tp->vector_size;
 }
 
 EXPORT_SYMBOL(tpMotFunctions);
