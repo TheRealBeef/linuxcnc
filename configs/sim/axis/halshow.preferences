@@ -1,10 +1,13 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 778x803+879+0
+wm geometry . 778x802+1691+305
 placeFrames 0.42005813953488375
 set ::ratio 0.42005813953488375
 set ::old_w_leftf 160
 set ::watchlist {
+    pin+motion.adaptive-feed
+    pin+motion.tp-reverse
+    pin+tpmod_scurve.reverse
 }
 set ::workmode watchhal
 set ::watchInterval 100

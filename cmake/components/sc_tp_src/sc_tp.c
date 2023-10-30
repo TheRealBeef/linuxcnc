@@ -259,7 +259,7 @@ V update_ruckig_cycle();
 
 //! Holds lcnc recieved values.
 T vm=15, a=15, af=1, jm=10, fo=1, ro=1;
-B reverse=0;
+B reverse_run=0;
 V update_pins_params();
 
 //! Skynet.

@@ -11,6 +11,7 @@ G21 G90 G64 G40
 G0 Z3.0
 ( engraving )
 G17
+M52 P1 (enable adaptive feed)
 M3 S10000
 G0 X[1.75781*#<scale>] Y[0.5*#<scale>]
 G1 F100.0 Z[-#<depth>]

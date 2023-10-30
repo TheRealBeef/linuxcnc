@@ -27,7 +27,6 @@ enum sc_motion_type {
     sc_rapid=1,
     sc_linear=2,
     sc_circle=3,
-    sc_G3
 };
 
 //float line_lenght(struct sc_pnt p0, struct sc_pnt p1){

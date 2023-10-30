@@ -109,6 +109,7 @@ typedef struct {
     double cur_vel;
     double cur_pos;
     double tar_pos;
+    double adaptive_feed;
 
     int vector_size;
     int vector_current_exec;
