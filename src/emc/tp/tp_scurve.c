@@ -743,11 +743,10 @@ inline void update_ruckig(TP_STRUCT * const tp){
             *tp_curvel->Pin=r.curvel;
             *tp_curacc->Pin=r.curacc;
         } else {
-
             return;
         }
 
-        if(r.finished){
+        if(r.finished && !tp->pausing){ //! The !tp->pausing repairs tp jump when pausing in motion reverse.
 
             // printf("segment progress: %f \n",tp->segment_progress);
 
@@ -788,6 +787,7 @@ inline void update_ruckig(TP_STRUCT * const tp){
 
                     //! Todo : check if moving forward or moving reverse.
                     tp->vector_current_exec++;
+                    path_lenght=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
                     tp->cur_pos=0;
                     tp->tar_pos=path_lenght;
                     tp->segment_progress=tp->cur_pos/path_lenght;
