@@ -34,6 +34,8 @@ SET(GCC_COVERAGE_COMPILE_FLAGS "-I. -I${RTAPI_DIR} -I${HAL_DIR} \
 add_definitions(-DRTAPI -DUSPACE -D_GNU_SOURCE -D__MODULE__ )
 
 ADD_LIBRARY(${PROJECT} SHARED
+    ${SRC_DIR}/../../../src/emc/tp/tp_corners.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_corners.cpp
     ${SRC_DIR}/../../../src/emc/tp/tp_conversion.h
     ${SRC_DIR}/../../../src/emc/tp/tp_conversion.c
     ${SRC_DIR}/../../../src/emc/tp/tp_vector.h

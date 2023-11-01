@@ -66,7 +66,7 @@ private:
                          double division);
 };
 #else
-typedef struct sc_arcs sc_arcs;
+typedef struct tp_arcs tp_arcs;
 #endif //! cplusplus
 
 #endif

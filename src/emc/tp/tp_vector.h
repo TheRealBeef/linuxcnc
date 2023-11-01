@@ -1,8 +1,7 @@
-
 #ifndef TP_VECTOR_H
 #define TP_VECTOR_H
 
-//! Author  : SKynet Cyberdyne
+//! Author  : Skynet Cyberdyne
 //! Licence : MIT
 //! Date    : 2023
 
@@ -32,7 +31,7 @@ private:
 
 //! Here it tells if this code is used in c, convert the class to a struct. This is handy!
 #else
-typedef struct sc_vector sc_vector;
+typedef struct tp_vector tp_vector;
 #endif //! cplusplus
 
 #endif

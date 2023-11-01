@@ -1,4 +1,4 @@
-﻿
+
 #include "rtapi.h"
 #include "rtapi_ctype.h"
 #include "rtapi_app.h"
@@ -17,6 +17,7 @@
 #include "tp_conversion.h"
 #include "tp_arcs.h"
 #include "tp_lines.h"
+#include "tp_corners.h"
 
 #include "ruckig_format.h"
 
@@ -49,6 +50,7 @@ typedef struct { //! Int.
 typedef struct { //! Param int.
     hal_s32_t Pin;
 } param_s32_data_t;
+param_s32_data_t *look_ahead;
 
 typedef struct { //! Uint.
     hal_u32_t *Pin;
@@ -117,8 +119,46 @@ static int setup_pins(){
     reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_bit_new("tpmod_scurve.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
 
+    look_ahead = (param_s32_data_t*)hal_malloc(sizeof(param_s32_data_t));
+    r+=hal_param_s32_new("tpmod_scurve.look_ahead",HAL_RW,&(look_ahead->Pin),comp_idx);
+
     return r;
 }
+
+int min(float a, float b){
+
+    if(a==b){
+        return a;
+    }
+
+    if(a<b){
+        return a;
+    }
+
+    if(b<a){
+        return b;
+    }
+
+    return a;
+}
+
+int max(float a, float b){
+
+    if(a==b){
+        return a;
+    }
+
+    if(a>b){
+        return a;
+    }
+
+    if(b>a){
+        return b;
+    }
+
+    return a;
+}
+
 
 //! Status and config from motion.h
 static emcmot_status_t *emcmotStatus;
@@ -165,6 +205,7 @@ extern void vector_clear(struct tp_vector *ptr);
 extern int vector_at_id(struct tp_vector *ptr, int n);
 extern struct tp_segment vector_at(struct tp_vector *ptr, int index);
 extern void vector_add_segment(struct tp_vector *ptr, struct tp_segment b);
+extern void vector_set_end_angle(tp_vector *ptr, int index, double angle_deg);
 
 extern double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end);
 extern double line_lenght_c(struct sc_pnt start, struct sc_pnt end);
@@ -174,6 +215,13 @@ extern void interpolate_ext_c(struct sc_ext p0, struct sc_ext p1, double progres
 extern void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, double progress, struct sc_pnt *pi);
 extern void sc_arc_get_mid_waypoint_c(struct sc_pnt start, struct sc_pnt center, struct sc_pnt end, struct sc_pnt *waypoint);
 extern void vector_interpolate_traject_c(struct tp_vector *ptr, double traject_progress, double traject_lenght, double *curve_progress, int *curve_nr);
+
+extern double line_line_angle(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2);
+extern double line_arc_angle(struct sc_pnt p0,struct sc_pnt p1, struct sc_pnt p2, struct sc_pnt p3);
+extern double arc_line_angle(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, struct sc_pnt p3);
+extern double arc_arc_angle(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, struct sc_pnt p3, struct sc_pnt p4);
+extern double segment_angle(struct tp_segment s0, struct tp_segment s1);
+
 
 //! Gcode vector dynamic.
 struct tp_vector *vector_ptr;
@@ -185,6 +233,9 @@ struct result r={};
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
+
+int netto_look_ahead(TP_STRUCT * const tp);
+void optimize_velocity_look_ahead(TP_STRUCT * const tp, int count);
 
 struct sc_pnt xyz;
 struct sc_dir abc;
@@ -202,7 +253,15 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
 {
     //! printf("tpRunCycle. \n");
     // tp->cycleTime=period;
+
+    //! Update hal pin's once a cycle.
     update_hal(tp);
+
+    //! Get the netto look ahead lines for the trajectory.
+    int count=netto_look_ahead(tp);
+    // printf("count: %i \n",count);
+
+    optimize_velocity_look_ahead(tp,count);
 
     //! Plan motion if the segment vector > 0
     update_ruckig(tp);
@@ -210,6 +269,13 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     //! Interpolate tp position.
     update_gui(tp);
 
+    /*
+    if(vector_size_c(vector_ptr)>0){
+        printf("current segment corners: \n");
+        printf("corner begin: %f \n", vector_at(vector_ptr,tp->vector_current_exec).angle_begin);
+        printf("corner end: %f \n", vector_at(vector_ptr,tp->vector_current_exec).angle_end);
+        printf("\n");
+    } */
 
     return 0;
 }
@@ -225,6 +291,11 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 
     //! Set the queue size to the c++ vector.
     vector_ptr=vector_init_ptr();
+
+    if(look_ahead->Pin==0){
+        look_ahead->Pin=10;
+        printf("tpCreate, set look_ahead to : %i \n",look_ahead->Pin);
+    }
 
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
 
@@ -489,7 +560,8 @@ int tpAddLine(TP_STRUCT *
     b.pnt_c.x=0;
     b.pnt_c.y=0;
     b.pnt_c.z=0;
-    b.angle_end_deg=0;
+    b.angle_begin=0;
+    b.angle_end=0;
 
     b.pnt_e=emc_pose_to_sc_pnt(end);
 
@@ -506,6 +578,16 @@ int tpAddLine(TP_STRUCT *
     b.ve=0;
 
     b.path_lenght=line_lenght_c(b.pnt_s,b.pnt_e);
+
+    //! Calculate previous segment to current segment path transition corners in degrees.
+    if(vector_size_c(vector_ptr)>0){
+
+        struct tp_segment previous=vector_at(vector_ptr,vector_size_c(vector_ptr)-1);
+        double angle_deg=segment_angle(previous,b);
+
+        b.angle_begin=angle_deg;
+        vector_set_end_angle(vector_ptr,vector_size_c(vector_ptr)-1,angle_deg);
+    }
 
     vector_add_segment(vector_ptr,b);
     tp->vector_size=vector_size_c(vector_ptr);
@@ -550,6 +632,7 @@ int tpAddCircle(TP_STRUCT * const tp,
     b.primitive_id=sc_arc;
     b.type=canon_motion_type;
     b.pnt_s=emc_pose_to_sc_pnt(tp->gcode_lastPos);
+    b.pnt_e= emc_pose_to_sc_pnt(end);
 
     b.dir_s=emc_pose_to_sc_dir(tp->gcode_lastPos);
     b.dir_e=emc_pose_to_sc_dir(end);
@@ -557,12 +640,16 @@ int tpAddCircle(TP_STRUCT * const tp,
     b.ext_s=emc_pose_to_sc_ext(tp->gcode_lastPos);
     b.ext_e=emc_pose_to_sc_ext(end);
 
+    b.pnt_c=emc_cart_to_sc_pnt(center);
+
     //! Create a 3d arc using waypoint technique.
     sc_arc_get_mid_waypoint_c(emc_pose_to_sc_pnt(tp->gcode_lastPos),
-                              emc_cart_to_sc_pnt(center),
-                              emc_pose_to_sc_pnt(end),&b.pnt_w);
+                              b.pnt_c,
+                              b.pnt_e,
+                              &b.pnt_w);
 
-    b.pnt_e=emc_pose_to_sc_pnt(end);
+    b.angle_begin=0;
+    b.angle_end=0;
 
     b.gcode_line_nr=tp->gcode_upcoming_line_nr;
 
@@ -571,6 +658,16 @@ int tpAddCircle(TP_STRUCT * const tp,
     b.ve=0;
 
     b.path_lenght=arc_lenght_c(b.pnt_s,b.pnt_w,b.pnt_e);
+
+    //! Calculate previous segment to current segment path transition corners in degrees.
+    if(vector_size_c(vector_ptr)>0){
+
+        struct tp_segment previous=vector_at(vector_ptr,vector_size_c(vector_ptr)-1);
+        double angle_deg=segment_angle(previous,b);
+
+        b.angle_begin=angle_deg;
+        vector_set_end_angle(vector_ptr,vector_size_c(vector_ptr)-1,angle_deg);
+    }
 
     vector_add_segment(vector_ptr,b);
     tp->vector_size=vector_size_c(vector_ptr);
@@ -812,7 +909,86 @@ inline void update_ruckig(TP_STRUCT * const tp){
 //! A Inline functinn is compiled in between the upper-level function. So
 //! its not called every time, but compiled inbetween. This makes it faster.
 inline void update_hal(TP_STRUCT * const tp){
+    //! For info, a pin uses a * before, a parameter not.
     tp->reverse_run=*reverse_run->Pin;
+    tp->look_ahead=look_ahead->Pin;
+}
+
+//! A Inline functinn is compiled in between the upper-level function. So
+//! its not called every time, but compiled inbetween. This makes it faster.
+//!
+//! This function calculates how much gcode segments can be optimized moving forward and
+//! or moving backwards.
+inline int netto_look_ahead(TP_STRUCT * const tp){
+
+    // tp->look_ahead;                  /* How much segments do we look ahead. */
+    // tp->reverse_run;                 /* Are we in reverse run? If so, look back. */
+    // tp->vector_current_exec;         /* Current ececuted vector nr. */
+
+    int count=0;
+
+    if(!tp->reverse_run){
+        //! Motion forward. Look forward, ahead.
+        //! min is calculating the minimal of 2 input values.
+        for(int i=tp->vector_current_exec; i< min(vector_size_c(vector_ptr),tp->vector_current_exec+tp->look_ahead); i++){
+
+            //! Is next segment colinair?
+
+            //! When segment is a G0 rapid, stop optimizing.
+            if(vector_at(vector_ptr,i).type==1){
+                // printf("Abort for G0 rapid. \n");
+                break;
+            }
+
+            count++;
+            // printf("look ahead forward, checking vector segment : %i \n",i);
+        }
+        // printf("\n");
+
+    } else {
+        //! Motion reverse, look back.
+        //! max is calculating the maximum of 2 input values.
+        for(int i=tp->vector_current_exec; i> max(0,tp->vector_current_exec-tp->look_ahead); i--){
+
+            //! When segment is a G0 rapid, stop optimizing.
+            if(vector_at(vector_ptr,i).type==1){
+                // printf("Abort for G0 rapid. \n");
+                break;
+            }
+
+            count++;
+            // printf("look ahead backward, checking vector segment : %i \n",i);
+
+        }
+        // printf("\n");
+    }
+
+    //! Return a positive value.
+    return count;
+}
+
+//! A Inline functinn is compiled in between the upper-level function. So
+//! its not called every time, but compiled inbetween. This makes it faster.
+//!
+//! This function tries to optimize velocity.
+inline void optimize_velocity_look_ahead(TP_STRUCT * const tp, int count){
+
+    int id=tp->vector_current_exec;
+    double vel_start=0;
+    double vel_end=0;
+    double segment_lenght=0;
+
+
+    //! Sweep the velocity forward.
+    for(int i=0; i<count; i++){
+
+
+
+    }
+
+
+
+
 }
 
 EXPORT_SYMBOL(tpMotFunctions);

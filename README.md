@@ -1,3 +1,25 @@
+```
+ Depends on :
+ 
+ $ sudo apt-get install libeigen3-dev
+ 
+ https://forum.linuxcnc.org/38-general-linuxcnc-questions/47379-linuxcnc-cmake-project?start=10#284188
+	
+```
+
+```
+To build :
+
+  $ cd ~/linuxcnc/cmake
+  $ ./build_all
+  
+  # After your first build fails to start, rtapi & module_helper must get super user privileges by :
+
+  $ cd ~linuxcnc/src/ 
+  $ sudo make setuid
+  
+```
+
 [![Badge GPL2]][License]
 [![Badge LGPL]][License]
 

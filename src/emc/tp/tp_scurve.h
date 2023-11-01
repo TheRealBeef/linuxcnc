@@ -42,13 +42,14 @@ struct tp_segment {
 
     int gcode_line_nr;
 
+    //! Point s=start, w=waypoint, c=center.
     struct sc_pnt pnt_s, pnt_e, pnt_w, pnt_c;
     struct sc_dir dir_s, dir_e;
     struct sc_ext ext_s, ext_e;
 
-    //! The look ahead angle to next primitive,
-    //! to calculate acceptable end velocity.
-    double angle_end_deg;
+    //! The angle to previous & next primitive.
+    double angle_begin;
+    double angle_end;
 
     //! If arc's velmax is reduced by gforce impact value, this is maxvel.
     //! Otherwise the velmax is set to program velmax.

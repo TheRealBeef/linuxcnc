@@ -30,6 +30,10 @@ extern "C" struct tp_segment vector_at(tp_vector *ptr, int index){
     return ptr->pvec.at(index);
 }
 
+extern "C" void vector_set_end_angle(tp_vector *ptr, int index, double angle_deg){
+    ptr->pvec.at(index).angle_end=angle_deg;
+}
+
 //! Interpolates traject progress 0-1.
 void tp_vector::interpolate_traject(double traject_progress,
                                     double traject_lenght,
@@ -66,3 +70,4 @@ extern "C" void vector_interpolate_traject_c(tp_vector *ptr,
     *curve_progress=curve_progress_;
     *curve_nr=curve_nr_;
 }
+
