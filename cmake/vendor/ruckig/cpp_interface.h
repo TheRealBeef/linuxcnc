@@ -23,7 +23,11 @@ public:
 
 public:
     Cpp_interface();
+    //! Calculate a normal cycle.
     result dofs(result input);
+
+    //! Get the stop lenght.
+    double dofs_stop_lenght(result input);
 private:
 
 };

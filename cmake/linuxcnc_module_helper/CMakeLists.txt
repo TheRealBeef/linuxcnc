@@ -16,25 +16,29 @@ include_directories(${SRC_DIR}/../../src/rtapi)
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-ADD_LIBRARY(${PROJECT} SHARED 
+set(SOURCES
     ${SRC_DIR}/../../src/module_helper/module_helper.c
-)
+    )
+add_executable(${PROJECT_NAME} ${SOURCES})
 
-if (BUILD_USPACE)
-    add_definitions(-DULAPI)
-else ()
-    add_definitions(-DRTAPI)
-endif ()
+#if (BUILD_USPACE)
+#    add_definitions(-DULAPI)
+#else ()
+#    add_definitions(-DRTAPI)
+#endif ()
 
+add_definitions(-DSIM -DULAPI -UULAPI -DRTAPI)
 
 # Set include paths for libraries to link.
 target_include_directories(${PROJECT_NAME} PRIVATE ${BUILD_DIR})
 
 # Link to libraries.
-target_link_libraries(${PROJECT_NAME} PRIVATE)
+target_link_libraries(${PROJECT_NAME} PRIVATE -Wall -Werror)
 
 # Set custom output name :
 # set_property(TARGET  ${PROJECT} PROPERTY OUTPUT_NAME thename)
 
 # Make install
 install(TARGETS ${PROJECT} DESTINATION ${BUILD_DIR}/../../../bin)
+
+# Notes.

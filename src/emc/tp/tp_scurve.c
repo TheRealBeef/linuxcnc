@@ -228,6 +228,7 @@ struct tp_vector *vector_ptr;
 
 //! Ruckig scurve.
 extern struct result wrapper_get_pos(struct result input);
+extern double wrapper_stop_lenght(struct result input);
 struct result r={};
 
 void update_gui(TP_STRUCT * const tp);
@@ -261,7 +262,7 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     int count=netto_look_ahead(tp);
     // printf("count: %i \n",count);
 
-    optimize_velocity_look_ahead(tp,count);
+   // optimize_velocity_look_ahead(tp,count);
 
     //! Plan motion if the segment vector > 0
     update_ruckig(tp);
@@ -573,15 +574,14 @@ int tpAddLine(TP_STRUCT *
 
     b.gcode_line_nr=tp->gcode_upcoming_line_nr;
 
+    b.path_lenght=line_lenght_c(b.pnt_s,b.pnt_e);
+
     b.vo=0;
     b.vm=vel;
     b.ve=0;
 
-    b.path_lenght=line_lenght_c(b.pnt_s,b.pnt_e);
-
     //! Calculate previous segment to current segment path transition corners in degrees.
     if(vector_size_c(vector_ptr)>0){
-
         struct tp_segment previous=vector_at(vector_ptr,vector_size_c(vector_ptr)-1);
         double angle_deg=segment_angle(previous,b);
 
@@ -661,7 +661,6 @@ int tpAddCircle(TP_STRUCT * const tp,
 
     //! Calculate previous segment to current segment path transition corners in degrees.
     if(vector_size_c(vector_ptr)>0){
-
         struct tp_segment previous=vector_at(vector_ptr,vector_size_c(vector_ptr)-1);
         double angle_deg=segment_angle(previous,b);
 
@@ -978,16 +977,60 @@ inline void optimize_velocity_look_ahead(TP_STRUCT * const tp, int count){
     double vel_end=0;
     double segment_lenght=0;
 
+    int segments=0;
+    double ltot=0;
 
-    //! Sweep the velocity forward.
-    for(int i=0; i<count; i++){
+    printf("count: %i \n",count);
 
 
+    ltot+=emcmotStatus->distance_to_go;
+
+    //! Max look ahead lines..
+    for(int i=1; i<count; i++){
+
+        //! Sweep the velocity forward.
+
+        double angle_end=vector_at(vector_ptr,tp->vector_current_exec+i).angle_end;
+        ltot+=vector_at(vector_ptr,tp->vector_current_exec+i).path_lenght;
+        if(angle_end>170){
+            segments++;
+        } else {
+            break;
+        }
 
     }
 
 
+    // printf("semgents to enable vm: %i \n",segments);
+    printf("lenght to enable vm: %f \n",ltot);
 
+    //! Get the stoplenght for current velocity.
+    struct result k={};
+    k.curacc=tp->cur_acc;
+    k.curpos=0;
+    k.curvel=tp->cur_vel;
+
+    k.enable=1;
+    k.maxvel = tp->cur_vel;
+    k.maxacc = tp->aMax;
+    k.maxjerk = tp->max_jerk;
+
+    k.enable=1;
+    k.durationdiscretizationtype=Continuous;
+    k.synchronizationtype=None;
+    k.interfacetype=velocity;
+
+    k.period=0.001;
+    k.tarpos=ltot;
+    k.taracc=0;
+    k.tarvel=0;
+
+    double dts=wrapper_stop_lenght(k);
+
+
+
+    printf("ruckig return code: %i \n",k.function_return_code);
+    printf("stoplenght for current velocity: %f \n",dts);
 
 }
 

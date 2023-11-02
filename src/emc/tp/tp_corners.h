@@ -65,6 +65,7 @@ public:
                     sc_pnt p4,
                     double &angle_deg);
 
+    //! If ange=180, this means colineair.
     void segment_angle(tp_segment s0, tp_segment s1, double &angle_deg);
 };
 

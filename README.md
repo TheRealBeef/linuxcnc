@@ -1,11 +1,3 @@
-```
- Depends on :
- 
- $ sudo apt-get install libeigen3-dev
- 
- https://forum.linuxcnc.org/38-general-linuxcnc-questions/47379-linuxcnc-cmake-project?start=10#284188
-	
-```
 
 ```
 To build :

@@ -3,10 +3,13 @@ echo "current folder:"
 echo $PWD
 echo "\n"
 
-echo "clean current linuxcnc installation."
+echo "check dependencies. \n"
+sudo apt-get install libeigen3-dev
+
+echo "clean current linuxcnc installation. \n"
 ./clean_all
 
-echo "copy python scripts to ~/bin folder"
+echo "copy python scripts to ~/bin folder. \n"
 cd ..
 cd scripts
 cp -rf * ../bin
@@ -28,7 +31,7 @@ cd ..
 cd ..
 
 
-echo "building & installing components needed by the axis gui. \nBuilding with halcompile. \n"
+echo "Building & installing components needed by the axis gui. \nBuilding with halcompile. \n"
 cd scripts
 ./rip-environment halcompile --install ../src/hal/components/ddt.comp
 ./rip-environment halcompile --install ../src/hal/components/hypot.comp
@@ -49,7 +52,7 @@ cd scripts
 ./rip-environment halcompile --install ../src/hal/components/sim_home_switch.comp
 cd ..
 
-echo "building linuxcnc with cmake. \n"
+echo "Building linuxcnc with cmake. \n"
 cd cmake
 mkdir -p build
 cd build
@@ -59,14 +62,19 @@ make install
 cd ..
 cd ..
 
-# Recreate the Sudo Make Setuid command (needed for running real machines)
-#echo "Running equivalent of Sudo Make Setuid"
-#sudo chown root bin/rtapi_app
-#sudo chmod 4750 bin/rtapi_app
-#sudo chown root bin/linuxcnc_module_helper.so
-#sudo chmod 4750 bin/linuxcnc_module_helper.so
+echo "current folder:"
+echo $PWD
+echo "\n"
 
-echo "start linuxcnc \n"
+# Recreate the Sudo Make Setuid command (needed for running real machines)
+# This version is from : https://github.com/grotius-cnc/hal-core/blob/main/make
+echo "Running equivalent of Sudo Make Setuid. \n"
+sudo chown 777 -R bin/rtapi_app
+sudo chown 777 -R bin/linuxcnc_module_helper
+sudo chmod 777 bin/rtapi_app
+sudo chmod 777 bin/linuxcnc_module_helper
+
+echo "Start linuxcnc. \n"
 cd scripts
 ./rip-environment linuxcnc ../configs/sim/axis/axis_mm.ini
 
