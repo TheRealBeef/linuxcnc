@@ -6,16 +6,14 @@ echo "\n"
 echo "check dependencies. \n"
 sudo apt-get install libeigen3-dev
 
-echo "clean current linuxcnc installation. \n"
-./clean_all
-
-echo "copy python scripts to ~/bin folder. \n"
-cd ..
-cd scripts
-cp -rf * ../bin
-cd ..
+#echo "copy python scripts to ~/bin folder. \n"
+#cd ..
+#cd scripts
+#cp -rf * ../bin
+#cd ..
 
 echo "run check and set scripts. \n"
+cd ..
 cd src
 ./autogen.sh
 ./configure --enable-non-distributable=yes --with-realtime=uspace
