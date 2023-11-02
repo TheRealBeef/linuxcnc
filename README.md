@@ -5,11 +5,6 @@ To build :
   $ cd ~/linuxcnc/cmake
   $ ./build_all
   
-  # After your first build fails to start, rtapi & module_helper must get super user privileges by :
-
-  $ cd ~linuxcnc/src/ 
-  $ sudo make setuid
-  
 ```
 
 [![Badge GPL2]][License]
