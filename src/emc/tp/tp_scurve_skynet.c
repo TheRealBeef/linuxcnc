@@ -23,7 +23,7 @@
 
 /* module information */
 MODULE_AUTHOR("Skynet_Cyberdyne");
-MODULE_DESCRIPTION("tpmod_scurve");
+MODULE_DESCRIPTION("tpmod_scurve_skynet");
 MODULE_LICENSE("GPL2");
 
 static int comp_idx;
@@ -50,6 +50,7 @@ typedef struct { //! Int.
 typedef struct { //! Param int.
     hal_s32_t Pin;
 } param_s32_data_t;
+param_s32_data_t *max_look_ahead;
 
 typedef struct { //! Uint.
     hal_u32_t *Pin;
@@ -67,11 +68,12 @@ typedef struct {
 typedef struct {
     hal_float_t Pin;
 } param_float_data_t;
+param_float_data_t *tp_progress;
 
 typedef struct {
     hal_bit_t Pin;
 } param_bit_data_t;
-param_bit_data_t *done;
+param_bit_data_t *clear_vec, *done;
 
 static int comp_idx; /* component ID */
 
@@ -81,9 +83,9 @@ static int setup_pins();
 int rtapi_app_main(void) {
 
     int r = 0;
-    comp_idx = hal_init("tpmod_scurve");
+    comp_idx = hal_init("tpmod_scurve_skynet");
     if(comp_idx < 0) return comp_idx;
-    r = hal_export_funct("tpmod_scurve", the_function, &skynet,0,0,comp_idx);
+    r = hal_export_funct("tpmod_scurve_skynet", the_function, &skynet,0,0,comp_idx);
 
     r+=setup_pins();
 
@@ -110,13 +112,25 @@ static int setup_pins(){
 
     //! Pins to be motitored by halscope.
     tp_curvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve.curvel",HAL_OUT,&(tp_curvel->Pin),comp_idx);
+    r+=hal_pin_float_new("tpmod_scurve_skynet.curvel",HAL_OUT,&(tp_curvel->Pin),comp_idx);
 
     tp_curacc = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve.curacc",HAL_OUT,&(tp_curacc->Pin),comp_idx);
+    r+=hal_pin_float_new("tpmod_scurve_skynet.curacc",HAL_OUT,&(tp_curacc->Pin),comp_idx);
 
     reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_bit_new("tpmod_scurve.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
+    r+=hal_pin_bit_new("tpmod_scurve_skynet.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
+
+    max_look_ahead = (param_s32_data_t*)hal_malloc(sizeof(param_s32_data_t));
+    r+=hal_param_s32_new("tpmod_scurve_skynet.look_ahead",HAL_RW,&(max_look_ahead->Pin),comp_idx);
+
+    tp_progress = (param_float_data_t*)hal_malloc(sizeof(param_float_data_t));
+    r+=hal_param_float_new("tpmod_scurve_skynet.progress",HAL_RW,&(tp_progress->Pin),comp_idx);
+
+    clear_vec = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
+    r+=hal_param_bit_new("tpmod_scurve_skynet.clear_vec",HAL_RW,&(clear_vec->Pin),comp_idx);
+
+    done = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
+    r+=hal_param_bit_new("tpmod_scurve_skynet.done",HAL_RW,&(done->Pin),comp_idx);
 
     return r;
 }
@@ -153,6 +167,15 @@ int max(float a, float b){
     }
 
     return a;
+}
+
+#define TOL 0.001
+bool near(double a, double b, double dist){
+
+    if(a<(b+dist) && a>(b-dist)){
+        return 1;
+    }
+    return 0;
 }
 
 
@@ -226,10 +249,13 @@ struct tp_vector *vector_ptr;
 extern struct result wrapper_get_pos(struct result input);
 extern double wrapper_stop_lenght(struct result input);
 struct result r={};
+struct result restore={};
 
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
+
+void update_look_ahead(TP_STRUCT * const tp);
 
 struct sc_pnt xyz;
 struct sc_dir abc;
@@ -245,25 +271,20 @@ int tpInit(TP_STRUCT * const tp)
 
 int tpRunCycle(TP_STRUCT * const tp, long period)
 {
-    //! printf("tpRunCycle. \n");
-    // tp->cycleTime=period;
-
     //! Update hal pin's once a cycle.
     update_hal(tp);
 
-    //! Plan motion if the segment vector > 0
+    //! Goto the target position.
     update_ruckig(tp);
 
-    //! Interpolate tp position.
-    update_gui(tp);
+    //! Get the netto look ahead segments for the trajectory based on
+    //! the current executed segment : tp->vector_current_exec.
+    update_look_ahead(tp);
 
-    /*
-    if(vector_size_c(vector_ptr)>0){
-        printf("current segment corners: \n");
-        printf("corner begin: %f \n", vector_at(vector_ptr,tp->vector_current_exec).angle_begin);
-        printf("corner end: %f \n", vector_at(vector_ptr,tp->vector_current_exec).angle_end);
-        printf("\n");
-    } */
+
+
+    //! Interpolate tp position given a 0-1 trajectory progress.
+    update_gui(tp);
 
     return 0;
 }
@@ -279,6 +300,11 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 
     //! Set the queue size to the c++ vector.
     vector_ptr=vector_init_ptr();
+
+    if(max_look_ahead->Pin==0){
+        max_look_ahead->Pin=10;
+        printf("tpCreate, set look_ahead to : %i \n",max_look_ahead->Pin);
+    }
 
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
 
@@ -465,9 +491,10 @@ int tpIsDone(TP_STRUCT * const tp)
 {
     if(tp->vector_size==0){
         tp->vector_current_exec=0;
-        tp->segment_progress=0;
         tp->cur_pos=0;
         tp->tar_pos=0;
+        tp->traject_lenght=0;
+        tp->traject_progress=0;
         return 1;
     }
     return 0;
@@ -523,10 +550,8 @@ int tpAddLine(TP_STRUCT *
               unsigned char enables,
               char atspeed,
               int indexer_jnum,
-              struct state_tag_t tag)
+              struct state_tag_t tag){
 
-
-{
     printf("tpAddLine \n");
 
     if(tp->vector_size==0){
@@ -585,8 +610,9 @@ int tpAddLine(TP_STRUCT *
     //! Clear.
     tp->vector_current_exec=0;
     tp->segment_progress=0;
+    tp->traject_progress=0;
     tp->cur_pos=0;
-    tp->tar_pos=0;
+    tp->tar_pos=tp->traject_lenght;
 
     return 0;
 }
@@ -602,8 +628,8 @@ int tpAddCircle(TP_STRUCT * const tp,
                 double acc,
                 unsigned char enables,
                 char atspeed,
-                struct state_tag_t tag)
-{
+                struct state_tag_t tag){
+
     printf("tpAddCircle. \n");
 
     if(tp->vector_size==0){
@@ -663,8 +689,9 @@ int tpAddCircle(TP_STRUCT * const tp,
 
     tp->vector_current_exec=0;
     tp->segment_progress=0;
+    tp->traject_progress=0;
     tp->cur_pos=0;
-    tp->tar_pos=0;
+    tp->tar_pos=tp->traject_lenght;
 
     return 0;
 }
@@ -693,6 +720,13 @@ int tcqFull(TC_QUEUE_STRUCT const * const tcq)
 inline void update_gui(TP_STRUCT * const tp){
 
     if(tp->vector_size>0){
+
+        //! Given a 0-1 trajectory progress will give the tp point.
+        vector_interpolate_traject_c(vector_ptr,
+                                     tp->traject_progress,
+                                     tp->traject_lenght,
+                                     &tp->segment_progress,
+                                     &tp->vector_current_exec);
 
         int id=tp->vector_current_exec;
 
@@ -753,11 +787,19 @@ inline void update_ruckig(TP_STRUCT * const tp){
     // Check the vector. Load first segment into the ruckig planner.
     if(tp->vector_size>0){
 
+        //! To prevent motion reverse from halting at segment start position.
+        if(tp->reverse_run && near(tp->cur_pos,tp->tar_pos,TOL)){
+        // if(tp->reverse_run && tp->cur_pos<tp->tar_pos+0.001 && tp->cur_pos>tp->tar_pos-0.001){
+             // printf("in motion reverse, at segment start. \n");
+             tp->tar_pos=0;
+        }
+
+        // printf("segment nr: %i",tp->vector_current_exec);
+        // printf(" segment progress: %f \n",tp->segment_progress);
+
         //! Gcode exec line nr.
         //! Used by funtion tpGetExecId to set the gui's current executed gcode line.
         tp->gcode_current_executed_line_nr=vector_at(vector_ptr,tp->vector_current_exec).gcode_line_nr;
-        double path_lenght=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
-        tp->tar_pos=path_lenght;
 
         r.curacc=tp->cur_acc;
         r.curpos=tp->cur_pos;
@@ -793,13 +835,9 @@ inline void update_ruckig(TP_STRUCT * const tp){
         //! We set it fixed for now.
         r.period=0.001;
         r.tarpos=tp->tar_pos;
+
         r.taracc=0;
         r.tarvel=0;
-
-        //! Change to motion reverse. Set tarpos to begin of segment.
-        if(tp->reverse_run){
-            r.tarpos=0;
-        }
 
         //! When pausing, goto velocity 0. See the component motdot
         //! how a jog stop is done.
@@ -809,81 +847,43 @@ inline void update_ruckig(TP_STRUCT * const tp){
             r.interfacetype=position;
         }
 
+        restore=r;
         r=wrapper_get_pos(r);
 
-        if(!r.error){
+        if(r.function_return_code==Working){
             tp->cur_pos=r.curpos;
             tp->cur_acc=r.curacc;
             tp->cur_vel=r.curvel;
-            tp->segment_progress=tp->cur_pos/path_lenght;
+
+            if(isnanf(tp->cur_pos)){
+                r=restore;
+            }
 
             //! Update hal pins for monitoring by halscope.
             *tp_curvel->Pin=r.curvel;
             *tp_curacc->Pin=r.curacc;
-        } else {
-            return;
+
+            tp->traject_progress=tp->cur_pos/tp->traject_lenght;
         }
 
-        if(r.finished && !tp->pausing){ //! The !tp->pausing repairs tp jump when pausing in motion reverse.
+        if(r.function_return_code==Finished && !tp->pausing){
 
-            // printf("segment progress: %f \n",tp->segment_progress);
+             // printf("curpos: %f trajectlenght: %f \n",tp->cur_pos,tp->traject_lenght);
 
-            //! Ruckig is finished, motion is backwards.
-            if(tp->reverse_run){
-                // printf("ruckig finished backward. \n");
+             tp->tar_pos=tp->traject_lenght;
 
-                //! Set next gcode segment if we are not at zero.
-                if(tp->vector_current_exec>0){
-
-                    //! Todo : check if moving forward or moving reverse.
-                    tp->vector_current_exec--;
-                    path_lenght=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
-                    tp->cur_pos=path_lenght;
-                    tp->tar_pos=0;
-                    tp->segment_progress=tp->cur_pos/path_lenght;
-                }
-
-                //! We are finished and completed the last gcode segment. Traject is done !
-                if(tp->vector_current_exec==0){
-                    vector_clear(vector_ptr);
-                    tp->vector_size=0;
-
-                    tp->vector_current_exec=0;
-                    tp->segment_progress=0;
-                    tp->cur_pos=0;
-                    tp->tar_pos=0;
-                    tp->segment_progress=0;
-                }
-            }
-
-            //! Ruckig is finished, motion is forward.
-            if(!tp->reverse_run && tp->segment_progress==1){
-                // printf("ruckig finished forward. \n");
-
-                //! Set next gcode segment if we are not at the end yet.
-                if(tp->vector_current_exec<tp->vector_size-1){
-
-                    //! Todo : check if moving forward or moving reverse.
-                    tp->vector_current_exec++;
-                    path_lenght=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
-                    tp->cur_pos=0;
-                    tp->tar_pos=path_lenght;
-                    tp->segment_progress=tp->cur_pos/path_lenght;
-                }
-
-                //! We are finished and completed the last gcode segment. Traject is done !
-                if(tp->vector_current_exec==tp->vector_size-1){
-                    vector_clear(vector_ptr);
-                    tp->vector_size=0;
-
-                    tp->vector_current_exec=0;
-                    tp->segment_progress=0;
-                    tp->cur_pos=0;
-                    tp->tar_pos=0;
-                    tp->segment_progress=0;
-                }
+            //! End of traject.
+            if(tp->cur_pos>tp->traject_lenght-0.001){
+                tp->vector_size=0;
+                vector_clear(vector_ptr);
             }
         }
+
+        if(r.function_return_code<0){
+            // printf("ruckig error code %i \n",r.function_return_code);
+        }
+
+        // printf("ruckig code %i \n",r.function_return_code);
     }
 }
 
@@ -892,7 +892,117 @@ inline void update_ruckig(TP_STRUCT * const tp){
 inline void update_hal(TP_STRUCT * const tp){
     //! For info, a pin uses a * before, a parameter not.
     tp->reverse_run=*reverse_run->Pin;
+    tp->max_look_ahead=max_look_ahead->Pin;
+
+    //! Force clear.
+    if(clear_vec->Pin){
+        vector_clear(vector_ptr);
+        tp->vector_size=0;
+        //! Reset pin directly.
+        clear_vec->Pin=0;
+    }
 }
+
+//! A Inline functinn is compiled in between the upper-level function. So
+//! its not called every time, but compiled inbetween. This makes it faster.
+//!
+//! This function calculates how much gcode segments can be optimized moving forward and
+//! or moving backwards.
+inline void update_look_ahead(TP_STRUCT * const tp){
+
+    if(tp->vector_size>0 && r.function_return_code==0){
+
+        int count=0;
+
+        if(!tp->reverse_run){
+            //! Motion forward. Look forward, ahead.
+            //! min is calculating the minimal of 2 input values.
+            for(int i=tp->vector_current_exec; i< min(vector_size_c(vector_ptr),tp->vector_current_exec+tp->max_look_ahead); i++){
+
+                //! Is it a tiny arc?
+                //!
+                //! And so on, path rules can come here.
+
+                //! Is next segment colinair?
+                if(vector_at(vector_ptr,i).angle_end<170){
+                    // printf("Abort for angle. \n");
+                    break;
+                }
+
+                //! When segment is a G0 rapid, stop optimizing.
+                if(vector_at(vector_ptr,i).type==1){
+                    // printf("Abort for G0 rapid. \n");
+                    break;
+                }
+
+                count++;
+                // printf("look ahead forward, checking vector segment : %i \n",i);
+            }
+            // printf("\n");
+
+        }
+
+        if(tp->reverse_run){
+            //! Motion reverse, look back.
+            //! max is calculating the maximum of 2 input values.
+            for(int i=tp->vector_current_exec; i> max(0,tp->vector_current_exec-tp->max_look_ahead); i--){
+
+                //! When segment is a G0 rapid, stop optimizing.
+                if(vector_at(vector_ptr,i).type==1){
+                    // printf("Abort for G0 rapid. \n");
+                    break;
+                }
+
+                //! Is next segment colinair?
+                if(vector_at(vector_ptr,i).angle_begin<170){
+                    // printf("Abort for angle. \n");
+                    break;
+                }
+
+                count++;
+                // printf("look ahead backward, checking vector segment : %i \n",i);
+
+            }
+            // printf("\n");
+        }
+
+
+        double lbegin=0, lend=0;
+        //! Calculate traject positions begin & end for current segment.
+        for(int i=0; i<tp->vector_current_exec; i++){
+            lbegin+=vector_at(vector_ptr,i).path_lenght;
+        }
+
+        lend+=lbegin;
+        lend+=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
+
+        // printf("traject lenght to current segment start: %f end: %f \n",lbegin,lend);
+
+        if(!tp->reverse_run){
+            //! Add look_ahead distance.
+            for(int i=min(tp->vector_current_exec+1,tp->vector_size); i<min(tp->vector_current_exec+1+count,tp->vector_size); i++){
+                lend+=vector_at(vector_ptr,i).path_lenght;
+            }
+
+            // printf("look ahead tarpos: %f \n",lend);
+            tp->tar_pos=lend;
+        }
+
+        if(tp->reverse_run){
+            //! Add look_back distance.
+            for(int i=max(0,tp->vector_current_exec-1); i>max(0,tp->vector_current_exec-1-count); i--){
+                lbegin-=vector_at(vector_ptr,i).path_lenght;
+            }
+
+            // printf("look back tarpos: %f \n",lbegin);
+            tp->tar_pos=lbegin;
+        }
+
+        // printf("look ahead: %i current_pos: %f \n",count,tp->cur_pos);
+        // printf("calculated tarpos: %f \n",tp->tar_pos);
+    }
+}
+
 
 EXPORT_SYMBOL(tpMotFunctions);
 EXPORT_SYMBOL(tpMotData);

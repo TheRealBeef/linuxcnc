@@ -853,7 +853,7 @@ int tcqFull(TC_QUEUE_STRUCT const * const tcq)
 EXPORT_SYMBOL(tpMotFunctions);
 EXPORT_SYMBOL(tpMotData);
 
-EXPORT_SYMBOL(tpSetMaxJerk); //! Added to get it to run.
+EXPORT_SYMBOL(tpSetMaxJerk);
 EXPORT_SYMBOL(tpAbort);
 EXPORT_SYMBOL(tpActiveDepth);
 EXPORT_SYMBOL(tpAddCircle);

@@ -43,7 +43,7 @@ enum ruckigs_function_return_message {
     ErrorInvalidInput = -100, ///< Error in the input parameter
     ErrorTrajectoryDuration = -101, ///< The trajectory duration exceeds its numerical limits
     ErrorPositionalLimits = -102, ///< The trajectory exceeds the given positional limits (only in Ruckig Pro)
-    // ErrorNoPhaseSynchronization = -103, ///< The trajectory cannot be phase synchronized
+    ErrorNoPhaseSynchronization = -103, ///< The trajectory cannot be phase synchronized
     ErrorExecutionTimeCalculation = -110, ///< Error during the extremel time calculation (Step 1)
     ErrorSynchronizationCalculation = -111, ///< Error during the synchronization calculation (Step 2)
 };

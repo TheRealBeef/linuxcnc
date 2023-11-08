@@ -116,7 +116,7 @@ typedef struct {
     double traject_lenght;
     double traject_progress;
     double segment_progress;
-    int look_ahead;
+    int max_look_ahead;
     EmcPose gcode_lastPos;
 
     int gcode_upcoming_line_nr;

@@ -6,6 +6,10 @@ echo "\n"
 echo "check dependencies. \n"
 sudo apt-get install libeigen3-dev
 
+echo "removing rtapi_app & linuxcnc_module_helper to overwrite. \n"
+rm -f ../bin/rtapi_app
+rm -f ../bin/linuxcnc_module_helper
+
 #echo "copy python scripts to ~/bin folder. \n"
 #cd ..
 #cd scripts
@@ -27,7 +31,6 @@ cd hal
 cp *.h ../../include
 cd ..
 cd ..
-
 
 echo "Building & installing components needed by the axis gui. \nBuilding with halcompile. \n"
 cd scripts
