@@ -58,7 +58,10 @@ struct tp_segment {
     double ve;
 
     //! Store the lenght for the scurve planner.
-     double path_lenght;
+    double path_lenght;
+
+    //! Store the radius, we can use this for look ahead tiny arc's.
+    double radius;
 };
 
 #endif

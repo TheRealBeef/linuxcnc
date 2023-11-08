@@ -473,6 +473,12 @@ extern "C" void sc_arc_get_mid_waypoint_c(sc_pnt start, sc_pnt center, sc_pnt en
     *waypoint=pi;
 }
 
+//! Arc way may be start or end point.
+//! Returns arc radius from calculated line lenght.
+extern "C" double arc_radius( struct sc_pnt arc_way, struct sc_pnt arc_center){
+
+    return sqrt(pow(arc_way.x-arc_center.x,2)+pow(arc_way.y-arc_center.y,2)+pow(arc_way.z-arc_center.z,2));
+}
 
 
 
