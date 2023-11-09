@@ -1,0 +1,12 @@
+#!/bin/sh
+
+echo "Start halshow. \n"
+cd ..
+cd scripts
+./rip-environment halshow
+
+echo "start linuxcnc server program."
+linuxcncsrv
+# Start emc server program. /bin/linuxcncsrv
+
+

@@ -1,0 +1,18 @@
+virtual machine installed with debian 12.
+
+# Outcomment search from cd, to install new stuff.
+sudo nano /etc/apt/sources.list
+
+# For ./autogen to work, we need automake.
+sudo apt-get install git cmake automake
+
+sudo apt-get install libudev-dev libmodbus-dev libusb-1.0-0-dev libgpiod-dev libgtk-3-dev libgtk2.0-dev
+ 
+sudo apt-get install libglib2.0-dev yapps2 intltool libboost-dev python3-dev bwidget
+sudo apt-get install libboost-python-dev tklib tcl8.6-dev tk-dev bwidget tclx libreadline-dev libeditreadline-dev
+sudo apt-get install python3-tk tclx
+
+git clone https://github.com/grotius-cnc/linuxcnc.git
+cd linuxcnc/cmake
+./build_all
+

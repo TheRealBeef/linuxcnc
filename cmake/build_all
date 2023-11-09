@@ -7,51 +7,63 @@ echo "check dependencies. \n"
 sudo apt-get install libeigen3-dev
 
 echo "removing rtapi_app & linuxcnc_module_helper to overwrite. \n"
-rm -f ../bin/rtapi_app
-rm -f ../bin/linuxcnc_module_helper
+cd ../bin
+rm -f rtapi_app
+rm -f linuxcnc_module_helper
+cd ..
 
-#echo "copy python scripts to ~/bin folder. \n"
-#cd ..
-#cd scripts
-#cp -rf * ../bin
-#cd ..
+	#echo "copy python scripts to ~/bin folder. \n"
+	#cd ..
+	#cd scripts
+	#cp -rf * ../bin
+	#cd ..
 
 echo "run check and set scripts. \n"
-cd ..
 cd src
 ./autogen.sh
 ./configure --enable-non-distributable=yes --with-realtime=uspace
+	# Use lcnc's original make process for now. The problem is there are .comp files
+	# that on some pc's will not be installed --install using halcompile. Halcompile fails to find a file.
+	# To resolve installion problems for now we use the original compilation first, then later on
+	# we overwrite it with the cmake build system.
+	# Another problem is that halcompile --preprocess .comp to .c files don't always work correctly.
+make -j2
 cd ..
 
-echo "Copying header files into the include directory to use with halcompile \n"
-cd src/rtapi
-cp *.h ../../include
-cd ..
-cd hal
-cp *.h ../../include
-cd ..
-cd ..
+	# echo "Copying header files into the include directory to use with halcompile \n"
+	# cd src/rtapi
+	# cp *.h ../../include
+	# cd ..
+	# cd hal
+	# cp *.h ../../include
+	# cd ..
+	# cd ..
+	
+	# echo "Building & installing components needed by the axis gui. \nBuilding with halcompile. \n"
+	# cd scripts
+	# ./rip-environment halcompile --install ../src/hal/components/ddt.comp
+	# ./rip-environment halcompile --install ../src/hal/components/hypot.comp
+	# ./rip-environment halcompile --install ../src/hal/components/sim_spindle.comp
+	# ./rip-environment halcompile --install ../src/hal/components/limit2.comp
+	# ./rip-environment halcompile --install ../src/hal/components/lowpass.comp
+	# ./rip-environment halcompile --install ../src/hal/components/near.comp
+	# ./rip-environment halcompile --install ../src/hal/components/scale.comp
+	# ./rip-environment halcompile --install ../src/hal/components/or2.comp
+	# ./rip-environment halcompile --install ../src/hal/components/comp.comp
+	# ./rip-environment halcompile --install ../src/hal/components/and2.comp
+	# ./rip-environment halcompile --install ../src/hal/components/wcomp.comp
+	# ./rip-environment halcompile --install ../src/hal/components/match8.comp
+	# ./rip-environment halcompile --install ../src/hal/components/mux2.comp
+	# ./rip-environment halcompile --install ../src/hal/components/mux4.comp
+	# ./rip-environment halcompile --install ../src/hal/components/mux8.comp
+	# ./rip-environment halcompile --install ../src/hal/components/mux16.comp
+	# ./rip-environment halcompile --install ../src/hal/components/sim_home_switch.comp
+	# cd ..
 
-echo "Building & installing components needed by the axis gui. \nBuilding with halcompile. \n"
-cd scripts
-./rip-environment halcompile --install ../src/hal/components/ddt.comp
-./rip-environment halcompile --install ../src/hal/components/hypot.comp
-./rip-environment halcompile --install ../src/hal/components/sim_spindle.comp
-./rip-environment halcompile --install ../src/hal/components/limit2.comp
-./rip-environment halcompile --install ../src/hal/components/lowpass.comp
-./rip-environment halcompile --install ../src/hal/components/near.comp
-./rip-environment halcompile --install ../src/hal/components/scale.comp
-./rip-environment halcompile --install ../src/hal/components/or2.comp
-./rip-environment halcompile --install ../src/hal/components/comp.comp
-./rip-environment halcompile --install ../src/hal/components/and2.comp
-./rip-environment halcompile --install ../src/hal/components/wcomp.comp
-./rip-environment halcompile --install ../src/hal/components/match8.comp
-./rip-environment halcompile --install ../src/hal/components/mux2.comp
-./rip-environment halcompile --install ../src/hal/components/mux4.comp
-./rip-environment halcompile --install ../src/hal/components/mux8.comp
-./rip-environment halcompile --install ../src/hal/components/mux16.comp
-./rip-environment halcompile --install ../src/hal/components/sim_home_switch.comp
-cd ..
+
+echo "removing rtapi_app & linuxcnc_module_helper to overwrite it with cmake. \n"
+rm -f rtapi_app
+rm -f linuxcnc_module_helper
 
 echo "Building linuxcnc with cmake. \n"
 cd cmake
@@ -66,9 +78,9 @@ cd ..
 echo "current folder:"
 echo $PWD
 echo "\n"
-
-# Recreate the Sudo Make Setuid command (needed for running real machines)
-# This version is from : https://github.com/grotius-cnc/hal-core/blob/main/make
+	
+	# Recreate the Sudo Make Setuid command (needed for running real machines)
+	# This version is from : https://github.com/grotius-cnc/hal-core/blob/main/make
 echo "Running equivalent of Sudo Make Setuid. \n"
 sudo chown 777 -R bin/rtapi_app
 sudo chown 777 -R bin/linuxcnc_module_helper
@@ -79,6 +91,6 @@ echo "Start linuxcnc. \n"
 cd scripts
 ./rip-environment linuxcnc ../configs/sim/axis/axis_mm.ini
 
-# Example to start with custom trajectory planner or use in ini file : [TRAJ]TPMOD=user_tpcomp
-# ./rip-environment linuxcnc -t tpmod_scurve ../configs/sim/axis/axis_mm.ini
-
+	# Example to start with custom trajectory planner or use in ini file : [TRAJ]TPMOD=user_tpcomp
+	# ./rip-environment linuxcnc -t tpmod_scurve ../configs/sim/axis/axis_mm.ini
+	
