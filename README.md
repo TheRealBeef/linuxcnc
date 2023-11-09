@@ -1,9 +1,25 @@
 
 ```
-To build :
+Check build dependencies :
+
+  $ cd ~/linuxcnc/cmake
+  $ ./check_build_deps
+
+To build linuxcnc from source :
 
   $ cd ~/linuxcnc/cmake
   $ ./build_all
+  # After succesfull build lcnc starts.	
+  
+To run linuxcnc :
+  
+  $ cd ~/linuxcnc/cmake
+  $ ./start_lcnc
+  
+To explore the the linuxcnc source code :
+
+   $ cd ~/linuxcnc/cmake
+   open the CMakeLists.txt file in qt-designer
   
 ```
 
