@@ -690,6 +690,17 @@ int tpAddLine(TP_STRUCT *
     tp->cur_pos=0;
     tp->tar_pos=tp->traject_lenght;
 
+    printf("line startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
+    printf("line endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
+
+    //! Check for isnan.
+    if(isnanf(b.path_lenght)){
+        printf("Isnan error in line segment, report gcode file to developper. Now emptying gcode quie to prevent program freeze. \n");
+        printf("Report to developper, arc error at tp->vector size: %i \n",tp->vector_size);
+        tp->vector_size=0;
+        vector_clear(vector_ptr);
+        return -1;
+    }
     return 0;
 }
 
@@ -710,7 +721,7 @@ int tpAddCircle(TP_STRUCT * const tp,
         return -1;
     }
 
-    // printf("tpAddCircle. \n");
+    printf("tpAddCircle. \n");
 
     if(tp->vector_size==0){
         tp->gcode_lastPos=tp->currentPos;
@@ -761,14 +772,14 @@ int tpAddCircle(TP_STRUCT * const tp,
 
     vector_add_segment(vector_ptr,b);
     tp->vector_size=vector_size_c(vector_ptr);
-    // printf("vector size: %i \n",tp->vector_size);
+    printf("vector size: %i \n",tp->vector_size);
 
     //! Update last pose to end of gcode block.
     tp->gcode_lastPos=end;
 
     tp->traject_lenght+=b.path_lenght;
-    // printf("lengt of this segment: %f \n",b.path_lenght);
-    // printf("traject lenght now: %f \n",tp->traject_lenght);
+    printf("lengt of this segment: %f \n",b.path_lenght);
+    printf("traject lenght now: %f \n",tp->traject_lenght);
 
     tp->vector_current_exec=0;
     tp->segment_progress=0;
@@ -776,6 +787,18 @@ int tpAddCircle(TP_STRUCT * const tp,
     tp->cur_pos=0;
     tp->tar_pos=tp->traject_lenght;
 
+    printf("arc startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
+    printf("arc endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
+    printf("arc center x: %f, y: %f, z: %f \n",center.x,center.y,center.z);
+
+    //! Check for isnan.
+    if(isnanf(b.path_lenght)){
+        printf("Isnan error in arc segment, report gcode file to developper. Now emptying gcode quie to prevent program freeze. \n");
+        printf("Report to developper, arc error at tp->vector size: %i \n",tp->vector_size);
+        tp->vector_size=0;
+        vector_clear(vector_ptr);
+        return -1;
+    }
     return 0;
 }
 
@@ -875,7 +898,12 @@ inline void update_ruckig(TP_STRUCT * const tp){
         //! To prevent motion reverse from halting at segment start position.
         if(tp->reverse_run && near(tp->cur_pos,tp->tar_pos,TOL)){
             // if(tp->reverse_run && tp->cur_pos<tp->tar_pos+0.001 && tp->cur_pos>tp->tar_pos-0.001){
-            // printf("in motion reverse, at segment start. \n");
+
+            //! This shows, reverse at current_exec_nr = 0. So you can not go any further back, sent message.
+            if(tp->vector_current_exec==0){
+                printf("At begin of gcode queue (gcode vector), can not go further back. \n");
+            }
+
             tp->tar_pos=0;
         }
 
