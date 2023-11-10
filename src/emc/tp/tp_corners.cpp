@@ -27,8 +27,8 @@ void tp_corners::line_arc_angle(sc_pnt p0,
                                 sc_pnt p3,
                                 double &angle_deg){
 
-    sc_pnt pi;
-    tp_arcs().sc_interpolate_arc(p1,p2,p3,0.1,pi);
+    sc_pnt pi,pdummy;
+    tp_arcs().sc_interpolate_arc(p1,p2,p3,pdummy,0.1,pi);
     line_line_angle(p0,p1,pi,angle_deg);
 }
 
@@ -38,8 +38,8 @@ void tp_corners::arc_line_angle(sc_pnt p0,
                                 sc_pnt p3,
                                 double &angle_deg){
 
-    sc_pnt pi;
-    tp_arcs().sc_interpolate_arc(p0,p1,p2,0.9,pi);
+    sc_pnt pi,pdummy;
+    tp_arcs().sc_interpolate_arc(p0,p1,p2,pdummy,0.9,pi);
     line_line_angle(pi,p2,p3,angle_deg);
 }
 
@@ -50,9 +50,9 @@ void tp_corners::arc_arc_angle(sc_pnt p0,
                                sc_pnt p4,
                                double &angle_deg){
 
-    sc_pnt pi0, pi1;
-    tp_arcs().sc_interpolate_arc(p0,p1,p2,0.9,pi0);
-    tp_arcs().sc_interpolate_arc(p2,p3,p4,0.1,pi1);
+    sc_pnt pi0, pi1, pdummy;
+    tp_arcs().sc_interpolate_arc(p0,p1,p2,pdummy,0.9,pi0);
+    tp_arcs().sc_interpolate_arc(p2,p3,p4,pdummy,0.1,pi1);
     line_line_angle(pi0,p2,pi1,angle_deg);
 }
 

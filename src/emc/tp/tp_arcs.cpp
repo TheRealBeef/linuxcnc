@@ -5,11 +5,23 @@ tp_arcs::tp_arcs()
 
 }
 
-void tp_arcs::sc_interpolate_arc(sc_pnt p0_,
-                                 sc_pnt p1_,
-                                 sc_pnt p2_,
+void tp_arcs::sc_interpolate_arc(sc_pnt p0_,        //! Startpoint.
+                                 sc_pnt p1_,        //! Waypoint.
+                                 sc_pnt p2_,        //! Endpoint.
+                                 sc_pnt p3_,        //! Centerpoint.
                                  double progress,
                                  sc_pnt &pi){
+
+
+    //! Is it a circle?
+    if(p0_.x==p2_.x && p0_.y==p2_.y && p0_.z==p2_.z){
+        printf("interpolating arc as 2d circle. \n");
+
+        sc_pnt p33_=p3_;
+        p33_.z+=1;
+        pi=sc_rotate_point_around_line(p0_,2*M_PI*progress,p3_,p33_);
+        return;
+    }
 
     Eigen::Vector3d p1(p0_.x,p0_.y,p0_.z);
     Eigen::Vector3d p2(p1_.x,p1_.y,p1_.z);
@@ -92,9 +104,9 @@ void tp_arcs::sc_interpolate_arc(sc_pnt p0_,
     pi=sc_rotate_point_around_line({p1.x(),p1.y(),p1.z()},progress*angle,{pc.x(),pc.y(),pc.z()},{pc.x()+an.x(),pc.y()+an.y(),pc.z()+an.z()});
 }
 
-extern "C" void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, double progress, struct sc_pnt *pi){
+extern "C" void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, struct sc_pnt p3, double progress, struct sc_pnt *pi){
     sc_pnt p;
-    tp_arcs().sc_interpolate_arc(p0,p1,p2,progress,p);
+    tp_arcs().sc_interpolate_arc(p0,p1,p2,p3,progress,p);
     *pi=p;
 }
 
@@ -137,9 +149,20 @@ void tp_arcs::sc_arc_radius(sc_pnt p0,
     radius = (pcenter-pa).norm();
 }
 
-double tp_arcs::sc_arc_lenght(sc_pnt p0,
-                         sc_pnt p1,
-                         sc_pnt p2){
+double tp_arcs::sc_arc_lenght(sc_pnt p0,    //! Start
+                         sc_pnt p1,         //! Waypoint
+                         sc_pnt p2,        //! Endpoint
+                              sc_pnt p3){      //! Center
+
+    //! Is it a circle?
+    if(p0.x==p2.x && p0.y==p2.y && p0.z==p2.z){
+        printf("processing arc lenght for circle. \n");
+        double radius=sqrt(pow(p3.x-p0.x,2)+pow(p3.y-p0.y,2)+pow(p3.z-p0.z,2));
+           printf("radius: %f \n",radius);
+
+        double circumfece=(M_PI*2)*radius;
+        return circumfece;
+    }
 
     Eigen::Vector3d pa,pb,pc;
     pa.x()=p0.x;
@@ -170,11 +193,11 @@ double tp_arcs::sc_arc_lenght(sc_pnt p0,
     //! Center of arc.
     Eigen::Vector3d pcenter = pa + v1*k1 + v2*k2;
     arc.center={pcenter.x(),pcenter.y(),pcenter.z()};
-    //! std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
+    std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
 
     double radius = (pcenter-pa).norm();
     arc.radius=radius;
-    //! std::cout<<"radius: "<<radius<<std::endl;
+    std::cout<<"radius: "<<radius<<std::endl;
     arc.diameter=radius*2;
 
     //! Arc angle.
@@ -228,8 +251,8 @@ double tp_arcs::sc_arc_lenght(sc_pnt p0,
     return arc.arcLenght;
 }
 
-extern "C" double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end){
-    double l=tp_arcs().sc_arc_lenght(start,way,end);
+extern "C" double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end, struct sc_pnt center){
+    double l=tp_arcs().sc_arc_lenght(start,way,end,center);
     if(isnanf(l)){
         return 0;
     }
@@ -381,6 +404,16 @@ void tp_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
                                    sc_pnt p1, //! Center.
                                    sc_pnt p2, //! End.
                                    sc_pnt &pi){
+
+    //! Is it a circle?
+    if(p0.x==p2.x && p0.y==p2.y && p0.z==p2.z){
+        printf("no arc but circle, processed as 2d circle. \n");
+
+        sc_pnt p11=p1;
+        p11.z+=100;
+        pi=sc_rotate_point_around_line(p0,M_PI,p1,p11);
+        return;
+    }
 
     sc_arc arc;
     arc.center={p1.x ,p1.y ,p1.z};

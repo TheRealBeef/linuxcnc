@@ -79,7 +79,7 @@ typedef struct {
 typedef struct {
     hal_float_t Pin;
 } param_float_data_t;
-param_float_data_t *tp_progress;
+param_float_data_t *test_param;
 
 typedef struct {
     hal_bit_t Pin;
@@ -134,8 +134,8 @@ static int setup_pins(){
     max_look_ahead = (param_s32_data_t*)hal_malloc(sizeof(param_s32_data_t));
     r+=hal_param_s32_new("tpmod_scurve_skynet.look_ahead",HAL_RW,&(max_look_ahead->Pin),comp_idx);
 
-    tp_progress = (param_float_data_t*)hal_malloc(sizeof(param_float_data_t));
-    r+=hal_param_float_new("tpmod_scurve_skynet.progress",HAL_RW,&(tp_progress->Pin),comp_idx);
+    test_param = (param_float_data_t*)hal_malloc(sizeof(param_float_data_t));
+    r+=hal_param_float_new("tpmod_scurve_skynet.vel_end",HAL_RW,&(test_param->Pin),comp_idx);
 
     clear_vec = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
     r+=hal_param_bit_new("tpmod_scurve_skynet.clear_vec",HAL_RW,&(clear_vec->Pin),comp_idx);
@@ -238,12 +238,12 @@ extern void vector_add_segment(struct tp_vector *ptr, struct tp_segment b);
 extern void vector_remove_last_segment(struct tp_vector *ptr);
 extern void vector_set_end_angle(tp_vector *ptr, int index, double angle_deg);
 
-extern double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end);
+extern double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end, struct sc_pnt center);
 extern double line_lenght_c(struct sc_pnt start, struct sc_pnt end);
 extern void interpolate_line_c(struct sc_pnt p0, struct sc_pnt p1, double progress, struct  sc_pnt *pi);
 extern void interpolate_dir_c(struct sc_dir p0, struct sc_dir p1, double progress, struct sc_dir *pi);
 extern void interpolate_ext_c(struct sc_ext p0, struct sc_ext p1, double progress, struct sc_ext *pi);
-extern void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, double progress, struct sc_pnt *pi);
+extern void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_pnt p2, struct sc_pnt p3, double progress, struct sc_pnt *pi);
 extern void sc_arc_get_mid_waypoint_c(struct sc_pnt start, struct sc_pnt center, struct sc_pnt end, struct sc_pnt *waypoint);
 extern void vector_interpolate_traject_c(struct tp_vector *ptr, double traject_progress, double traject_lenght, double *curve_progress, int *curve_nr);
 
@@ -319,7 +319,26 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
         printf("tpCreate, set look_ahead to : %i \n",max_look_ahead->Pin);
     }
 
+    test_param->Pin=0;
+
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
+
+
+    //! Test if a circle is processed ok.
+    struct sc_pnt start={0,0,0};
+    struct sc_pnt center={50,0,0};
+    struct sc_pnt end={0,0,0};
+    struct sc_pnt way={0,0,0};
+
+    //! Create a 3d arc using waypoint technique.
+    sc_arc_get_mid_waypoint_c(start,
+                              center,
+                              end,
+                              &way);
+
+    printf("Testing circle, start{0,0,0} center{50,0,0} end {0,0,0} \n");
+    printf("waypoint rotated at Pi radians x : %f y: %f z: %f \n",way.x,way.y,way.z);
+    printf("arc lenght: %f \n", arc_lenght_c(start,way,end,center));
 
     return 0;
 }
@@ -749,7 +768,7 @@ int tpAddCircle(TP_STRUCT * const tp,
     b.vm=vel;
     b.ve=0;
 
-    b.path_lenght=arc_lenght_c(b.pnt_s,b.pnt_w,b.pnt_e);
+    b.path_lenght=arc_lenght_c(b.pnt_s,b.pnt_w,b.pnt_e,b.pnt_c);
 
     //! Calculate the arc radius, we can use this for look ahead of tiny arc's.
     b.radius=arc_radius(b.pnt_w,b.pnt_c);
@@ -833,6 +852,7 @@ inline void update_gui(TP_STRUCT * const tp){
             interpolate_arc_c(vector_at(vector_ptr,id).pnt_s,
                               vector_at(vector_ptr,id).pnt_w,
                               vector_at(vector_ptr,id).pnt_e,
+                              vector_at(vector_ptr,id).pnt_c,
                               tp->segment_progress,
                               &xyz);
         }
@@ -926,7 +946,7 @@ inline void update_ruckig(TP_STRUCT * const tp){
         }
 
         r.enable=1;
-        r.durationdiscretizationtype=Continuous;
+        r.durationdiscretizationtype=Discrete;
         r.synchronizationtype=None;
 
         //! MENTION: tp->cycletime is not set to 0.001, or it has a long to double conversion error.

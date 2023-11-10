@@ -1,0 +1,13 @@
+( File created using Intuwiz Software Service )
+( https://www.intuwiz.com )
+( More information: https://www.intuwiz.com/circle.html )
+( File created:  2023-11-10  09:20:39  UTC )
+
+G00 Z10
+G00 X0 Y0
+G01 Z0 F1000
+G02 I50
+G00 Z10
+G00 X0 Y0
+M30
+

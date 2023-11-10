@@ -21,30 +21,33 @@ class tp_arcs
 public:
     tp_arcs();
 
-    void sc_interpolate_arc(sc_pnt p0,
-                            sc_pnt p1,     //! Waypoint.
-                            sc_pnt p2,
+    void sc_interpolate_arc(sc_pnt p0,          //! Startpoint.
+                            sc_pnt p1,          //! Waypoint.
+                            sc_pnt p2,          //! Endpoint.
+                            sc_pnt p3_,         //! Centerpoint.
                             double progress,    //! 0-1.
-                            sc_pnt &pi);   //! Interpolated point.
+                            sc_pnt &pi);        //! Interpolated point.
 
-    double sc_arc_lenght(sc_pnt p0,
-                    sc_pnt p1,  //! Waypoint.
-                    sc_pnt p2);
+    double sc_arc_lenght(sc_pnt p0,  //! Start.
+                         sc_pnt p1,  //! Waypoint.
+                         sc_pnt p2,  //! End.
+                         sc_pnt p3); //! Center.
 
     void sc_arc_radius(sc_pnt p0,
-                    sc_pnt p1,  //! Waypoint.
-                    sc_pnt p2,
-                    double &radius);
+                       sc_pnt p1,  //! Waypoint.
+                       sc_pnt p2,
+                       double &radius);
 
     //! If points are colinear, output is xy plane, type clockwise g2.
     void sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
-                          sc_pnt p1, //! Center.
-                          sc_pnt p2, //! End.
-                          sc_pnt &pi);
+                                 sc_pnt p1, //! Center.
+                                 sc_pnt p2, //! End.
+                                 sc_pnt &pi);
 
 private:
     sc_pnt sc_rotate_point_around_line(sc_pnt thePointToRotate,
-                                       double theta,sc_pnt theLineP1,
+                                       double theta,            //! Input in radians.
+                                       sc_pnt theLineP1,
                                        sc_pnt theLineP2);
 
     //! Keeping as is from original github code example.
