@@ -1,20 +1,26 @@
 
 ```
-Check build dependencies :
+1. Check and install build dependencies :
 
   $ cd ~/linuxcnc/cmake
+  
+  Install a pre configured dependency list:
+  $ ./install_build_deps
+  	
+  Check if all is ok:
   $ ./check_build_deps
 
-To build linuxcnc from source :
+2. build linuxcnc with make:
 
   $ cd ~/linuxcnc/cmake
-  $ ./build_all
-  # After succesfull build lcnc starts.	
+  $ ./build_make
   
-To run linuxcnc :
+  # If this fails try to solve manually : https://linuxcnc.org/docs/html/code/building-linuxcnc.html
+  
+3. build linuxcnc with cmake :
   
   $ cd ~/linuxcnc/cmake
-  $ ./start_lcnc
+  $ ./build_cmake
   
 To explore the the linuxcnc source code :
 

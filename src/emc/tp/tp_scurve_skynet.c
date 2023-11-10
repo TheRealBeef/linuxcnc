@@ -235,6 +235,7 @@ extern void vector_clear(struct tp_vector *ptr);
 extern int vector_at_id(struct tp_vector *ptr, int n);
 extern struct tp_segment vector_at(struct tp_vector *ptr, int index);
 extern void vector_add_segment(struct tp_vector *ptr, struct tp_segment b);
+extern void vector_remove_last_segment(struct tp_vector *ptr);
 extern void vector_set_end_angle(tp_vector *ptr, int index, double angle_deg);
 
 extern double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end);
@@ -693,14 +694,6 @@ int tpAddLine(TP_STRUCT *
     printf("line startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
     printf("line endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
 
-    //! Check for isnan.
-    if(isnanf(b.path_lenght)){
-        printf("Isnan error in line segment, report gcode file to developper. Now emptying gcode quie to prevent program freeze. \n");
-        printf("Report to developper, arc error at tp->vector size: %i \n",tp->vector_size);
-        tp->vector_size=0;
-        vector_clear(vector_ptr);
-        return -1;
-    }
     return 0;
 }
 
@@ -791,14 +784,6 @@ int tpAddCircle(TP_STRUCT * const tp,
     printf("arc endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
     printf("arc center x: %f, y: %f, z: %f \n",center.x,center.y,center.z);
 
-    //! Check for isnan.
-    if(isnanf(b.path_lenght)){
-        printf("Isnan error in arc segment, report gcode file to developper. Now emptying gcode quie to prevent program freeze. \n");
-        printf("Report to developper, arc error at tp->vector size: %i \n",tp->vector_size);
-        tp->vector_size=0;
-        vector_clear(vector_ptr);
-        return -1;
-    }
     return 0;
 }
 

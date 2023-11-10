@@ -84,7 +84,12 @@ double tp_lines::sc_line_lenght(sc_pnt p0, sc_pnt p1){
 }
 
 extern "C" double line_lenght_c(struct sc_pnt start, struct sc_pnt end){
-    return tp_lines().sc_line_lenght(start,end);
+
+    double l=tp_lines().sc_line_lenght(start,end);
+    if(isnanf(l)){
+        return 0;
+    }
+    return l;
 }
 
 

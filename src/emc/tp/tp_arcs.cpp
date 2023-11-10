@@ -229,7 +229,11 @@ double tp_arcs::sc_arc_lenght(sc_pnt p0,
 }
 
 extern "C" double arc_lenght_c(struct sc_pnt start, struct sc_pnt way, struct sc_pnt end){
-    return tp_arcs().sc_arc_lenght(start,way,end);
+    double l=tp_arcs().sc_arc_lenght(start,way,end);
+    if(isnanf(l)){
+        return 0;
+    }
+    return l;
 }
 
 //! http://paulbourke.net/geometry/rotate/

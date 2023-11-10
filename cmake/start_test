@@ -1,0 +1,24 @@
+#!/bin/sh
+
+PATH=/home/user/linuxcnc/lib
+PATH=/home/user/linuxcnc/rtlib
+
+echo "Start halshow. \n"
+cd ..
+cd scripts
+./rip-environment halrun -U 
+./rip-environment halshow &
+
+./rip-environment halcmd stop
+
+# EMCMOT = motmod_scurve # jogging.
+# ./rip-environment halcmd -i /home/user/linuxcnc/configs/sim/axis/axis_mm.ini
+# ./rip-environment halcmd -f /home/user/linuxcnc/lib/hallib/core_sim.hal
+
+# Use debug flag here like : -rcsdebug 
+# ./rip-environment linuxcncsvr -ini /home/user/linuxcnc/cmake/start_test.ini &
+
+echo "and now?"
+
+
+
