@@ -30,7 +30,7 @@ float_data_t *vi,*si,*ai;
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *module, *tool_on;
+bit_data_t *module, *vel;
 
 typedef struct {
     hal_s32_t *Pin;
@@ -162,8 +162,8 @@ static int setup_pins(){
     r+=hal_pin_bit_new("scurve.enable",HAL_IN,&(module->Pin),comp_idx);
     
     //! Output pins, type bit.
-    tool_on = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
-    r+=hal_pin_bit_new("scurve.tool_on",HAL_OUT,&(tool_on->Pin),comp_idx);
+    vel = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
+    r+=hal_pin_bit_new("scurve.tool_on",HAL_OUT,&(vel->Pin),comp_idx);
     
     //! Output pins, type float.
     vi = (float_data_t*)hal_malloc(sizeof(float_data_t));

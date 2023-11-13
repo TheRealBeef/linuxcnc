@@ -62,6 +62,8 @@ Python Library      ${PYTHON_LIB}
 Boost library       Boost::python${BOOST_PYTHON_LIB_SUFFIX}
 ]]
 
+# add_subdirectory(${SRC_DIR}/vendor/ruckig_dev)
+
 include_directories("/usr/include/boost")
 
 # ~/lib (c - c++ code for motion, gcode etc.)
@@ -110,6 +112,7 @@ add_subdirectory(${SRC_DIR}/components/motmod) # jogging trapezium
 add_subdirectory(${SRC_DIR}/components/motmod_scurve) # jogging scurve
 add_subdirectory(${SRC_DIR}/components/scope_rt)
 add_subdirectory(${SRC_DIR}/components/pid)
+add_subdirectory(${SRC_DIR}/components/cyberdyne)
 #add_subdirectory(${SRC_DIR}/components/simple_tp)
 
 # Components from here need a halcompile from .comp to .c file.
