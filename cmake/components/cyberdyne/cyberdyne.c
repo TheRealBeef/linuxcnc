@@ -116,12 +116,6 @@ static void the_function(){
     if(r.curpos==r.tarpos){
         r.curpos=0;
     }
-
-
-
-    // rtapi_print_msg(RTAPI_MSG_ERR,"running!");
-
-
 }
 
 static int setup_pins(){

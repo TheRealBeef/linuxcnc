@@ -48,6 +48,14 @@ struct ruckig_c_data {
     double pos_extrema_min, pos_extrema_max; //! Min's and max's of the trajectory.
 };
 
+struct ruckig_c_waypoint {
+    double vo;  //! Velocity begin.
+    double ve;  //! Velocity end.
+    double vm;  //! Velcotiy max.
+    double po;  //! Position begin.
+    double pe;  //! Position end.
+};
+
 #endif // RUCKIG_DEV_FORMAT_H
 
 

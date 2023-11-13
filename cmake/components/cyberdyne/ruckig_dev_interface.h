@@ -15,10 +15,9 @@ public:
     ruckig_c_data ruckig_calculate_offline(ruckig_c_data in);
     ruckig_c_data ruckig_calculate_online(ruckig_c_data in);
 
+
+
 };
-
-
-
 
 #endif // RUCKIG_DEV_INTERFACE_H
 
