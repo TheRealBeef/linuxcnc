@@ -3,6 +3,9 @@
 
 #include "stdbool.h"
 
+#define OK 1;
+#define ERROR -1;
+
 enum ruckig_c_control_interface {
     position,
     velocity
@@ -36,9 +39,12 @@ enum ruckig_c_function_return_message {
 struct ruckig_c_data {
     double cycletime; //! Servo cycletime 0.001 seconds.
     double curvel, curacc, curpos;
+    double newvel, newacc, newpos;
     double tarvel, taracc, tarpos;
+    double oldmaxvel, oldmaxacc, oldmaxjerk, oldtarvel, oldtaracc, oldtarpos;
     double maxvel,maxacc,maxjerk;
     bool enable;    //! Enable ruckig.
+    bool initialized;
     enum ruckig_c_control_interface control_interfacetype;
     enum ruckig_c_synchronization synchronizationtype;
     enum ruckig_c_durationdiscretization durationdiscretizationtype;
@@ -49,11 +55,8 @@ struct ruckig_c_data {
 };
 
 struct ruckig_c_waypoint {
-    double vo;  //! Velocity begin.
-    double ve;  //! Velocity end.
-    double vm;  //! Velcotiy max.
-    double po;  //! Position begin.
-    double pe;  //! Position end.
+    double ve;      //! Velocity end.
+    double goalpos; //! Position target.
 };
 
 #endif // RUCKIG_DEV_FORMAT_H

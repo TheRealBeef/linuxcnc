@@ -5,85 +5,103 @@ ruckig_dev_interface::ruckig_dev_interface()
 
 }
 
+extern "C" ruckig_dev_interface* ruckig_init_ptr(){
+    return new ruckig_dev_interface();
+}
 
-ruckig_c_data ruckig_dev_interface::ruckig_calculate_offline(ruckig_c_data in){
+extern "C" void ruckig_add_waypoint(ruckig_dev_interface *ptr, struct ruckig_c_waypoint point){
+    ptr->pointvec.push_back(point);
+}
 
-    // Ruckig example: 02_position_offline.cpp
-    ruckig::InputParameter<1> input;
-    input=ruckig_c_data_to_cpp(in);
+extern "C" struct ruckig_c_waypoint ruckig_get_waypoint(ruckig_dev_interface *ptr, int index){
+    return ptr->pointvec.at(index);
+}
 
-    // We don't need to pass the control rate (cycle time) when using only offline features
-    ruckig::Ruckig<1> otg;
-    ruckig::Trajectory<1> trajectory;
+extern "C" int ruckig_waypoint_vector_size(ruckig_dev_interface *ptr){
+    return ptr->pointvec.size();
+}
 
-    // Calculate the trajectory in an offline manner (outside of the control loop)
-    ruckig::Result result = otg.calculate(input, trajectory);
-    if (result == ruckig::Result::ErrorInvalidInput) {
-        std::cout << "Invalid input!" << std::endl;
+extern "C" int ruckig_calculate_c(struct ruckig_c_data in, ruckig_c_data *out){
+    return ruckig_dev_interface().ruckig_calculate(in,*out);
+}
+
+ruckig::Trajectory<1> trajectory;
+
+int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out){
+
+    out=in;
+    out.at_time+=out.cycletime;
+
+    //! Check for all kind of interupts.
+    if(out.maxvel!=out.oldmaxvel || out.maxacc!=out.oldmaxacc ||  out.maxjerk!=out.oldmaxjerk ||
+            out.tarvel!=out.oldtarvel || out.taracc!=out.oldtaracc || out.tarpos!=out.oldtarpos  ){
+        // printf("Ruckig interupt. \n");
+
+        //! For new calculation, set actual positions.
+        out.curpos=out.newpos;
+        out.curacc=out.newacc;
+        out.curvel=out.newvel;
+
+        out.initialized=0;
     }
 
-    in.function_return_code=result;
-
-    // Get duration of the trajectory
-    in.duration=trajectory.get_duration();
-
-    // Then, we can calculate the kinematic state at a given time
-    std::array<double, 1> new_position, new_velocity, new_acceleration;
-    trajectory.at_time(in.at_time, new_position, new_velocity, new_acceleration);
-
-    in.curpos=new_position[0];
-    in.curvel=new_velocity[0];
-    in.curacc=new_acceleration[0];
-
-
-    // Get some info about the position extrema of the trajectory
-    std::array<ruckig::PositionExtrema, 1> position_extrema = trajectory.get_position_extrema();
-
-    in.pos_extrema_min=position_extrema[0].min;
-    in.pos_extrema_max=position_extrema[0].max;
-
-    return in;
-}
-
-extern "C" struct ruckig_c_data ruckig_calculate_c_offline(struct ruckig_c_data in){
-    struct ruckig_c_data out=ruckig_dev_interface().ruckig_calculate_offline(in);
-    return out;
-}
-
-ruckig_c_data ruckig_dev_interface::ruckig_calculate_online(ruckig_c_data in){
-
-    ruckig::Ruckig<1> otg {in.cycletime};
-
+    //! Ruckig input data format.
     ruckig::InputParameter<1> input;
-    input=ruckig_c_data_to_cpp(in);
+    //! Convert c++ to c struct.
+    input=ruckig_c_data_to_cpp(out);
 
-    ruckig::OutputParameter<1> output;
+    //! Calculate new motion.
+    if(!out.initialized){
 
-    ruckig::Result result = otg.update(input, output);
+        // printf("Ruckig calculate new motion. \n");
 
-    double new_position, new_velocity, new_acceleration;
-    output.trajectory.at_time(in.at_time, new_position, new_velocity, new_acceleration);
+        //! Calculate the trajectory in an offline manner (outside of the control loop)
+        //! This is done to avoid a velocity end error when using the online trajectory.
+        ruckig::Ruckig<1> otg;
+        ruckig::Result result = otg.calculate(input,trajectory);
 
-    //! Update input with new pos, acc, vel.
-    output.pass_to_input(input);
+        //! Add code.
+        out.function_return_code=result;
 
-    //! Transfer to c style.
-    ruckig_c_data out=ruckig_cpp_data_to_c(input);
+        out.duration=trajectory.get_duration();
 
-    //! Add code.
-    out.function_return_code=result;
+        //! Update oldvel to trigger interupt next cycle.
+        out.oldmaxvel=out.maxvel;
+        out.oldmaxacc=out.maxacc;
+        out.oldmaxjerk=out.maxjerk;
+        out.oldtarvel=out.tarvel;
+        out.oldtaracc=out.taracc;
+        out.oldtarpos=out.tarpos;
 
-    //! Add duration.
-    out.duration=output.trajectory.get_duration();
+        out.at_time=0;
+        out.initialized=1;
+    }
 
-    return out;
+    //! Motion finished.
+    if(out.at_time+0.001>out.duration){
+        out.at_time=out.duration;
+        out.function_return_code=1;
+
+        //! Set to the given tar values.
+        out.curpos=out.tarpos;
+        out.curacc=out.taracc;
+        out.curvel=out.tarvel;
+
+        //! Return finished.
+        return Finished;
+    }
+
+    //! Then, we can calculate the kinematic state at a given time
+    std::array<double, 1> new_position, new_velocity, new_acceleration;
+    trajectory.at_time(out.at_time, new_position, new_velocity, new_acceleration);
+
+    //! Update out new pos, acc, vel.
+    out.newpos=new_position[0];
+    out.newvel=new_velocity[0];
+    out.newacc=new_acceleration[0];
+
+    return Working;
 }
-
-extern "C" struct ruckig_c_data ruckig_calculate_c_online(struct ruckig_c_data in){
-    struct ruckig_c_data out=ruckig_dev_interface().ruckig_calculate_online(in);
-    return out;
-}
-
 
 ruckig_c_data ruckig_dev_interface::ruckig_cpp_data_to_c(ruckig::InputParameter<1> input){
 
@@ -204,4 +222,3 @@ ruckig::InputParameter<1> ruckig_dev_interface::ruckig_c_data_to_cpp(ruckig_c_da
 
     return input;
 }
-

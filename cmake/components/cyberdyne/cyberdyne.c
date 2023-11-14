@@ -7,6 +7,7 @@
 #include <rtapi_io.h>
 #include "hal.h"
 #include "ruckig_dev_format.h"
+#include "ruckig_dev_interface.h"
 #include "stdio.h"
 
 /* module information */
@@ -24,7 +25,8 @@ skynet_t *skynet;
 typedef struct {
     hal_float_t *Pin;
 } float_data_t;
-float_data_t *vel, *pos, *acc;
+float_data_t *vel, *pos, *acc, *return_code;
+float_data_t *maxjerk, *maxacc, *tarpos, *tarvel, *cycletime, *tarvel, *maxvel;
 
 //! Pins
 typedef struct {
@@ -58,10 +60,19 @@ static int comp_idx; /* component ID */
 
 static void the_function();
 static int setup_pins();
+void set_ruckig_values();
+void set_ruckig_waypoints();
 
 struct ruckig_c_data r,s;
-extern struct ruckig_c_data ruckig_calculate_c_online(struct ruckig_c_data in);
-extern struct ruckig_c_data ruckig_calculate_c_offline(struct ruckig_c_data in);
+struct ruckig_dev_interface *ruckig_ptr;
+extern ruckig_dev_interface* ruckig_init_ptr();
+extern int ruckig_calculate_c(struct ruckig_c_data in, struct ruckig_c_data *out);
+extern void ruckig_add_waypoint(ruckig_dev_interface *ptr, struct ruckig_c_waypoint point);
+extern struct ruckig_c_waypoint ruckig_get_waypoint(ruckig_dev_interface *ptr, int index);
+extern int ruckig_waypoint_vector_size(ruckig_dev_interface *ptr);
+
+int waypoint_nr;
+bool mode_auto;
 
 int rtapi_app_main(void) {
 
@@ -77,10 +88,53 @@ int rtapi_app_main(void) {
     } else {
         hal_ready(comp_idx);
     }
-    return 0;
+    printf("component %i ready.\n",comp_idx);
+
+    ruckig_ptr=ruckig_init_ptr();
+
+    set_ruckig_values();
+    set_ruckig_waypoints();
+
+    //! Return 0=ok.
+    return r;
+}
+
+void set_ruckig_values(){
+
+    //! Set some values.
+    *maxvel->Pin=50;
+    *maxjerk->Pin=1100;
+    *maxacc->Pin=500;
+    *tarpos->Pin=300;
+    *tarvel->Pin=10;
+    *cycletime->Pin=0.001;
+}
+
+void set_ruckig_waypoints(){
+
+    struct ruckig_c_waypoint waypoint;
+    waypoint.goalpos=100;
+    waypoint.ve=10;
+    ruckig_add_waypoint(ruckig_ptr,waypoint);
+
+    waypoint.goalpos=200;
+    waypoint.ve=25;
+    ruckig_add_waypoint(ruckig_ptr,waypoint);
+
+    waypoint.goalpos=500;
+    waypoint.ve=0;
+    ruckig_add_waypoint(ruckig_ptr,waypoint);
+
+    printf("waypoint vector size: %i \n",ruckig_waypoint_vector_size(ruckig_ptr));
+
+    waypoint_nr=0;
+
+    //! Turn off to use halpin values, see : set_ruckig_values();
+    mode_auto=1;
 }
 
 void rtapi_app_exit(void){
+    ruckig_ptr=NULL;
     hal_exit(comp_idx);
 }
 
@@ -89,32 +143,40 @@ static void the_function(){
 
     if(*module->Pin==1){}
 
+    *vel->Pin=r.newvel;
+    *acc->Pin=r.newacc;
+    *pos->Pin=r.newpos;
+
+    //! Everything is ok.
+    *return_code->Pin=r.function_return_code;
+
     r.enable=1;
     r.control_interfacetype=position;
     r.durationdiscretizationtype=Continuous;
     r.synchronizationtype=None;
 
-    r.maxacc=500;
-    r.maxjerk=1100;
-    r.maxvel=50;
+    r.cycletime=*cycletime->Pin;    // 0.001
+    r.maxacc=*maxacc->Pin;          // 500
+    r.maxjerk=*maxjerk->Pin;        // 1100
+    r.maxvel=*maxvel->Pin;          // 50
 
-    r.tarpos=100;
-    r.at_time=0.001;
-    r.cycletime=0.001;
+    if(!mode_auto){
+        r.tarpos=*tarpos->Pin;
+        r.tarvel=*tarvel->Pin;
+    } else {
+        r.tarpos=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).goalpos;
+        r.tarvel=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).ve;
+    }
 
-    s=r;
-    s=ruckig_calculate_c_offline(s);
-    // printf("offline vel: %f acc: %f pos: %f \n",s.curvel,s.curacc,s.curpos);
+    if(ruckig_calculate_c(r,&r)){}
 
-    r=ruckig_calculate_c_online(r);
-    // printf("online vel: %f acc: %f pos: %f \n",r.curvel,r.curacc,r.curpos);
+    if(r.function_return_code==1){
 
-    *vel->Pin=r.curvel;
-    *acc->Pin=r.curacc;
-    *pos->Pin=r.curpos;
-
-    if(r.curpos==r.tarpos){
-        r.curpos=0;
+        int size=ruckig_waypoint_vector_size(ruckig_ptr);
+        if(waypoint_nr<size-1){
+            waypoint_nr++;
+            printf("waypoint nr: %i \n",waypoint_nr);
+        }
     }
 }
 
@@ -132,6 +194,27 @@ static int setup_pins(){
 
     pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("cyberdyne.pos",HAL_OUT,&(pos->Pin),comp_idx);
+
+    return_code = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.code",HAL_OUT,&(return_code->Pin),comp_idx);
+
+    tarvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.tarvel",HAL_IN,&(tarvel->Pin),comp_idx);
+
+    maxvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.maxvel",HAL_IN,&(maxvel->Pin),comp_idx);
+
+    maxacc = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.maxacc",HAL_IN,&(maxacc->Pin),comp_idx);
+
+    maxjerk = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.maxjerk",HAL_IN,&(maxjerk->Pin),comp_idx);
+
+    tarpos = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.tarpos",HAL_IN,&(tarpos->Pin),comp_idx);
+
+    cycletime = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.cycletime",HAL_IN,&(cycletime->Pin),comp_idx);
 
     return r;
 }
