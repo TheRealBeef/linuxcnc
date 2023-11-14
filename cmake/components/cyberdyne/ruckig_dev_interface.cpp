@@ -25,8 +25,11 @@ extern "C" int ruckig_calculate_c(struct ruckig_c_data in, ruckig_c_data *out){
     return ruckig_dev_interface().ruckig_calculate(in,*out);
 }
 
+//! Holds the calculated trajectory data for one traject.
 ruckig::Trajectory<1> trajectory;
 
+//! Main ruckig trajectory function.
+//! This function calculates the traject, and can handle interupts like pause etc.
 int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out){
 
     out=in;
@@ -34,7 +37,8 @@ int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out)
 
     //! Check for all kind of interupts.
     if(out.maxvel!=out.oldmaxvel || out.maxacc!=out.oldmaxacc ||  out.maxjerk!=out.oldmaxjerk ||
-            out.tarvel!=out.oldtarvel || out.taracc!=out.oldtaracc || out.tarpos!=out.oldtarpos  ){
+            out.tarvel!=out.oldtarvel || out.taracc!=out.oldtaracc || out.tarpos!=out.oldtarpos ||
+            out.pause!=out.oldpause || out.reverse!=out.oldreverse ){
         // printf("Ruckig interupt. \n");
 
         //! For new calculation, set actual positions.
@@ -55,6 +59,13 @@ int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out)
 
         // printf("Ruckig calculate new motion. \n");
 
+        if(out.pause){
+            input.control_interface=ruckig::ControlInterface::Velocity;
+            input.synchronization=ruckig::Synchronization::None;
+            input.target_velocity[0]=0;
+            input.target_acceleration[0]=0;
+        }
+
         //! Calculate the trajectory in an offline manner (outside of the control loop)
         //! This is done to avoid a velocity end error when using the online trajectory.
         ruckig::Ruckig<1> otg;
@@ -72,6 +83,8 @@ int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out)
         out.oldtarvel=out.tarvel;
         out.oldtaracc=out.taracc;
         out.oldtarpos=out.tarpos;
+        out.oldpause=out.pause;
+        out.oldreverse=out.reverse;
 
         out.at_time=0;
         out.initialized=1;

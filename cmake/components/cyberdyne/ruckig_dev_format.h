@@ -41,10 +41,13 @@ struct ruckig_c_data {
     double curvel, curacc, curpos;
     double newvel, newacc, newpos;
     double tarvel, taracc, tarpos;
-    double oldmaxvel, oldmaxacc, oldmaxjerk, oldtarvel, oldtaracc, oldtarpos;
+    double oldmaxvel, oldmaxacc, oldmaxjerk, oldtarvel, oldtaracc, oldtarpos; //! Used to trigger interupts.
+    bool oldpause, oldreverse; //! Used to trigger interupts.
     double maxvel,maxacc,maxjerk;
     bool enable;    //! Enable ruckig.
-    bool initialized;
+    bool initialized;  //! New motion has to be initialized.
+    bool pause; //! Pause the motion.
+    bool reverse; //! Motion reverse direction.
     enum ruckig_c_control_interface control_interfacetype;
     enum ruckig_c_synchronization synchronizationtype;
     enum ruckig_c_durationdiscretization durationdiscretizationtype;
@@ -55,7 +58,9 @@ struct ruckig_c_data {
 };
 
 struct ruckig_c_waypoint {
+    double vo;      //! Velocity begin.
     double ve;      //! Velocity end.
+    double starpos; //! Position start.
     double goalpos; //! Position target.
 };
 

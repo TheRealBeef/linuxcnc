@@ -11,11 +11,14 @@ class ruckig_dev_interface
 public:
     ruckig_dev_interface();
 
+    //! Data converter functions.
     ruckig::InputParameter<1> ruckig_c_data_to_cpp(ruckig_c_data input);
     ruckig_c_data ruckig_cpp_data_to_c(ruckig::InputParameter<1> input);
 
+    //! Main ruckig trajectory function.
     int ruckig_calculate(ruckig_c_data in, ruckig_c_data &out);
 
+    //! A bucket that stores our waypoints.
     std::vector<ruckig_c_waypoint> pointvec;
 };
 

@@ -12,7 +12,8 @@
 
 /* module information */
 MODULE_AUTHOR("Skynet");
-MODULE_DESCRIPTION("Halmodule test");
+MODULE_DESCRIPTION("Halmodule cyberdyne"
+"Testing the ruckig-dev scurve library to use velocity end values.");
 MODULE_LICENSE("GPL");
 
 static int comp_idx;
@@ -27,12 +28,13 @@ typedef struct {
 } float_data_t;
 float_data_t *vel, *pos, *acc, *return_code;
 float_data_t *maxjerk, *maxacc, *tarpos, *tarvel, *cycletime, *tarvel, *maxvel;
+float_data_t *waypoint;
 
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *module;
+bit_data_t *module, *pause_, *reverse;
 
 typedef struct {
     hal_s32_t *Pin;
@@ -101,7 +103,7 @@ int rtapi_app_main(void) {
 
 void set_ruckig_values(){
 
-    //! Set some values.
+    //! Set some values if using in manual mode, set mode_auto=0;
     *maxvel->Pin=50;
     *maxjerk->Pin=1100;
     *maxacc->Pin=500;
@@ -112,16 +114,24 @@ void set_ruckig_values(){
 
 void set_ruckig_waypoints(){
 
+    //! A little trajectory using a few waypoints, using velocity end values.
     struct ruckig_c_waypoint waypoint;
-    waypoint.goalpos=100;
-    waypoint.ve=10;
-    ruckig_add_waypoint(ruckig_ptr,waypoint);
 
+    waypoint.starpos=0;
     waypoint.goalpos=200;
+    waypoint.vo=0;
     waypoint.ve=25;
     ruckig_add_waypoint(ruckig_ptr,waypoint);
 
+    waypoint.starpos=200;
     waypoint.goalpos=500;
+    waypoint.vo=25;
+    waypoint.ve=10;
+    ruckig_add_waypoint(ruckig_ptr,waypoint);
+
+    waypoint.starpos=500;
+    waypoint.goalpos=1000;
+    waypoint.vo=10;
     waypoint.ve=0;
     ruckig_add_waypoint(ruckig_ptr,waypoint);
 
@@ -134,6 +144,7 @@ void set_ruckig_waypoints(){
 }
 
 void rtapi_app_exit(void){
+    //! Free memory of the ruckig pointer.
     ruckig_ptr=NULL;
     hal_exit(comp_idx);
 }
@@ -141,50 +152,78 @@ void rtapi_app_exit(void){
 //! Perforn's every ms.
 static void the_function(){
 
-    if(*module->Pin==1){}
-
-    *vel->Pin=r.newvel;
-    *acc->Pin=r.newacc;
-    *pos->Pin=r.newpos;
+    *vel->Pin=r.newvel; //! Update actual tp value to show in halscope.
+    *acc->Pin=r.newacc; //!
+    *pos->Pin=r.newpos; //!
 
     //! Everything is ok.
     *return_code->Pin=r.function_return_code;
 
-    r.enable=1;
-    r.control_interfacetype=position;
-    r.durationdiscretizationtype=Continuous;
-    r.synchronizationtype=None;
+    r.enable=1; //! Enable ruckig.
+    r.control_interfacetype=position; //! For normal usage, for pause we use type velocity.
+    r.durationdiscretizationtype=Continuous; //! Every trajectory duration is allowed (Default)
+    r.synchronizationtype=None; //! Calculate every DoF independently
 
     r.cycletime=*cycletime->Pin;    // 0.001
     r.maxacc=*maxacc->Pin;          // 500
     r.maxjerk=*maxjerk->Pin;        // 1100
     r.maxvel=*maxvel->Pin;          // 50
+    r.pause=*pause_->Pin; //! Pause pin.
+    r.reverse=*reverse->Pin; //! Motion reverse pin.
 
+    //! If used for manual hal pin inputs.
     if(!mode_auto){
         r.tarpos=*tarpos->Pin;
         r.tarvel=*tarvel->Pin;
     } else {
-        r.tarpos=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).goalpos;
-        r.tarvel=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).ve;
-    }
-
-    if(ruckig_calculate_c(r,&r)){}
-
-    if(r.function_return_code==1){
-
-        int size=ruckig_waypoint_vector_size(ruckig_ptr);
-        if(waypoint_nr<size-1){
-            waypoint_nr++;
-            printf("waypoint nr: %i \n",waypoint_nr);
+        //! Use in auto mode, using waypoints.
+        if(!r.reverse){ //! Motion forward, goto goalpos of segment.
+            r.tarpos=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).goalpos;
+            r.tarvel=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).ve;
+        } else { //! Motion reverse, goto begin of segment.
+            r.tarpos=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).starpos;
+            r.tarvel=ruckig_get_waypoint(ruckig_ptr,waypoint_nr).vo;
         }
     }
+
+    //! Perform the ruckig scurve traject calculation.
+    ruckig_calculate_c(r,&r);
+
+    //! Returncode 1=finished.
+    if(r.function_return_code==1){
+
+        //! Size of the waypoint bucket.
+        int size=ruckig_waypoint_vector_size(ruckig_ptr);
+
+        //! Motion forward, increment to next segment.
+        if(!r.reverse){
+            if(waypoint_nr<size-1){
+                waypoint_nr++;
+                // printf("waypoint forward nr: %i \n",waypoint_nr);
+            }
+        } else { //! Motion reverse, decrement on segment.
+            if(waypoint_nr>0){
+                waypoint_nr--;
+                // printf("waypoint reverse nr: %i \n",waypoint_nr);
+            }
+        }
+    }
+    //! Show the outside world wich waypoint we are.
+    *waypoint->Pin=waypoint_nr;
 }
 
+//! Setup hal pins to interact outside the golden ring.
 static int setup_pins(){
     int r=0;
 
     module = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
     r+=hal_pin_bit_new("cyberdyne.enable",HAL_IN,&(module->Pin),comp_idx);
+
+    pause_ = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
+    r+=hal_pin_bit_new("cyberdyne.pause",HAL_IN,&(pause_->Pin),comp_idx);
+
+    reverse = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
+    r+=hal_pin_bit_new("cyberdyne.reverse",HAL_IN,&(reverse->Pin),comp_idx);
 
     vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("cyberdyne.vel",HAL_OUT,&(vel->Pin),comp_idx);
@@ -199,7 +238,7 @@ static int setup_pins(){
     r+=hal_pin_float_new("cyberdyne.code",HAL_OUT,&(return_code->Pin),comp_idx);
 
     tarvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("cyberdyne.tarvel",HAL_IN,&(tarvel->Pin),comp_idx);
+    r+=hal_pin_float_new("cyberdyne.tarvel_manual_mode",HAL_IN,&(tarvel->Pin),comp_idx);
 
     maxvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("cyberdyne.maxvel",HAL_IN,&(maxvel->Pin),comp_idx);
@@ -211,10 +250,13 @@ static int setup_pins(){
     r+=hal_pin_float_new("cyberdyne.maxjerk",HAL_IN,&(maxjerk->Pin),comp_idx);
 
     tarpos = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("cyberdyne.tarpos",HAL_IN,&(tarpos->Pin),comp_idx);
+    r+=hal_pin_float_new("cyberdyne.tarpos_manual_mode",HAL_IN,&(tarpos->Pin),comp_idx);
 
     cycletime = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("cyberdyne.cycletime",HAL_IN,&(cycletime->Pin),comp_idx);
+
+    waypoint = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("cyberdyne.waypoint",HAL_OUT,&(waypoint->Pin),comp_idx);
 
     return r;
 }
