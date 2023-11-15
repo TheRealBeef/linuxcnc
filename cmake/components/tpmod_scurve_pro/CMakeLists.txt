@@ -1,17 +1,28 @@
 cmake_minimum_required(VERSION 3.0)
-set(PROJECT "cyberdyne")
-project(${PROJECT} CXX C)
+set(PROJECT "tpmod_scurve_pro")
 set(CMAKE_CXX_STANDARD 17) # Needed by ruckig.
+project(${PROJECT} CXX C)
 
 # Set variables.
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+set(RTLINK "liblinuxcnchal")
 
 # Set includepaths.
 include_directories(${SRC_DIR})
+
 include_directories(${SRC_DIR}/../../../src/rtapi)
 include_directories(${SRC_DIR}/../../../src/hal)
+include_directories(${SRC_DIR}/../../../src/libnml/posemath)
+include_directories(${SRC_DIR}/../../../src/emc/tp)
+include_directories(${SRC_DIR}/../../../src/emc/motion)
+include_directories(${SRC_DIR}/../../../src/emc/kinematics)
+include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
+include_directories(${SRC_DIR}/../tpmod_scurve_src)
 include_directories(${SRC_DIR}/../../vendor/ruckig_dev/include)
+
+# Set path to eigen3, for install $ sudo apt-get install libeigen3-dev
+include_directories("/usr/include/eigen3/Eigen")
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -23,10 +34,34 @@ SET(GCC_COVERAGE_COMPILE_FLAGS "-I. -I${RTAPI_DIR} -I${HAL_DIR} \
 add_definitions(-DRTAPI -DUSPACE -D_GNU_SOURCE -D__MODULE__ )
 
 ADD_LIBRARY(${PROJECT} SHARED
-    ${SRC_DIR}/cyberdyne.c
+    # Scurve Planner
+    ${SRC_DIR}/../../../src/emc/tp/tp_scurve_pro.c
+    # Cyberdyne test component copies.
     ${SRC_DIR}/ruckig_dev_format.h
     ${SRC_DIR}/ruckig_dev_interface.h
     ${SRC_DIR}/ruckig_dev_interface.cpp
+    # Helpers
+    ${SRC_DIR}/../../../src/emc/tp/tp_corners.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_corners.cpp
+    ${SRC_DIR}/../../../src/emc/tp/tp_conversion.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_conversion.c
+    ${SRC_DIR}/../../../src/emc/tp/tp_vector.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_vector.cpp
+    ${SRC_DIR}/../../../src/emc/tp/tp_arcs.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_arcs.cpp
+    ${SRC_DIR}/../../../src/emc/tp/tp_lines.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_lines.cpp
+    ${SRC_DIR}/../../../src/emc/tp/tc.h
+    ${SRC_DIR}/../../../src/emc/tp/tc.c
+    ${SRC_DIR}/../../../src/emc/tp/tp.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_scurve.h
+    ${SRC_DIR}/../../../src/emc/tp/tp_types.h
+    ${SRC_DIR}/../../../src/emc/tp/spherical_arc.c
+    ${SRC_DIR}/../../../src/emc/tp/blendmath.c
+    ${SRC_DIR}/../../../src/emc/nml_intf/emcpose.c
+    ${SRC_DIR}/../../../src/libnml/posemath/_posemath.c
+    ${SRC_DIR}/../../../src/libnml/posemath/sincos.c
+    # Ruckig-dev
     ${SRC_DIR}/../../vendor/ruckig_dev/src/ruckig/brake.cpp
     ${SRC_DIR}/../../vendor/ruckig_dev/src/ruckig/position_first_step1.cpp
     ${SRC_DIR}/../../vendor/ruckig_dev/src/ruckig/position_first_step2.cpp
@@ -57,3 +92,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal)
 install(TARGETS ${PROJECT} DESTINATION ${BUILD_DIR}/../../../../rtlib)
 
 # Notes.
+
