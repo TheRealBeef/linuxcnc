@@ -21,45 +21,58 @@ extern "C" int ruckig_waypoint_vector_size(ruckig_dev_interface *ptr){
     return ptr->pointvec.size();
 }
 
-extern "C" int ruckig_calculate_c(struct ruckig_c_data in, ruckig_c_data *out){
-    return ruckig_dev_interface().ruckig_calculate(in,*out);
+extern "C" struct ruckig_c_data ruckig_calculate_c(struct ruckig_c_data in){
+    return ruckig_dev_interface().ruckig_calculate(in);
 }
 
-//! Holds the calculated trajectory data for one traject.
-ruckig::Trajectory<1> trajectory;
+extern "C" struct ruckig_c_data ruckig_calculate_c_ptr(ruckig_dev_interface *ruckig_ptr, struct ruckig_c_data in){
+    return ruckig_ptr->ruckig_calculate(in);
+}
 
 //! Main ruckig trajectory function.
 //! This function calculates the traject, and can handle interupts like pause etc.
-int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out){
+ruckig_c_data ruckig_dev_interface::ruckig_calculate(ruckig_c_data in){
 
-    out=in;
-    out.at_time+=out.cycletime;
+    in.at_time+=in.cycletime;
 
-    //! Check for all kind of interupts.
-    if(out.maxvel!=out.oldmaxvel || out.maxacc!=out.oldmaxacc ||  out.maxjerk!=out.oldmaxjerk ||
-            out.tarvel!=out.oldtarvel || out.taracc!=out.oldtaracc || out.tarpos!=out.oldtarpos ||
-            out.pause!=out.oldpause || out.reverse!=out.oldreverse ){
+    //! Hard position zero reset, when you need a new trajectory.
+    if(in.reset){
+        in.newpos=0;
+        in.newacc=0;
+        // in.newvel=0;
+        in.curpos=0;
+        in.curacc=0;
+        // in.curvel=0;
+        in.initialized=0;
+        in.at_time=0;
+        in.reset=0;
+        printf("Ruckig reset. \n");
+    }
+
+    //! Check for all kind of interupts, program stop, start is also interupt.
+    if(in.maxvel!=in.oldmaxvel || in.maxacc!=in.oldmaxacc ||  in.maxjerk!=in.oldmaxjerk ||
+            in.tarvel!=in.oldtarvel || in.taracc!=in.oldtaracc || in.tarpos!=in.oldtarpos ||
+            in.pause!=in.oldpause || in.reverse!=in.oldreverse ){
         // printf("Ruckig interupt. \n");
 
         //! For new calculation, set actual positions.
-        out.curpos=out.newpos;
-        out.curacc=out.newacc;
-        out.curvel=out.newvel;
+        in.curpos=in.newpos;
+        in.curacc=in.newacc;
+        in.curvel=in.newvel;
 
-        out.initialized=0;
+        in.initialized=0;
     }
-
     //! Ruckig input data format.
     ruckig::InputParameter<1> input;
     //! Convert c++ to c struct.
-    input=ruckig_c_data_to_cpp(out);
+    input=ruckig_c_data_to_cpp(in);
 
     //! Calculate new motion.
-    if(!out.initialized){
+    if(!in.initialized){
 
         // printf("Ruckig calculate new motion. \n");
 
-        if(out.pause){
+        if(in.pause){
             input.control_interface=ruckig::ControlInterface::Velocity;
             input.synchronization=ruckig::Synchronization::None;
             input.target_velocity[0]=0;
@@ -68,52 +81,52 @@ int ruckig_dev_interface::ruckig_calculate(ruckig_c_data in, ruckig_c_data &out)
 
         //! Calculate the trajectory in an offline manner (outside of the control loop)
         //! This is done to avoid a velocity end error when using the online trajectory.
-        ruckig::Ruckig<1> otg;
-        ruckig::Result result = otg.calculate(input,trajectory);
+        ruckig::Ruckig<1> otg_offline;
+        ruckig::Result result = otg_offline.calculate(input,trajectory);
 
         //! Add code.
-        out.function_return_code=result;
+        in.function_return_code=result;
 
-        out.duration=trajectory.get_duration();
+        in.duration=trajectory.get_duration();
 
         //! Update oldvel to trigger interupt next cycle.
-        out.oldmaxvel=out.maxvel;
-        out.oldmaxacc=out.maxacc;
-        out.oldmaxjerk=out.maxjerk;
-        out.oldtarvel=out.tarvel;
-        out.oldtaracc=out.taracc;
-        out.oldtarpos=out.tarpos;
-        out.oldpause=out.pause;
-        out.oldreverse=out.reverse;
+        in.oldmaxvel=in.maxvel;
+        in.oldmaxacc=in.maxacc;
+        in.oldmaxjerk=in.maxjerk;
+        in.oldtarvel=in.tarvel;
+        in.oldtaracc=in.taracc;
+        in.oldtarpos=in.tarpos;
+        in.oldpause=in.pause;
+        in.oldreverse=in.reverse;
 
-        out.at_time=0;
-        out.initialized=1;
+        in.at_time=0;
+        in.initialized=1;
     }
 
     //! Motion finished.
-    if(out.at_time+0.001>out.duration){
-        out.at_time=out.duration;
-        out.function_return_code=1;
+    if(in.at_time+0.001>in.duration){
+        in.at_time=in.duration;
+        in.function_return_code=1;
 
         //! Set to the given tar values.
-        out.curpos=out.tarpos;
-        out.curacc=out.taracc;
-        out.curvel=out.tarvel;
+        in.curpos=in.tarpos;
+        in.curacc=in.taracc;
+        in.curvel=in.tarvel;
 
         //! Return finished.
-        return Finished;
+        return in;
     }
 
     //! Then, we can calculate the kinematic state at a given time
     std::array<double, 1> new_position, new_velocity, new_acceleration;
-    trajectory.at_time(out.at_time, new_position, new_velocity, new_acceleration);
+    trajectory.at_time(in.at_time, new_position, new_velocity, new_acceleration);
 
     //! Update out new pos, acc, vel.
-    out.newpos=new_position[0];
-    out.newvel=new_velocity[0];
-    out.newacc=new_acceleration[0];
+    in.newpos=new_position[0];
+    in.newvel=new_velocity[0];
+    in.newacc=new_acceleration[0];
 
-    return Working;
+    return in;;
 }
 
 ruckig_c_data ruckig_dev_interface::ruckig_cpp_data_to_c(ruckig::InputParameter<1> input){

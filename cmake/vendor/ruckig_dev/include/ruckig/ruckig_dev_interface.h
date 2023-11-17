@@ -16,10 +16,13 @@ public:
     ruckig_c_data ruckig_cpp_data_to_c(ruckig::InputParameter<1> input);
 
     //! Main ruckig trajectory function.
-    int ruckig_calculate(ruckig_c_data in, ruckig_c_data &out);
+    ruckig_c_data ruckig_calculate(ruckig_c_data in);
 
     //! A bucket that stores our waypoints.
     std::vector<ruckig_c_waypoint> pointvec;
+
+    //! Holds the calculated trajectory data for one traject.
+    ruckig::Trajectory<1> trajectory;
 };
 
 

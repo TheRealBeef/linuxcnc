@@ -1,15 +1,24 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 753x802+1696+596
-placeFrames 0.42005813953488375
-set ::ratio 0.42005813953488375
+wm geometry . 388x794+3089+220
+placeFrames 0.016194331983805668
+set ::ratio 0.016194331983805668
 set ::old_w_leftf 160
 set ::watchlist {
-    pin+tpmod_scurve_skynet.curacc
-    pin+tpmod_scurve_skynet.curvel
-    pin+tpmod_scurve_skynet.reverse
-    param+tpmod_scurve_skynet.look_ahead
-    param+tpmod_scurve_skynet.vel_end
+    pin+tpmod_T800.curacc
+    pin+tpmod_T800.curvel
+    pin+tpmod_T800.reverse
+    pin+tpmod_T800.vector_exec_nr
+    pin+tpmod_T800.vector_size
+    pin+tpmod_T800.curpos
+    pin+tpmod_T800.tarpos
+    pin+tpmod_T800.return_code
+    pin+tpmod_T800.test
+    pin+tpmod_T800.progress
+    pin+tpmod_T800.enable_look_ahead
+    pin+tpmod_T800.la_tarpos
+    pin+tpmod_T800.enable_ve
+    pin+tpmod_T800.tp_ve
 }
 set ::workmode watchhal
 set ::watchInterval 100

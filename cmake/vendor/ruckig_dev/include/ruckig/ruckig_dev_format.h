@@ -48,6 +48,7 @@ struct ruckig_c_data {
     bool initialized;  //! New motion has to be initialized.
     bool pause; //! Pause the motion.
     bool reverse; //! Motion reverse direction.
+    bool reset; //! Reset values to zero.
     enum ruckig_c_control_interface control_interfacetype;
     enum ruckig_c_synchronization synchronizationtype;
     enum ruckig_c_durationdiscretization durationdiscretizationtype;

@@ -85,7 +85,7 @@ add_subdirectory(${SRC_DIR}/components/tpmod) # Rob Ellenberg's motion planner.
 add_subdirectory(${SRC_DIR}/components/tpmod_template) # a template how the lcnc program flow works.
 add_subdirectory(${SRC_DIR}/components/tpmod_scurve) # working motion component for scurve, excl look ahead.
 add_subdirectory(${SRC_DIR}/components/tpmod_scurve_skynet) # experimental scurve lib using ruckig and look ahead.
-add_subdirectory(${SRC_DIR}/components/tpmod_scurve_pro) # experimental scurve lib using ruckig-dev, enabling velocity ends.
+add_subdirectory(${SRC_DIR}/components/tpmod_T800) # experimental scurve lib using ruckig-dev, enabling velocity ends.
 add_subdirectory(${SRC_DIR}/components/homemod)
 add_subdirectory(${SRC_DIR}/components/threads)
 add_subdirectory(${SRC_DIR}/components/ethercat)
@@ -111,6 +111,7 @@ add_subdirectory(${SRC_DIR}/components/ugenserkins)
 add_subdirectory(${SRC_DIR}/components/scurve)
 add_subdirectory(${SRC_DIR}/components/motmod) # jogging trapezium
 add_subdirectory(${SRC_DIR}/components/motmod_scurve) # jogging scurve
+add_subdirectory(${SRC_DIR}/components/motmod_T800) # jogging scurve using ruckig-dev lib.
 add_subdirectory(${SRC_DIR}/components/scope_rt)
 add_subdirectory(${SRC_DIR}/components/pid)
 add_subdirectory(${SRC_DIR}/components/cyberdyne)

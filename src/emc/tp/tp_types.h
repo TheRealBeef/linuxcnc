@@ -109,6 +109,9 @@ typedef struct {
     double cur_vel;
     double cur_pos;
     double tar_pos;
+    double tar_vel;
+    double tar_acc;
+    double la_tar_pos; //! Look ahead tarpos.
     double adaptive_feed;
 
     int vector_size;

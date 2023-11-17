@@ -111,9 +111,9 @@ extern "C" void interpolate_arc_c(struct sc_pnt p0, struct sc_pnt p1, struct sc_
 }
 
 void tp_arcs::sc_arc_radius(sc_pnt p0,
-                         sc_pnt p1,
-                         sc_pnt p2,
-                         double &radius){
+                            sc_pnt p1,
+                            sc_pnt p2,
+                            double &radius){
 
     Eigen::Vector3d pa,pb,pc;
     pa.x()=p0.x;
@@ -150,15 +150,15 @@ void tp_arcs::sc_arc_radius(sc_pnt p0,
 }
 
 double tp_arcs::sc_arc_lenght(sc_pnt p0,    //! Start
-                         sc_pnt p1,         //! Waypoint
-                         sc_pnt p2,        //! Endpoint
-                              sc_pnt p3){      //! Center
+                              sc_pnt p1,    //! Waypoint
+                              sc_pnt p2,    //! Endpoint
+                              sc_pnt p3){   //! Center
 
     //! Is it a circle?
     if(p0.x==p2.x && p0.y==p2.y && p0.z==p2.z){
-        printf("processing arc lenght for circle. \n");
+        // printf("processing arc lenght for circle. \n");
         double radius=sqrt(pow(p3.x-p0.x,2)+pow(p3.y-p0.y,2)+pow(p3.z-p0.z,2));
-           printf("radius: %f \n",radius);
+        // printf("radius: %f \n",radius);
 
         double circumfece=(M_PI*2)*radius;
         return circumfece;
@@ -193,11 +193,11 @@ double tp_arcs::sc_arc_lenght(sc_pnt p0,    //! Start
     //! Center of arc.
     Eigen::Vector3d pcenter = pa + v1*k1 + v2*k2;
     arc.center={pcenter.x(),pcenter.y(),pcenter.z()};
-    std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
+    // std::cout<<"arc center x:"<<pc.x()<<" y:"<<pc.y()<<" z:"<<pc.z()<<std::endl;
 
     double radius = (pcenter-pa).norm();
     arc.radius=radius;
-    std::cout<<"radius: "<<radius<<std::endl;
+    // std::cout<<"radius: "<<radius<<std::endl;
     arc.diameter=radius*2;
 
     //! Arc angle.
@@ -401,9 +401,9 @@ tp_arcs::sc_arc tp_arcs::sc_arc_points(Eigen::Vector3d p1, Eigen::Vector3d p2, E
 }
 
 void tp_arcs::sc_arc_get_mid_waypoint(sc_pnt p0, //! Start.
-                                   sc_pnt p1, //! Center.
-                                   sc_pnt p2, //! End.
-                                   sc_pnt &pi){
+                                      sc_pnt p1, //! Center.
+                                      sc_pnt p2, //! End.
+                                      sc_pnt &pi){
 
     //! Is it a circle?
     if(p0.x==p2.x && p0.y==p2.y && p0.z==p2.z){

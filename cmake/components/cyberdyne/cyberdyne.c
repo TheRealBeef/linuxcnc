@@ -34,7 +34,7 @@ float_data_t *waypoint;
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *module, *pause_, *reverse;
+bit_data_t *module, *pause_, *reverse, *setposzero;
 
 typedef struct {
     hal_s32_t *Pin;
@@ -68,7 +68,7 @@ void set_ruckig_waypoints();
 struct ruckig_c_data r,s;
 struct ruckig_dev_interface *ruckig_ptr;
 extern ruckig_dev_interface* ruckig_init_ptr();
-extern int ruckig_calculate_c(struct ruckig_c_data in, struct ruckig_c_data *out);
+extern struct ruckig_c_data ruckig_calculate_c(struct ruckig_c_data in);
 extern void ruckig_add_waypoint(ruckig_dev_interface *ptr, struct ruckig_c_waypoint point);
 extern struct ruckig_c_waypoint ruckig_get_waypoint(ruckig_dev_interface *ptr, int index);
 extern int ruckig_waypoint_vector_size(ruckig_dev_interface *ptr);
@@ -186,8 +186,15 @@ static void the_function(){
         }
     }
 
+    //! Hard reset. Tp planner uses this to start from new queue.
+    if(*setposzero->Pin){
+        r.reset=1;
+        waypoint_nr=0;
+        *setposzero->Pin=0;
+    }
+
     //! Perform the ruckig scurve traject calculation.
-    ruckig_calculate_c(r,&r);
+    r=ruckig_calculate_c(r);
 
     //! Returncode 1=finished.
     if(r.function_return_code==1){
@@ -235,7 +242,7 @@ static int setup_pins(){
     r+=hal_pin_float_new("cyberdyne.pos",HAL_OUT,&(pos->Pin),comp_idx);
 
     return_code = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("cyberdyne.code",HAL_OUT,&(return_code->Pin),comp_idx);
+    r+=hal_pin_float_new("cyberdyne.return_code",HAL_OUT,&(return_code->Pin),comp_idx);
 
     tarvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("cyberdyne.tarvel_manual_mode",HAL_IN,&(tarvel->Pin),comp_idx);
@@ -257,6 +264,9 @@ static int setup_pins(){
 
     waypoint = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("cyberdyne.waypoint",HAL_OUT,&(waypoint->Pin),comp_idx);
+
+    setposzero = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
+    r+=hal_pin_bit_new("cyberdyne.setposzero",HAL_IN,&(setposzero->Pin),comp_idx);
 
     return r;
 }
