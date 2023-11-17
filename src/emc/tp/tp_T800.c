@@ -48,12 +48,12 @@ skynet_t *skynet;
 typedef struct {
     hal_float_t *Pin;
 } float_data_t;
-float_data_t *tp_curvel, *tp_curacc, *tp_curpos, *tp_tarpos, *tp_test, *tp_progress, *tp_la_tarpos, *tp_ve;
+float_data_t *tp_curvel, *tp_curacc, *tp_curpos, *tp_tarpos, *tp_test, *tp_progress, *tp_la_tarpos, *tp_ve, *blendsize;
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *reverse_run, *enable_look_ahead, *enable_ve;
+bit_data_t *reverse_run, *enable_look_ahead, *enable_ve, *enable_blend_rapids;
 
 typedef struct { //! Int.
     hal_s32_t *Pin;
@@ -146,6 +146,9 @@ static int setup_pins(){
     tp_test = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("tpmod_T800.test",HAL_IN,&(tp_test->Pin),comp_idx);
 
+    blendsize = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_T800.blendsize",HAL_IN,&(blendsize->Pin),comp_idx);
+
     reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_bit_new("tpmod_T800.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
 
@@ -154,6 +157,9 @@ static int setup_pins(){
 
     enable_ve = (bit_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_bit_new("tpmod_T800.enable_ve",HAL_IN,&(enable_ve->Pin),comp_idx);
+
+    enable_blend_rapids = (bit_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_bit_new("tpmod_T800.enable_blend_rapids",HAL_IN,&(enable_blend_rapids->Pin),comp_idx);
 
     max_look_ahead = (param_s32_data_t*)hal_malloc(sizeof(param_s32_data_t));
     r+=hal_param_s32_new("tpmod_T800.look_ahead",HAL_RW,&(max_look_ahead->Pin),comp_idx);
@@ -301,14 +307,18 @@ extern struct ruckig_c_data ruckig_calculate_c_ptr(ruckig_dev_interface *ruckig_
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
+void update_blend_rapids(TP_STRUCT * const tp);
 
 void set_ruckig_inputs(TP_STRUCT * const tp);
 void set_ruckig_tarpos(TP_STRUCT * const tp);
 void set_ruckig_tarvel(TP_STRUCT * const tp);
 
+
 struct sc_pnt xyz;
 struct sc_dir abc;
 struct sc_ext uvw;
+bool blend_enable;
+struct sc_pnt blendxyz;
 
 void update_look_ahead(TP_STRUCT * const tp);
 bool pathrules_forward_stop(int i);
@@ -330,6 +340,9 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
 
     //! Goto the target position.
     update_ruckig(tp);
+
+    //! Blend rapids algo.
+    update_blend_rapids(tp);
 
     //! Interpolate tp position given a 0-1 trajectory progress.
     update_gui(tp);
@@ -361,6 +374,7 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
     test_param->Pin=0;
     *tp_ve->Pin=1; //! Velocity end value.
     *enable_look_ahead->Pin=1; //! Enable path rules.
+    *blendsize->Pin=1; //! Blendsize for rapids.
 
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
 
@@ -909,6 +923,14 @@ inline void update_gui(TP_STRUCT * const tp){
                               tp->segment_progress,
                               &xyz);
         }
+
+        //! Overwrite if blend is active.
+        if(blend_enable){
+            xyz.x=blendxyz.x;
+            xyz.y=blendxyz.y;
+            xyz.z=blendxyz.z;
+        }
+
         tp->currentPos.tran.x=xyz.x;
         tp->currentPos.tran.y=xyz.y;
         tp->currentPos.tran.z=xyz.z;
@@ -1019,7 +1041,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
         //! Motion forward.
         if(((tp->cur_pos>tp->tar_pos-0.001 || r.function_return_code==Finished)) && !tp->reverse_run){
             tp->tar_pos=tp->traject_lenght;
-            printf("finished forward, rtime: %f \n",r.at_time);
+            // printf("finished forward, rtime: %f \n",r.at_time);
 
             //! Disable ve.
             tp->tar_vel=0;
@@ -1029,7 +1051,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
         //! Motion reverse.
         if(((tp->cur_pos>tp->tar_pos-0.001 || r.function_return_code==Finished)) && tp->reverse_run){
             tp->tar_pos=0;
-            printf("finished reverse, rtime: %f \n",r.at_time);
+            // printf("finished reverse, rtime: %f \n",r.at_time);
 
             //! Disable ve.
             tp->tar_vel=0;
@@ -1038,7 +1060,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
 
         //! Hanging.
         if(old_time==r.at_time){
-            printf("time hangs. \n");
+            // printf("time hangs. \n");
 
             if(!tp->reverse_run){
                 tp->tar_pos=tp->traject_lenght;
@@ -1086,6 +1108,137 @@ inline void update_ruckig(TP_STRUCT * const tp){
         if(r.function_return_code==Finished && !tp->pausing && tp->traject_progress!=0 && tp->vector_current_exec==tp->vector_size-1){
             tp->vector_size=0;
             vector_clear(vector_ptr);
+        }
+    }
+}
+
+//! Experimental function to blend rapids G0.
+inline void update_blend_rapids(TP_STRUCT * const tp){
+
+    int size=vector_size_c(vector_ptr);
+    if(size>0 && *enable_blend_rapids->Pin){
+
+        int nr=tp->vector_current_exec;
+        int istart=0, iend=0;
+        double lstart=0, lend=0;
+
+        struct tp_segment s;
+        s=vector_at(vector_ptr,nr);
+        if(s.type==1){ //! Current executed line is a G0 rapid, find start & end traject lenghts.
+
+            //! Calculate lenght to G0 begin.
+            for(int i=nr; i>0; i--){
+                struct tp_segment s;
+                s=vector_at(vector_ptr,i);
+                if(s.type!=1){ //! G0 rapid.
+                    istart=i+1;
+                    // printf("start i: %i gcodeline nr: %d \n",istart,vector_at(vector_ptr,istart).gcode_line_nr);
+                    break;
+                }
+            }
+            //! Calculate lenght to G0 end.
+            for(int i=nr; i<size; i++){
+                struct tp_segment s;
+                s=vector_at(vector_ptr,i);
+                if(s.type!=1){ //! G0 rapid.
+                    iend=i-1;
+                    // printf("start i: %i gcodeline nr: %d \n",iend,vector_at(vector_ptr,iend).gcode_line_nr);
+                    break;
+                }
+            }
+
+            //! Traject lenght at G0 start.
+            for(int i=0; i<size; i++){
+                struct tp_segment s;
+                s=vector_at(vector_ptr,i);
+                if(i==istart){
+                    break;
+                } else {
+                    lstart+=s.path_lenght;
+                }
+            }
+            //! Traject lenght at G0 end.
+            for(int i=0; i<size; i++){
+                struct tp_segment s;
+                s=vector_at(vector_ptr,i);
+                lend+=s.path_lenght;
+                if(i==iend){
+                    break;
+                }
+            }
+
+            double pos_a=tp->cur_pos-(*blendsize->Pin);
+            double pos_c=tp->cur_pos+(*blendsize->Pin);
+
+            //! Limits inside the G0.
+            if(pos_a<lstart){
+                pos_a=lstart;
+            }
+            if(pos_c>lend){
+                pos_c=lend;
+            }
+
+            //! Get pos_a tp.
+            double segment_progress;
+            int id=0;
+            struct sc_pnt pnt_a,pnt_c;
+
+            //! Interpolate pnt_a.
+            vector_interpolate_traject_c(vector_ptr,
+                                         pos_a/tp->traject_lenght, //! Traject progress.
+                                         tp->traject_lenght,
+                                         &segment_progress,
+                                         &id);
+
+            if(vector_at_id(vector_ptr,id)==sc_line){
+                interpolate_line_c(vector_at(vector_ptr,id).pnt_s,
+                                   vector_at(vector_ptr,id).pnt_e,
+                                   segment_progress,
+                                   &pnt_a);
+            }
+            if(vector_at_id(vector_ptr,id)==sc_arc){
+                interpolate_arc_c(vector_at(vector_ptr,id).pnt_s,
+                                  vector_at(vector_ptr,id).pnt_w,
+                                  vector_at(vector_ptr,id).pnt_e,
+                                  vector_at(vector_ptr,id).pnt_c,
+                                  segment_progress,
+                                  &pnt_a);
+            }
+
+            //! Interpolate pnt_c.
+            vector_interpolate_traject_c(vector_ptr,
+                                         pos_c/tp->traject_lenght, //! Traject progress.
+                                         tp->traject_lenght,
+                                         &segment_progress,
+                                         &id);
+
+            if(vector_at_id(vector_ptr,id)==sc_line){
+                interpolate_line_c(vector_at(vector_ptr,id).pnt_s,
+                                   vector_at(vector_ptr,id).pnt_e,
+                                   segment_progress,
+                                   &pnt_c);
+            }
+            if(vector_at_id(vector_ptr,id)==sc_arc){
+                interpolate_arc_c(vector_at(vector_ptr,id).pnt_s,
+                                  vector_at(vector_ptr,id).pnt_w,
+                                  vector_at(vector_ptr,id).pnt_e,
+                                  vector_at(vector_ptr,id).pnt_c,
+                                  segment_progress,
+                                  &pnt_c);
+            }
+
+            //! Get the midpoint of pnt_a & pnt_c to create the blend.
+            blendxyz.x=(pnt_a.x+pnt_c.x)/2;
+            blendxyz.y=(pnt_a.y+pnt_c.y)/2;
+            blendxyz.z=(pnt_a.z+pnt_c.z)/2;
+
+            blend_enable=true;
+            // printf("inside a G0, starting at l: %f ending at %f \n",lstart,lend);
+
+        } else {
+
+            blend_enable=false;
+            // printf("outside of G0. \n");
         }
     }
 }

@@ -1,8 +1,8 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 388x794+3089+220
-placeFrames 0.016194331983805668
-set ::ratio 0.016194331983805668
+wm geometry . 638x794+2515+430
+placeFrames 0.40641711229946526
+set ::ratio 0.40641711229946526
 set ::old_w_leftf 160
 set ::watchlist {
     pin+tpmod_T800.curacc
@@ -19,6 +19,8 @@ set ::watchlist {
     pin+tpmod_T800.la_tarpos
     pin+tpmod_T800.enable_ve
     pin+tpmod_T800.tp_ve
+    pin+tpmod_T800.blendsize
+    pin+tpmod_T800.enable_blend_rapids
 }
 set ::workmode watchhal
 set ::watchInterval 100
