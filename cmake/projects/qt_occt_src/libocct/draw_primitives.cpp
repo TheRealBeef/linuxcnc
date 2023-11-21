@@ -222,7 +222,7 @@ Handle(AIS_Shape) draw_primitives::draw_3p_3d_arc(gp_Pnt point1,gp_Pnt point2,gp
 }
 
 Handle(AIS_Shape) draw_primitives::draw_cp_3d_arc(gp_Pnt point1,gp_Pnt point2,gp_Pnt center){
-    // Test
+
     double radius=center.Distance(point1);
     //gp_Dir dir(0,0,1); // you can change this
 
@@ -230,8 +230,6 @@ Handle(AIS_Shape) draw_primitives::draw_cp_3d_arc(gp_Pnt point1,gp_Pnt point2,gp
     //gp_Vec vec(point1,point2);
     gp_Dir dir(0,0,1);
     gp_Circ circle(gp_Ax2( center, dir),radius);
-
-
 
     Handle(Geom_TrimmedCurve) aArcOfCircle = GC_MakeArcOfCircle(circle,point1,point2,0);
     TopoDS_Edge aEdge2 = BRepBuilderAPI_MakeEdge(aArcOfCircle);

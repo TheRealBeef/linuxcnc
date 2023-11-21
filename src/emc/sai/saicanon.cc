@@ -239,6 +239,18 @@ void STRAIGHT_TRAVERSE( int line_number,
   _sai._program_position_a = a; /*AA*/
   _sai._program_position_b = b; /*BB*/
   _sai._program_position_c = c; /*CC*/
+
+  _sai.pose.tran.x=x;
+  _sai.pose.tran.y=y;
+  _sai.pose.tran.z=z;
+  _sai.pose.a=a;
+  _sai.pose.b=b;
+  _sai.pose.c=c;
+  _sai.pose.u=u;
+  _sai.pose.v=v;
+  _sai.pose.w=w;
+
+  _sai.type=3; //! G0.
 }
 
 /* Machining Attributes */
@@ -344,6 +356,7 @@ void ARC_FEED(int line_number,
  , double u, double v, double w
 )
 {
+
   ECHO_WITH_ARGS("%.4f, %.4f, %.4f, %.4f, %d, %.4f"
          ", %.4f" /*AA*/
          ", %.4f" /*BB*/
@@ -375,6 +388,22 @@ void ARC_FEED(int line_number,
   _sai._program_position_a = a; /*AA*/
   _sai._program_position_b = b; /*BB*/
   _sai._program_position_c = c; /*CC*/
+
+  _sai.pose.tran.x=first_end;
+  _sai.pose.tran.y=second_end;
+  _sai.pose.tran.z=axis_end_point;;
+  _sai.pose.a=a;
+  _sai.pose.b=b;
+  _sai.pose.c=c;
+  _sai.pose.u=u;
+  _sai.pose.v=v;
+  _sai.pose.w=w;
+
+  _sai.cx=first_axis;
+  _sai.cy=second_axis;
+
+  _sai.type=2;
+  _sai.rotation=rotation;
 }
 
 void STRAIGHT_FEED(int line_number,
@@ -400,6 +429,20 @@ void STRAIGHT_FEED(int line_number,
   _sai._program_position_a = a; /*AA*/
   _sai._program_position_b = b; /*BB*/
   _sai._program_position_c = c; /*CC*/
+
+  _sai.pose.tran.x=x;
+  _sai.pose.tran.y=y;
+  _sai.pose.tran.z=z;
+  _sai.pose.a=a;
+  _sai.pose.b=b;
+  _sai.pose.c=c;
+  _sai.pose.u=u;
+  _sai.pose.v=v;
+  _sai.pose.w=w;
+  _sai.cx=0;
+  _sai.cy=0;
+  _sai.type=1;
+  _sai.rotation=0;
 }
 
 

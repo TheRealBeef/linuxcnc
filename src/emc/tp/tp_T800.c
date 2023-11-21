@@ -374,6 +374,7 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
     test_param->Pin=0;
     *tp_ve->Pin=1; //! Velocity end value.
     *enable_look_ahead->Pin=1; //! Enable path rules.
+    *enable_blend_rapids->Pin=0;
     *blendsize->Pin=1; //! Blendsize for rapids.
 
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);

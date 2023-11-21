@@ -36,6 +36,7 @@ include_directories(${Python3_INCLUDE_DIRS})
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 set(SOURCES
+    ${SRC_DIR}/../../src/emc/rs274ngc/interp_base.hh
     ${SRC_DIR}/../../src/emc/sai/driver.cc
     ${SRC_DIR}/../../src/emc/sai/dummyemcstat.cc
     ${SRC_DIR}/../../src/emc/sai/saicanon.cc

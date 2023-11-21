@@ -137,7 +137,7 @@ public:
     Handle(AIS_Shape) draw_3d_line(gp_Pnt point1, gp_Pnt point2);
     Handle(AIS_Shape) draw_3d_line_wire(std::vector<gp_Pnt> points);
     Handle(AIS_Shape) draw_3p_3d_arc(gp_Pnt point1, gp_Pnt point2, gp_Pnt point3);
-    Handle(AIS_Shape) draw_cp_3d_arc(gp_Pnt point1, gp_Pnt point2, gp_Pnt center); // Test
+    Handle(AIS_Shape) draw_cp_3d_arc(gp_Pnt point1, gp_Pnt point2, gp_Pnt center);
     Handle(AIS_Shape) draw_3p_3d_circle(gp_Pnt point1,gp_Pnt point2,gp_Pnt point3);
     Handle(AIS_Shape) draw_3d_spline(std::vector<gp_Pnt> pointvec, int divisions); // Divisions is spline resolution (number of line fragments / segmentation value).
 

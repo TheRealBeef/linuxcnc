@@ -19,6 +19,13 @@ struct StandaloneInterpInternals
   StandaloneInterpInternals();
   /* Dummy world model */
 
+  //! Retrieve values for line and arc.
+  EmcPose pose;
+  double cx,cy;
+  //! Line=0, arc=1, none=-1
+  int type;
+  int rotation;
+
   CANON_PLANE _active_plane;
   int _active_slot;
   int _selected_tool;

@@ -8,15 +8,30 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    myNml=new nml();
+    if(myNml->cmd==NULL){
+        std::cout<<"no cmd channel found."<<std::endl;
+    } else {
+        std::cout<<"nml cmd channel ok."<<std::endl;
+    }
+
+    if(myNml->stat==NULL){
+        std::cout<<"no stat channel found."<<std::endl;
+    } else {
+        std::cout<<"nml stat channel ok."<<std::endl;
+    }
+
     //! This activates a screen update when robot is moving and screen needs to be updated automaticly.
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::update);
     timer->start(100);
 
-    ui->label_jog_speed->setText(QString::number(ui->horizontalScrollBar_jog_speed->value(),'f',3));
 
-    ui->label_rapid_override->setText(QString::number(ui->horizontalScrollBar_rapid_override->value(),'f',3));
-    ui->label_spindle_override->setText(QString::number(ui->horizontalScrollBar_spindle_override->value(),'f',3));
+    myNml->setFeedOveride(1);
+    myNml->setMaxVelocity(1000);
+    myNml->setSpindleOverride(0,1);
+    myNml->setRapidOverride(1);
+    ui->horizontalScrollBar_jog_speed->setValue(1000); //! Non nml.
 }
 
 MainWindow::~MainWindow()
@@ -25,7 +40,12 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::update(){
+
+
     myNml->update();
+
+    // std::cout<<"x: "<<myNml->theStatus.x<<std::endl;
+
 
     if(myNml->theStatus.estop){
         ui->pushButton_estop->setChecked(true);
@@ -52,22 +72,22 @@ void MainWindow::update(){
         ui->pushButton_mdi->setStyleSheet(grey);
         ui->pushButton_auto->setStyleSheet(grey);
     } else
-    if(myNml->theStatus.mode==1 && myNml->theStatus.machine_on){
-        mode="mdi";
-        ui->pushButton_manual->setStyleSheet(grey);
-        ui->pushButton_mdi->setStyleSheet(green);
-        ui->pushButton_auto->setStyleSheet(grey);
-    } else
-    if(myNml->theStatus.mode==2 && myNml->theStatus.machine_on){
-        mode="auto";
-        ui->pushButton_manual->setStyleSheet(grey);
-        ui->pushButton_mdi->setStyleSheet(grey);
-        ui->pushButton_auto->setStyleSheet(green);
-    } else {
-        ui->pushButton_manual->setStyleSheet(grey);
-        ui->pushButton_mdi->setStyleSheet(grey);
-        ui->pushButton_auto->setStyleSheet(grey);
-    }
+        if(myNml->theStatus.mode==1 && myNml->theStatus.machine_on){
+            mode="mdi";
+            ui->pushButton_manual->setStyleSheet(grey);
+            ui->pushButton_mdi->setStyleSheet(green);
+            ui->pushButton_auto->setStyleSheet(grey);
+        } else
+            if(myNml->theStatus.mode==2 && myNml->theStatus.machine_on){
+                mode="auto";
+                ui->pushButton_manual->setStyleSheet(grey);
+                ui->pushButton_mdi->setStyleSheet(grey);
+                ui->pushButton_auto->setStyleSheet(green);
+            } else {
+                ui->pushButton_manual->setStyleSheet(grey);
+                ui->pushButton_mdi->setStyleSheet(grey);
+                ui->pushButton_auto->setStyleSheet(grey);
+            }
     ui->label_mode->setText(mode);
 
     ui->label_x_coordinate->setText(QString::number(myNml->theStatus.x,'f',3));
@@ -97,7 +117,7 @@ void MainWindow::update(){
 
     ui->label_command->setText(myNml->theStatus.command);
     ui->label_inifile->setText(myNml->theStatus.inifile);
-    ui->label_command->setText(myNml->theStatus.command);
+    ui->label_file->setText(myNml->theStatus.file);
 
     if(myNml->theStatus.homed_x){
         ui->label_homed_x->setText("H");
@@ -145,9 +165,9 @@ void MainWindow::update(){
 
     if(myNml->theStatus.run){
         ui->pushButton_run->setStyleSheet(green);
-         ui->pushButton_resume->setStyleSheet(grey);
-             ui->pushButton_pause->setStyleSheet(grey);
-                 ui->pushButton_stop->setStyleSheet(grey);
+        ui->pushButton_resume->setStyleSheet(grey);
+        ui->pushButton_pause->setStyleSheet(grey);
+        ui->pushButton_stop->setStyleSheet(grey);
     } else {
         ui->pushButton_run->setStyleSheet(grey);
     }
@@ -182,9 +202,25 @@ void MainWindow::on_pushButton_machine_on_pressed()
         myNml->machine_on();
     }
 }
+
+#include <QFileDialog>
 void MainWindow::on_pushButton_load_pressed()
 {
-    myNml->load("");
+    myNml->mode_auto();
+    myNml->teleop_enable();
+
+    QString fileName ;
+
+    QFileDialog dialog(this);
+    dialog.setViewMode(QFileDialog::Detail);
+    dialog.setNameFilter(tr("Images (*.txt *.ngc)"));
+    QStringList fileNames;
+    if (dialog.exec())
+        fileNames = dialog.selectedFiles();
+
+    myNml->load(fileNames[0].toStdString());
+
+
 }
 
 void MainWindow::on_pushButton_auto_pressed()
@@ -224,7 +260,8 @@ void MainWindow::on_pushButton_pause_pressed()
 
 void MainWindow::on_pushButton_teleop_pressed()
 {
-    myNml->teleop();
+    // myNml->mode_teleop();
+    myNml->teleop_enable();
 }
 
 void MainWindow::on_pushButton_coord_pressed()
@@ -418,10 +455,13 @@ void MainWindow::on_pushButton_mdi_exec_pressed()
 
 void MainWindow::on_pushButton_run_step_pressed()
 {
-   myNml->run_step();
+    myNml->run_step();
 }
 
 void MainWindow::on_pushButton_forward_pressed()
 {
     myNml->forward();
 }
+
+
+

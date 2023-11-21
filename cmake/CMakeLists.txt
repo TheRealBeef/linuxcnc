@@ -150,8 +150,8 @@ add_subdirectory(${SRC_DIR}/schedrmt)
 add_subdirectory(${SRC_DIR}/linuxcnclcd)
 
 # ~/tlc (used before gtk was invented)
-add_subdirectory(${SRC_DIR}/linuxcnc_tlc)
-add_subdirectory(${SRC_DIR}/hal_tlc)
+add_subdirectory(${SRC_DIR}/linuxcnc_tcl)
+add_subdirectory(${SRC_DIR}/hal_tcl)
 
 # ~/lib/python (c++ python glue code)
 add_subdirectory(${SRC_DIR}/lineardeltakins_py)
@@ -162,9 +162,10 @@ add_subdirectory(${SRC_DIR}/linuxcnc_py)
 add_subdirectory(${SRC_DIR}/gcode_py)
 
 # ~/projects (c - c++ gui projects)
-# add_subdirectory(${SRC_DIR}/projects/qt_occt) # Requires opencascade & kdl & qt installed.
-# add_subdirectory(${SRC_DIR}/projects/qt_nml) # Requires qt installed, first start linuxcnc, then start qt_nml.
-# add_subdirectory(${SRC_DIR}/projects/qt_ruckig_gui) # Requires qt installed, run trough qt.
+#add_subdirectory(${SRC_DIR}/projects/qt_occt) # Requires opencascade & kdl & qt installed.
+add_subdirectory(${SRC_DIR}/projects/qt_nml) # Requires qt installed, first start linuxcnc, then start qt_nml.
+add_subdirectory(${SRC_DIR}/projects/qt_ruckig_gui) # Requires qt installed, run trough qt.
+add_subdirectory(${SRC_DIR}/projects/qt_gremlin) # Requires opencascade & qt installed.
 
 # Experimental scurve motion planner.
 add_subdirectory(${SRC_DIR}/components/sc_tp)

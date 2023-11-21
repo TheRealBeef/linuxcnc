@@ -172,7 +172,7 @@ public:
 
         theStatus.pause = emcStatus->task.interpState == EMC_TASK_INTERP::PAUSED;
         theStatus.run= emcStatus->task.interpState == EMC_TASK_INTERP::READING ||
-                                            emcStatus->task.interpState == EMC_TASK_INTERP::WAITING;
+                emcStatus->task.interpState == EMC_TASK_INTERP::WAITING;
         theStatus.idle= emcStatus->task.interpState == EMC_TASK_INTERP::IDLE;
 
         theStatus.adaptive_feed_enabled=emcStatus->motion.traj.adaptive_feed_enabled;
@@ -199,11 +199,17 @@ public:
         s.state=EMC_TASK_STATE::ESTOP;
         cmd->write(&s);
     }
-    void teleop(){
+    void mode_teleop(){
         EMC_TRAJ_SET_MODE x;
         x.mode=EMC_TRAJ_MODE::TELEOP;
         cmd->write(&x);
     }
+    void teleop_enable(){
+        EMC_TRAJ_SET_TELEOP_ENABLE a;
+        a.enable=1;
+        cmd->write(&a);
+    }
+
     void coord(){
         EMC_TRAJ_SET_MODE x;
         x.mode=EMC_TRAJ_MODE::COORD;
@@ -311,13 +317,14 @@ public:
 
         EMC_TASK_PLAN_OPEN o;
         if(theFile.size()==0){
-            std::string str; //=EMC2_NCFILES_DIR; //!  "~/linuxcnc/nc_files"
-            str.append("/test.ngc");
-            strcpy(o.file, str.c_str());
+            printf("no input file.\n");
+            return;
         } else {
             strcpy(o.file, theFile.c_str());
         }
+
         cmd->write(&o);
+
     }
     void spindle_off(int theSpindle){
         EMC_SPINDLE_OFF m;
@@ -349,16 +356,19 @@ public:
         o.scale=theScale;
         cmd->write(&o);
     }
+    //! MM/min.
     void setMaxVelocity(float theVelocity){
         EMC_TRAJ_SET_MAX_VELOCITY o;
         o.velocity=theVelocity/60;
         cmd->write(&o);
     }
+    //! Factor 1.0 - ...
     void setRapidOverride(float theScale){
         EMC_TRAJ_SET_RAPID_SCALE o;
         o.scale=theScale;
         cmd->write(&o);
     }
+    //! Starting at spindle 0, Factor 1.0 - ...
     void setSpindleOverride(int theSpindle, int theScale){
         EMC_TRAJ_SET_SPINDLE_SCALE s;
         s.spindle=theSpindle;
@@ -371,7 +381,6 @@ public:
         cmd->write(&mdi);
     }
 
-private:
     RCS_CMD_CHANNEL *cmd = new RCS_CMD_CHANNEL(emcFormat, "emcCommand", "xemc", EMC2_DEFAULT_NMLFILE);
     RCS_STAT_CHANNEL *stat = new RCS_STAT_CHANNEL(emcFormat, "emcStatus", "xemc", EMC2_DEFAULT_NMLFILE);
     EMC_STAT  *emcStatus;

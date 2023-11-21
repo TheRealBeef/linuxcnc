@@ -116,9 +116,11 @@ private slots:
 
     void on_pushButton_forward_pressed();
 
+
+
 private:
     Ui::MainWindow *ui;
-    nml *myNml=new nml();
+    nml *myNml;
 
     //! Stylesheet. ui->...->setStyleSheet(grey);
     QString grey="background-color: rgb(51, 57, 59);\ncolor: rgb(255, 255, 255);\n";

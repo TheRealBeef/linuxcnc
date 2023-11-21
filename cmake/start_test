@@ -1,24 +1,43 @@
 #!/bin/sh
 
-PATH=/home/user/linuxcnc/lib
-PATH=/home/user/linuxcnc/rtlib
+echo "current folder:"
+echo $PWD
+echo "\n"
 
-echo "Start halshow. \n"
+echo "removing rtapi_app & linuxcnc_module_helper to overwrite. \n"
+cd ../bin
+rm -f rtapi_app
+rm -f linuxcnc_module_helper
 cd ..
-cd scripts
-./rip-environment halrun -U 
-./rip-environment halshow &
 
-./rip-environment halcmd stop
+echo "Building linuxcnc with cmake. \n"
+cd cmake
+mkdir -p build
+cd build
+cmake -DBUILD_USPACE=ON ..
+make
+make install
+cd ..
+cd ..
 
-# EMCMOT = motmod_scurve # jogging.
-# ./rip-environment halcmd -i /home/user/linuxcnc/configs/sim/axis/axis_mm.ini
-# ./rip-environment halcmd -f /home/user/linuxcnc/lib/hallib/core_sim.hal
+echo "current folder:"
+echo $PWD
+echo "\n"
+	
+# Recreate the Sudo Make Setuid command (needed for running real machines)
+# This version is from : https://github.com/grotius-cnc/hal-core/blob/main/make
+echo "Running equivalent of Sudo Make Setuid. \n"
+sudo chown 777 -R bin/rtapi_app
+sudo chown 777 -R bin/linuxcnc_module_helper
+sudo chmod 777 bin/rtapi_app
+sudo chmod 777 bin/linuxcnc_module_helper
 
-# Use debug flag here like : -rcsdebug 
-# ./rip-environment linuxcncsvr -ini /home/user/linuxcnc/cmake/start_test.ini &
+if [ $# -eq 0 ]
+then
+    echo "Start linuxcnc. \n"
+    cd scripts
+    ./rip-environment linuxcnc ../configs/sim/axis/axis_test.ini 2>&1 | tee ../cmake/run.log
 
-echo "and now?"
-
-
-
+	# Example to start with custom trajectory planner or use in ini file : [TRAJ]TPMOD=user_tpcomp
+	# ./rip-environment linuxcnc -t tpmod_scurve ../configs/sim/axis/axis_mm.ini
+fi

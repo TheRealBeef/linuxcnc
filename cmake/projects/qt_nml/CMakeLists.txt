@@ -84,8 +84,6 @@ include_directories(${SRC_DIR}/../../../src/libnml/posemath)
 include_directories(${SRC_DIR}/../../../src/emc/rs274ngc)
 include_directories(${SRC_DIR}/../../../src/emc/usr_intf/axis/extensions)
 
-include_directories(${SRC_DIR}/../qt_occt_src)
-
 # Set include paths for libraries to link.
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED
 set_target_properties(linuxcnchal PROPERTIES
