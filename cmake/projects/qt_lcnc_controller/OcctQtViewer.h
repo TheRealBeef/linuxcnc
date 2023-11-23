@@ -91,6 +91,17 @@ public:
     void set_orthographic();
     void set_perspective();
 
+    void set_view_front();
+    void set_view_back();
+    void set_view_left();
+    void set_view_right();
+    void set_view_top();
+    void set_view_bottom();
+    void set_view_3d();
+
+    void zoom_plus();
+    void zoom_min();
+
     void redraw();
     void fit_all();
     bool ready();

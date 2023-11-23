@@ -8,9 +8,9 @@
 #include <iostream>
 
 //! For info about nml usage visit : ~/linuxcnc/cmake/halui_src/halui.cc
-class nml {
+class Nml {
 public:
-    nml(){}
+    Nml(){}
 
     struct status {
         bool estop=0;
@@ -22,7 +22,9 @@ public:
         //! 0=manual 1=mdi 2=auto.
         int mode;
         //! Coordinates.
-        float x=0, y=0, z=0, a=0, b=0, c=0, u=0, v=0, w=0;
+        double x=0, y=0, z=0, a=0, b=0, c=0, u=0, v=0, w=0;
+        double dtgx=0, dtgy=0, dtgz=0;
+
         //! Feed override, jog override.
         float feed_override=0;
         float rapid_override=0;
@@ -37,9 +39,9 @@ public:
         int spindle_increasing=0;
         bool spindle_enabled=0;
         bool spindle_homed=0;
-        float spindle_scale=0;
+        double spindle_speed=0;
         float lube_level=0;
-        bool coolant=0;
+        bool flood=0;
         bool mist=0;
         bool lube=0;
         //! Gcode.
@@ -48,7 +50,7 @@ public:
 
         char command[256];
         char inifile[256];
-        char file[256];
+        std::string filename;
 
         bool homed_x=0, homed_y=0, homed_z=0, homed_all=0;
         bool run=0, pause=0, stop=0, idle=0;
@@ -135,10 +137,14 @@ public:
         theStatus.v=emcStatus->motion.traj.position.v;
         theStatus.w=emcStatus->motion.traj.position.w;
 
+        theStatus.dtgx=emcStatus->motion.traj.dtg.tran.x;
+        theStatus.dtgy=emcStatus->motion.traj.dtg.tran.y;
+        theStatus.dtgz=emcStatus->motion.traj.dtg.tran.z;
+
         theStatus.feed_override=emcStatus->motion.traj.scale; //! Velocity override scale.
         theStatus.rapid_override=emcStatus->motion.traj.rapid_scale; //! Rapic override scale.
-        theStatus.max_velocity=emcStatus->motion.traj.maxVelocity*60;
-        theStatus.current_velocity=emcStatus->motion.traj.current_vel*60;
+        theStatus.max_velocity=emcStatus->motion.traj.maxVelocity;
+        theStatus.current_velocity=emcStatus->motion.traj.current_vel;
         theStatus.current_rpm=emcStatus->motion.spindle->speed;
 
         //! Extra
@@ -147,9 +153,11 @@ public:
         theStatus.spindle_increasing=emcStatus->motion.spindle->increasing;
         theStatus.spindle_enabled=emcStatus->motion.spindle->enabled;
         theStatus.spindle_homed=emcStatus->motion.spindle->homed;
-        theStatus.spindle_scale=emcStatus->motion.spindle->spindle_scale; //! Spindle override.
+        theStatus.spindle_override=emcStatus->motion.spindle->spindle_scale; //! Spindle override.
+        theStatus.spindle_speed=emcStatus->motion.spindle->speed;
+
         // theStatus.lube_level=emcStatus->io.lube.level;
-        theStatus.coolant=emcStatus->io.coolant.flood;
+        theStatus.flood=emcStatus->io.coolant.flood;
         theStatus.mist=emcStatus->io.coolant.mist;
         // theStatus.lube=emcStatus->io.lube.on;
 
@@ -158,11 +166,13 @@ public:
 
         strcpy(theStatus.command,emcStatus->task.command);
         strcpy(theStatus.inifile,emcStatus->task.ini_filename);
-        strcpy(theStatus.file,emcStatus->task.file);
+        theStatus.filename=emcStatus->task.file;
 
         theStatus.homed_x=emcStatus->motion.joint[0].homed;
         theStatus.homed_y=emcStatus->motion.joint[1].homed;
         theStatus.homed_z=emcStatus->motion.joint[2].homed;
+
+
 
         if(theStatus.homed_x && theStatus.homed_y && theStatus.homed_z){
             theStatus.homed_all=1;
@@ -275,9 +285,17 @@ public:
         m.mode=EMC_TASK_MODE::MANUAL;
         cmd->write(&m);
     }
+    void run(){
+        EMC_TASK_PLAN_RUN r;
+        cmd->write(&r);
+    }
     void run(int theLine){
         EMC_TASK_PLAN_RUN r;
         r.line=theLine;
+        cmd->write(&r);
+    }
+    void mdi_execute(){
+        EMC_TASK_PLAN_EXECUTE r;
         cmd->write(&r);
     }
     void run_step(){
@@ -309,12 +327,6 @@ public:
         cmd->write(&e);
     }
     void load(std::string theFile){
-        //! Mention, the drawing will not be displayed by a gui like axis. But the code is
-        //! loaded and will run.
-
-        EMC_TASK_PLAN_CLOSE m0;
-        cmd->write(&m0);
-
         EMC_TASK_PLAN_OPEN o;
         if(theFile.size()==0){
             printf("no input file.\n");
@@ -324,7 +336,10 @@ public:
         }
 
         cmd->write(&o);
-
+    }
+    void close(){
+         EMC_TASK_PLAN_CLOSE c;
+         cmd->write(&c);
     }
     void spindle_off(int theSpindle){
         EMC_SPINDLE_OFF m;
@@ -341,7 +356,7 @@ public:
         EMC_JOG_CONT j;
         j.jjogmode = 0;
         j.joint_or_axis = axis;
-        j.vel = speed/60;
+        j.vel = speed;
         cmd->write(&j);
     }
     void jog_stop(int axis){
@@ -351,21 +366,21 @@ public:
         cmd->write(&s);
     }
     //! Factor 1.0 - ...
-    void setFeedOveride(float theScale){
+    void setFeedOveride(float value){
         EMC_TRAJ_SET_SCALE o;
-        o.scale=theScale;
+        o.scale=value;
         cmd->write(&o);
     }
     //! MM/min.
     void setMaxVelocity(float theVelocity){
         EMC_TRAJ_SET_MAX_VELOCITY o;
-        o.velocity=theVelocity/60;
+        o.velocity=theVelocity;
         cmd->write(&o);
     }
     //! Factor 1.0 - ...
-    void setRapidOverride(float theScale){
+    void setRapidOverride(float value){
         EMC_TRAJ_SET_RAPID_SCALE o;
-        o.scale=theScale;
+        o.scale=value;
         cmd->write(&o);
     }
     //! Starting at spindle 0, Factor 1.0 - ...
@@ -379,6 +394,22 @@ public:
         EMC_TASK_PLAN_EXECUTE mdi;
         strcpy(mdi.command,theCommand.c_str());
         cmd->write(&mdi);
+    }
+    void flood_on(){
+        EMC_COOLANT_FLOOD_ON s;
+        cmd->write(&s);
+    }
+    void flood_off(){
+        EMC_COOLANT_FLOOD_OFF s;
+        cmd->write(&s);
+    }
+    void mist_on(){
+        EMC_COOLANT_MIST_ON s;
+        cmd->write(&s);
+    }
+    void mist_off(){
+        EMC_COOLANT_MIST_OFF s;
+        cmd->write(&s);
     }
 
     RCS_CMD_CHANNEL *cmd = new RCS_CMD_CHANNEL(emcFormat, "emcCommand", "xemc", EMC2_DEFAULT_NMLFILE);

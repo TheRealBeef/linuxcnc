@@ -41,15 +41,4 @@ void Form::update_dro(double x, double y, double z, double dtgx, double dtgy, do
      }
 }
 
-void Form::reset_btn_press(){
-    fit_all=false;
-}
 
-bool Form::is_fit_all(){
-    return fit_all;
-}
-
-void Form::on_toolButton_fit_all_pressed()
-{
-    fit_all=true;
-}

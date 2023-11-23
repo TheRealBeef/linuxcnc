@@ -691,3 +691,44 @@ void OcctQtViewer::remove_shape(Handle(AIS_Shape) aShape){
     aShape.Nullify();
 }
 
+void OcctQtViewer::set_view_front()
+{
+    myView->SetProj( V3d_Yneg );
+}
+
+void OcctQtViewer::set_view_back()
+{
+    myView->SetProj( V3d_Ypos );
+}
+
+void OcctQtViewer::set_view_top()
+{
+    myView->SetProj( V3d_Zpos );
+}
+
+void OcctQtViewer::set_view_bottom()
+{
+    myView->SetProj( V3d_Zneg );
+}
+
+void OcctQtViewer::set_view_left()
+{
+    myView->SetProj( V3d_Xneg );
+}
+void OcctQtViewer::set_view_right()
+{
+    myView->SetProj( V3d_Xpos );
+}
+
+void OcctQtViewer::set_view_3d()
+{
+    myView->SetProj( V3d_XnegYnegZpos );
+}
+
+void OcctQtViewer::zoom_plus(){
+    UpdateZoom(1);
+}
+
+void OcctQtViewer::zoom_min(){
+    UpdateZoom(-1);
+}

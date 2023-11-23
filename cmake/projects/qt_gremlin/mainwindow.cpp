@@ -52,7 +52,7 @@ void MainWindow::update(){
 
     //! Loaded gcode file.
     filename=emcStatus->task.file;
-    if(oldfile!=filename){
+    if(oldfile!=filename && filename.size()>0){
         load_cad_data_from_interpreter();
         oldfile=filename;
     }
@@ -65,11 +65,14 @@ void MainWindow::update(){
     double dtgy=emcStatus->motion.traj.dtg.tran.y;
     double dtgz=emcStatus->motion.traj.dtg.tran.z;
     double vel=emcStatus->motion.traj.current_vel;
+    bool homedx=emcStatus->motion.joint[0].homed;
+    bool homedy=emcStatus->motion.joint[1].homed;
+    bool homedz=emcStatus->motion.joint[2].homed;
 
-    form->update_dro(x,y,z,dtgx,dtgy,dtgz,vel);
+    form->update_dro(x,y,z,dtgx,dtgy,dtgz,vel,homedx,homedy,homedz);
     occ->translate_tp_cone(x,y,z,0,-0.5*M_PI,0);
 
-    //! Trigger button press.
+    //! Trigger overlay button press.
     if(form->is_fit_all()){
         occ->fit_all();
         form->reset_btn_press();
@@ -82,7 +85,8 @@ void MainWindow::update(){
 //! Todo colorize rapids little different.
 void MainWindow::load_cad_data_from_interpreter()
 {  
-    // occ->remove_all();
+    occ->clear_shapevec();
+
     std::vector<cad_data> cadvec=runInterpreter(filename);
     s=cadvec.size();
 
@@ -95,10 +99,10 @@ void MainWindow::load_cad_data_from_interpreter()
             gp_Pnt p1(d.pose.tran.x, d.pose.tran.y, d.pose.tran.z);
 
             if(d.type==1){
-                occ->show_shape(draw_primitives().colorize( draw_primitives().draw_3d_line(p0,p1),Quantity_NOC_GRAY50,0) );
+                occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_line(p0,p1),Quantity_NOC_GRAY50,0) );
             }
             if(d.type==3){
-                occ->show_shape(draw_primitives().colorize( draw_primitives().draw_3d_line(p0,p1),Quantity_NOC_GRAY15,0) );
+                occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_line(p0,p1),Quantity_NOC_GRAY15,0) );
             }
         }
         if(d.type==2){ //! Draw opencascade arc.
@@ -116,9 +120,9 @@ void MainWindow::load_cad_data_from_interpreter()
                 std::cout<<""<<std::endl;*/
 
                 if(d.rotation==-1){
-                    occ->show_shape(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,0,0,1),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,0,0,1),Quantity_NOC_GRAY50,0) );
                 } else {
-                    occ->show_shape(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,0,0,1),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,0,0,1),Quantity_NOC_GRAY50,0) );
                 }
             }
             if(d.plane==2){ //!
@@ -134,9 +138,9 @@ void MainWindow::load_cad_data_from_interpreter()
                 std::cout<<""<<std::endl;*/
 
                 if(d.rotation==-1){
-                    occ->show_shape(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,1,0,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,1,0,0),Quantity_NOC_GRAY50,0) );
                 } else {
-                    occ->show_shape(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,1,0,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,1,0,0),Quantity_NOC_GRAY50,0) );
                 }
             }
             if(d.plane==3){ //! Y swap Z.
@@ -152,9 +156,9 @@ void MainWindow::load_cad_data_from_interpreter()
                 std::cout<<""<<std::endl;*/
 
                 if(d.rotation==-1){
-                    occ->show_shape(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,0,1,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,0,1,0),Quantity_NOC_GRAY50,0) );
                 } else {
-                    occ->show_shape(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,0,1,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,0,1,0),Quantity_NOC_GRAY50,0) );
                 }
             }
         }
@@ -163,5 +167,7 @@ void MainWindow::load_cad_data_from_interpreter()
         oldy=d.pose.tran.y;
         oldz=d.pose.tran.z;
     }
+
+    occ->fit_all();
 }
 
