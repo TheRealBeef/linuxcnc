@@ -1,14 +1,19 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 638x794+41+83
+wm geometry . 869x794+1677+787
 placeFrames 0.40641711229946526
 set ::ratio 0.40641711229946526
 set ::old_w_leftf 160
 set ::watchlist {
-    pin+spindle.0.revs
-    pin+spindle.0.on
-    pin+spindle.0.at-speed
-    pin+spindle.0.speed-cmd-rps
+    pin+tpmod_scurve_skynet.curacc
+    pin+tpmod_scurve_skynet.curvel
+    pin+tpmod_scurve_skynet.reverse
+    pin+tpmod_scurve_skynet.ruckig_x_acc
+    pin+tpmod_scurve_skynet.ruckig_x_pos
+    pin+tpmod_scurve_skynet.ruckig_x_vel
+    pin+tpmod_scurve_skynet.ruckig_x_pos_ferror
+    pin+tpmod_scurve_skynet.ruckig_y_pos_ferror
+    pin+tpmod_scurve_skynet.ruckig_z_pos_ferror
 }
 set ::workmode watchhal
 set ::watchInterval 100

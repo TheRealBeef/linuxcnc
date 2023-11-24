@@ -48,6 +48,10 @@ typedef struct {
     hal_float_t *Pin;
 } float_data_t;
 float_data_t *tp_curvel, *tp_curacc;
+float_data_t  *ruckig_x_pos, *ruckig_x_vel, *ruckig_x_acc;
+float_data_t  *ruckig_y_pos, *ruckig_y_vel, *ruckig_y_acc;
+float_data_t  *ruckig_z_pos, *ruckig_z_vel, *ruckig_z_acc;
+float_data_t  *ruckig_x_pos_ferror, *ruckig_y_pos_ferror, *ruckig_z_pos_ferror;
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
@@ -127,6 +131,42 @@ static int setup_pins(){
 
     tp_curacc = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("tpmod_scurve_skynet.curacc",HAL_OUT,&(tp_curacc->Pin),comp_idx);
+
+    ruckig_x_pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_pos",HAL_OUT,&(ruckig_x_pos->Pin),comp_idx);
+
+    ruckig_x_pos_ferror = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_pos_ferror",HAL_OUT,&(ruckig_x_pos_ferror->Pin),comp_idx);
+
+    ruckig_x_vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_vel",HAL_OUT,&(ruckig_x_vel->Pin),comp_idx);
+
+    ruckig_x_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_acc",HAL_OUT,&(ruckig_x_acc->Pin),comp_idx);
+
+    ruckig_y_pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_pos",HAL_OUT,&(ruckig_y_pos->Pin),comp_idx);
+
+    ruckig_y_pos_ferror = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_pos_ferror",HAL_OUT,&(ruckig_y_pos_ferror->Pin),comp_idx);
+
+    ruckig_y_vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_vel",HAL_OUT,&(ruckig_y_vel->Pin),comp_idx);
+
+    ruckig_y_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_acc",HAL_OUT,&(ruckig_y_acc->Pin),comp_idx);
+
+    ruckig_z_pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_pos",HAL_OUT,&(ruckig_z_pos->Pin),comp_idx);
+
+    ruckig_z_pos_ferror = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_pos_ferror",HAL_OUT,&(ruckig_z_pos_ferror->Pin),comp_idx);
+
+    ruckig_z_vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_vel",HAL_OUT,&(ruckig_z_vel->Pin),comp_idx);
+
+    ruckig_z_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_acc",HAL_OUT,&(ruckig_z_acc->Pin),comp_idx);
 
     reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_bit_new("tpmod_scurve_skynet.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
@@ -262,9 +302,11 @@ extern struct result wrapper_get_pos(struct result input);
 extern double wrapper_stop_lenght(struct result input);
 struct result r={};
 struct result restore={};
+struct result rx={},ry={},rz={},rxyz={}; //! Xyz tp followers using scurve algo.
 
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
+void update_ruckig_followers(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
 
 void update_look_ahead(TP_STRUCT * const tp);
@@ -298,6 +340,9 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
 
     //! Interpolate tp position given a 0-1 trajectory progress.
     update_gui(tp);
+
+    //! Test function for halscope, to find velocity jumps.
+    update_ruckig_followers(tp);
 
     return 0;
 }
@@ -965,7 +1010,7 @@ inline void update_ruckig(TP_STRUCT * const tp){
             r.interfacetype=position;
         }
 
-        restore=r;
+        // restore=r;
         r=wrapper_get_pos(r);
 
         if(r.function_return_code==Working){
@@ -973,9 +1018,9 @@ inline void update_ruckig(TP_STRUCT * const tp){
             tp->cur_acc=r.curacc;
             tp->cur_vel=r.curvel;
 
-            if(isnanf(tp->cur_pos)){
-                r=restore;
-            }
+            //if(isnanf(tp->cur_pos)){
+            //    r=restore;
+            //}
 
             //! Update hal pins for monitoring by halscope.
             *tp_curvel->Pin=r.curvel;
@@ -1004,6 +1049,119 @@ inline void update_ruckig(TP_STRUCT * const tp){
         // printf("ruckig code %i \n",r.function_return_code);
     }
 }
+
+inline void update_ruckig_followers(TP_STRUCT * const tp){
+
+    // Check the vector. Load first segment into the ruckig planner.
+    if(tp->vector_size>0){
+
+
+        rxyz.maxacc=tp->aMax;
+        rxyz.maxjerk=tp->max_jerk;
+
+        double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
+        if(vm>tp->vLimit){
+            vm=tp->vLimit;
+        }
+
+        if(vector_at(vector_ptr,tp->vector_current_exec).type==1){ //! G0
+            vm*=emcmotStatus->rapid_scale;
+        } else { //! It's a G1,G2,G3.
+            vm*=emcmotStatus->net_feed_scale;
+        }
+
+        rxyz.maxvel = vm;
+        if(rxyz.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
+            rxyz.maxvel=0.01;
+        }
+
+        rxyz.enable=1;
+        rxyz.durationdiscretizationtype=Discrete;
+        rxyz.synchronizationtype=None;
+
+        //! MENTION: tp->cycletime is not set to 0.001, or it has a long to double conversion error.
+        //! We set it fixed for now.
+        rxyz.period=0.001;
+
+        rxyz.taracc=0;
+        rxyz.tarvel=0;
+
+        //! When pausing, goto velocity 0. See the component motdot
+        //! how a jog stop is done.
+        if(tp->pausing || vm==0 ){
+            rxyz.interfacetype=velocity;
+        } else {
+            rxyz.interfacetype=position;
+        }
+
+        //! Copy shared values.
+        rx.maxacc=rxyz.maxacc;
+        rx.maxjerk=rxyz.maxjerk;
+        rx.maxvel=rxyz.maxvel;
+        rx.enable=rxyz.enable;
+        rx.durationdiscretizationtype=rxyz.durationdiscretizationtype;
+        rx.synchronizationtype=rxyz.synchronizationtype;
+        rx.period=rxyz.period;
+        rx.taracc=rxyz.taracc;
+        rx.tarvel=rxyz.tarvel;
+
+        ry.maxacc=rxyz.maxacc;
+        ry.maxjerk=rxyz.maxjerk;
+        ry.maxvel=rxyz.maxvel;
+        ry.enable=rxyz.enable;
+        ry.durationdiscretizationtype=rxyz.durationdiscretizationtype;
+        ry.synchronizationtype=rxyz.synchronizationtype;
+        ry.period=rxyz.period;
+        ry.taracc=rxyz.taracc;
+        ry.tarvel=rxyz.tarvel;
+
+        rz.maxacc=rxyz.maxacc;
+        rz.maxjerk=rxyz.maxjerk;
+        rz.maxvel=rxyz.maxvel;
+        rz.enable=rxyz.enable;
+        rz.durationdiscretizationtype=rxyz.durationdiscretizationtype;
+        rz.synchronizationtype=rxyz.synchronizationtype;
+        rz.period=rxyz.period;
+        rz.taracc=rxyz.taracc;
+        rz.tarvel=rxyz.tarvel;
+
+        //! Calculate the x axis follower.
+        rx.tarpos=xyz.x;
+        rx=wrapper_get_pos(rx);
+        if(rx.function_return_code==Working){
+            //! Update hal pins for monitoring by halscope.
+            *ruckig_x_pos->Pin=rx.curpos;
+            *ruckig_x_vel->Pin=rx.curvel;
+            *ruckig_x_acc->Pin=rx.curacc;
+        }
+
+        //! Calculate the y axis follower.
+        ry.tarpos=xyz.y;
+        ry=wrapper_get_pos(ry);
+        if(ry.function_return_code==Working){
+            //! Update hal pins for monitoring by halscope.
+            *ruckig_y_pos->Pin=ry.curpos;
+            *ruckig_y_vel->Pin=ry.curvel;
+            *ruckig_y_acc->Pin=ry.curacc;
+        }
+
+        //! Calculate the z axis follower.
+        rz.tarpos=xyz.z;
+        rz=wrapper_get_pos(rz);
+        if(rz.function_return_code==Working){
+            //! Update hal pins for monitoring by halscope.
+            *ruckig_z_pos->Pin=rz.curpos;
+            *ruckig_z_vel->Pin=rz.curvel;
+            *ruckig_z_acc->Pin=rz.curacc;
+        }
+
+        //! Calculate out of position distances for xyz.
+        *ruckig_x_pos_ferror->Pin=xyz.x-rx.curpos;
+        *ruckig_y_pos_ferror->Pin=xyz.y-ry.curpos;
+        *ruckig_z_pos_ferror->Pin=xyz.z-rz.curpos;
+    }
+}
+
 
 //! A Inline functinn is compiled in between the upper-level function. So
 //! its not called every time, but compiled inbetween. This makes it faster.

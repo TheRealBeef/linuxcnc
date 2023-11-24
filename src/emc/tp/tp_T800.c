@@ -49,6 +49,8 @@ typedef struct {
     hal_float_t *Pin;
 } float_data_t;
 float_data_t *tp_curvel, *tp_curacc, *tp_curpos, *tp_tarpos, *tp_test, *tp_progress, *tp_la_tarpos, *tp_ve, *blendsize;
+//! Scurve tp followers for x & y.
+float_data_t *ruckig_x_pos, *ruckig_x_vel, *ruckig_x_acc, *ruckig_y;
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
@@ -148,6 +150,18 @@ static int setup_pins(){
 
     blendsize = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("tpmod_T800.blendsize",HAL_IN,&(blendsize->Pin),comp_idx);
+
+    ruckig_x_pos= (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_T800.ruckig_x_pos",HAL_OUT,&(ruckig_x_pos->Pin),comp_idx);
+
+    ruckig_x_vel= (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_T800.ruckig_x_vel",HAL_OUT,&(ruckig_x_vel->Pin),comp_idx);
+
+    ruckig_x_acc= (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_T800.ruckig_x_acc",HAL_OUT,&(ruckig_x_acc->Pin),comp_idx);
+
+    ruckig_y= (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_T800.ruckig_y",HAL_OUT,&(ruckig_y->Pin),comp_idx);
 
     reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_bit_new("tpmod_T800.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
@@ -298,14 +312,16 @@ extern double arc_radius( struct sc_pnt arc_way, struct sc_pnt arc_center);
 
 //! Gcode vector dynamic.
 struct tp_vector *vector_ptr;
-struct ruckig_dev_interface *ruckig_ptr;
+struct ruckig_dev_interface *ruckig_ptr, *ruckig_ptr_x;
 
-struct ruckig_c_data r,rclean;
+
+struct ruckig_c_data rtp,rx,ry,rz;
 extern ruckig_dev_interface* ruckig_init_ptr();
 extern struct ruckig_c_data ruckig_calculate_c_ptr(ruckig_dev_interface *ruckig_ptr, struct ruckig_c_data in);
 
 void update_gui(TP_STRUCT * const tp);
 void update_ruckig(TP_STRUCT * const tp);
+void update_ruckig_xyz_followers(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
 void update_blend_rapids(TP_STRUCT * const tp);
 
@@ -347,6 +363,9 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     //! Interpolate tp position given a 0-1 trajectory progress.
     update_gui(tp);
 
+    //! Update ruckig followers, to check in halscope.
+    //! Take the gui xyz values to run for ruckig xyz.
+    update_ruckig_xyz_followers(tp);
 
     return 0;
 }
@@ -365,6 +384,8 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 
     //! Create a new ruckig class instance.
     ruckig_ptr=ruckig_init_ptr();
+
+    ruckig_ptr_x=ruckig_init_ptr();
 
     if(max_look_ahead->Pin==0){
         max_look_ahead->Pin=10;
@@ -609,10 +630,10 @@ int tpIsDone(TP_STRUCT * const tp)
         tp->traject_progress=0;
         //! Hard position reset for the ruckig traject.
         //! Avoid a second reset.
-        if(r.curpos==0 && r.tarpos==0){
+        if(rtp.curpos==0 && rtp.tarpos==0){
 
         } else {
-            r.reset=1;
+            rtp.reset=1;
         }
 
         return 1;
@@ -972,15 +993,15 @@ inline void update_gui(TP_STRUCT * const tp){
 //! Set ruckig inputs, also to trigger interupts.
 inline void set_ruckig_inputs(TP_STRUCT * const tp){
 
-    r.enable=1; //! Enable ruckig.
-    r.control_interfacetype=position; //! For normal usage, for pause we use type velocity.
-    r.durationdiscretizationtype=Continuous; //! Every trajectory duration is allowed (Default)
-    r.synchronizationtype=None; //! Calculate every DoF independently
+    rtp.enable=1; //! Enable ruckig.
+    rtp.control_interfacetype=position; //! For normal usage, for pause we use type velocity.
+    rtp.durationdiscretizationtype=Continuous; //! Every trajectory duration is allowed (Default)
+    rtp.synchronizationtype=None; //! Calculate every DoF independently
 
-    r.cycletime=0.001;              // 0.001
-    r.maxacc=tp->aMax;              // 500
-    r.maxjerk=tp->max_jerk;         // 1100
-    r.reverse=tp->reverse_run; //! Motion reverse pin.
+    rtp.cycletime=0.001;              // 0.001
+    rtp.maxacc=tp->aMax;              // 500
+    rtp.maxjerk=tp->max_jerk;         // 1100
+    rtp.reverse=tp->reverse_run; //! Motion reverse pin.
 
     //! Set the velocity max.
     double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
@@ -994,16 +1015,16 @@ inline void set_ruckig_inputs(TP_STRUCT * const tp){
         vm*=emcmotStatus->net_feed_scale;
     }
 
-    r.maxvel = vm;
-    if(r.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
-        r.maxvel=0.01;
+    rtp.maxvel = vm;
+    if(rtp.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
+        rtp.maxvel=0.01;
     }
 
     //! Set pause.
     if(tp->pausing || vm==0 ){
-        r.pause=1;
+        rtp.pause=1;
     } else {
-        r.pause=0;
+        rtp.pause=0;
     }
 }
 
@@ -1013,8 +1034,8 @@ inline void set_ruckig_tarvel(TP_STRUCT * const tp){
     if(*enable_ve->Pin==1){
         tp->tar_vel=*tp_ve->Pin;
 
-        if(tp->tar_vel>r.maxvel){
-            tp->tar_vel=r.maxvel;
+        if(tp->tar_vel>rtp.maxvel){
+            tp->tar_vel=rtp.maxvel;
         }
 
         //! At start & at end of traject, ve=0. Inbetween may be > 0.
@@ -1040,7 +1061,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
         tp->tar_pos=tp->la_tar_pos;
 
         //! Motion forward.
-        if(((tp->cur_pos>tp->tar_pos-0.001 || r.function_return_code==Finished)) && !tp->reverse_run){
+        if(((tp->cur_pos>tp->tar_pos-0.001 || rtp.function_return_code==Finished)) && !tp->reverse_run){
             tp->tar_pos=tp->traject_lenght;
             // printf("finished forward, rtime: %f \n",r.at_time);
 
@@ -1050,7 +1071,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
         }
 
         //! Motion reverse.
-        if(((tp->cur_pos>tp->tar_pos-0.001 || r.function_return_code==Finished)) && tp->reverse_run){
+        if(((tp->cur_pos>tp->tar_pos-0.001 || rtp.function_return_code==Finished)) && tp->reverse_run){
             tp->tar_pos=0;
             // printf("finished reverse, rtime: %f \n",r.at_time);
 
@@ -1060,7 +1081,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
         }
 
         //! Hanging.
-        if(old_time==r.at_time){
+        if(old_time==rtp.at_time){
             // printf("time hangs. \n");
 
             if(!tp->reverse_run){
@@ -1070,7 +1091,7 @@ void set_ruckig_tarpos(TP_STRUCT * const tp){
             }
 
         }
-        old_time=r.at_time;
+        old_time=rtp.at_time;
 
     } else { //! No look ahead.
         if(!tp->reverse_run){ //! Motion forward.
@@ -1094,23 +1115,46 @@ inline void update_ruckig(TP_STRUCT * const tp){
 
         set_ruckig_tarpos(tp);
 
-        r.tarpos=tp->tar_pos;
-        r.taracc=tp->tar_acc=0;
-        r.tarvel=tp->tar_vel;
+        rtp.tarpos=tp->tar_pos;
+        rtp.taracc=tp->tar_acc=0;
+        rtp.tarvel=tp->tar_vel;
 
-        r=ruckig_calculate_c_ptr(ruckig_ptr,r);
+        rtp=ruckig_calculate_c_ptr(ruckig_ptr,rtp);
 
-        tp->cur_vel=r.newvel; //! Update actual tp value to show in halscope.
-        tp->cur_acc=r.newacc; //!
-        tp->cur_pos=r.newpos; //!
+        tp->cur_vel=rtp.newvel; //! Update actual tp value to show in halscope.
+        tp->cur_acc=rtp.newacc; //!
+        tp->cur_pos=rtp.newpos; //!
         tp->traject_progress=tp->cur_pos/tp->traject_lenght;
 
         //! Check if we are at the end of the segment list.
-        if(r.function_return_code==Finished && !tp->pausing && tp->traject_progress!=0 && tp->vector_current_exec==tp->vector_size-1){
+        if(rtp.function_return_code==Finished && !tp->pausing && tp->traject_progress!=0 && tp->vector_current_exec==tp->vector_size-1){
             tp->vector_size=0;
             vector_clear(vector_ptr);
         }
     }
+}
+
+//! Test function, shows a problem refusing multiple instances of ruckig running in realtime.
+inline void update_ruckig_xyz_followers(TP_STRUCT * const tp){
+
+    //! Copy vm, enable, max_jerk.
+    rx=rtp;
+
+    printf("rx tarpos: %f \n",xyz.x);
+    //! Set new tarpos.
+    rx.tarpos=xyz.x;
+
+    rx.initialized=0;
+
+    rx=ruckig_calculate_c_ptr(ruckig_ptr_x,rx);
+
+    *ruckig_x_pos->Pin=rx.newpos;
+    *ruckig_x_vel->Pin=rx.newvel;
+    *ruckig_x_acc->Pin=rx.newacc;
+
+    rx.curpos=rx.newpos;
+    rx.curacc=rx.newacc;
+    rx.curvel=rx.newvel;
 }
 
 //! Experimental function to blend rapids G0.
@@ -1265,7 +1309,7 @@ inline void update_hal(TP_STRUCT * const tp){
     *tp_curvel->Pin=tp->cur_vel;
     *tp_curacc->Pin=tp->cur_acc;
     *tp_tarpos->Pin=tp->tar_pos;
-    *return_code->Pin=r.function_return_code;
+    *return_code->Pin=rtp.function_return_code;
     *tp_progress->Pin=tp->traject_progress;
     *tp_la_tarpos->Pin=tp->la_tar_pos;
 }

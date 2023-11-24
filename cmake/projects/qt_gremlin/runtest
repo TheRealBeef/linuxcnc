@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# Be sure you did a make & make install.
-
-echo "start. \n"
 cd ../../../scripts
+
+echo "starting lcnc master."
+./rip-environment linuxcnc ../configs/sim/axis/axis_mm.ini &
+echo "starting gremlin."
 ./rip-environment qt_gremlin
 
