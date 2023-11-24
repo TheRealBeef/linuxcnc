@@ -48,15 +48,16 @@ typedef struct {
     hal_float_t *Pin;
 } float_data_t;
 float_data_t *tp_curvel, *tp_curacc;
-float_data_t  *ruckig_x_pos, *ruckig_x_vel, *ruckig_x_acc;
-float_data_t  *ruckig_y_pos, *ruckig_y_vel, *ruckig_y_acc;
-float_data_t  *ruckig_z_pos, *ruckig_z_vel, *ruckig_z_acc;
-float_data_t  *ruckig_x_pos_ferror, *ruckig_y_pos_ferror, *ruckig_z_pos_ferror;
+float_data_t *ruckig_x_pos, *ruckig_x_vel, *ruckig_x_acc;
+float_data_t *ruckig_y_pos, *ruckig_y_vel, *ruckig_y_acc;
+float_data_t *ruckig_z_pos, *ruckig_z_vel, *ruckig_z_acc;
+float_data_t *ruckig_x_pos_ferror, *ruckig_y_pos_ferror, *ruckig_z_pos_ferror;
+float_data_t *ruckig_ferror_limit;
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *reverse_run;
+bit_data_t *reverse_run, *show_runners_toolpath, *limit_ferror;
 
 typedef struct { //! Int.
     hal_s32_t *Pin;
@@ -83,7 +84,7 @@ typedef struct {
 typedef struct {
     hal_float_t Pin;
 } param_float_data_t;
-param_float_data_t *test_param;
+param_float_data_t *test_param, *ruckig_ferror_extrema;
 
 typedef struct {
     hal_bit_t Pin;
@@ -124,6 +125,15 @@ static void the_function(){
 //! Setup hal pins.
 static int setup_pins(){
     int r=0;
+
+    show_runners_toolpath = (bit_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_bit_new("tpmod_scurve_skynet.runners_toolpath",HAL_IN,&(show_runners_toolpath->Pin),comp_idx);
+
+    ruckig_ferror_limit = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_ferror_limit",HAL_IN,&(ruckig_ferror_limit->Pin),comp_idx);
+
+    ruckig_ferror_extrema = (param_float_data_t*)hal_malloc(sizeof(param_float_data_t));
+    r+=hal_param_float_new("tpmod_scurve_skynet.ruckig_ferror_extrema",HAL_RW,&(ruckig_ferror_extrema->Pin),comp_idx);
 
     //! Pins to be motitored by halscope.
     tp_curvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
@@ -170,6 +180,9 @@ static int setup_pins(){
 
     reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_bit_new("tpmod_scurve_skynet.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
+
+    limit_ferror = (bit_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_bit_new("tpmod_scurve_skynet.limit_ferror",HAL_IN,&(limit_ferror->Pin),comp_idx);
 
     max_look_ahead = (param_s32_data_t*)hal_malloc(sizeof(param_s32_data_t));
     r+=hal_param_s32_new("tpmod_scurve_skynet.look_ahead",HAL_RW,&(max_look_ahead->Pin),comp_idx);
@@ -362,6 +375,10 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
     if(max_look_ahead->Pin==0){
         max_look_ahead->Pin=10;
         printf("tpCreate, set look_ahead to : %i \n",max_look_ahead->Pin);
+    }
+
+    if(*ruckig_ferror_limit->Pin==0){
+        *ruckig_ferror_limit->Pin=0.1;
     }
 
     test_param->Pin=0;
@@ -905,6 +922,13 @@ inline void update_gui(TP_STRUCT * const tp){
         tp->currentPos.tran.y=xyz.y;
         tp->currentPos.tran.z=xyz.z;
 
+        //! Output the toolpath created by the ruckig xyz runners.
+        if(*show_runners_toolpath->Pin){
+            tp->currentPos.tran.x=rx.curpos;
+            tp->currentPos.tran.y=ry.curpos;
+            tp->currentPos.tran.z=rz.curpos;
+        }
+
         interpolate_dir_c(vector_at(vector_ptr,id).dir_s,
                           vector_at(vector_ptr,id).dir_e,
                           tp->segment_progress,
@@ -985,6 +1009,20 @@ inline void update_ruckig(TP_STRUCT * const tp){
             vm*=emcmotStatus->net_feed_scale;
         }
 
+        //! Limit ferror here.
+        if(*limit_ferror->Pin){
+            //! Check if there is current ferror limit overshoot for xyz.
+            if(*ruckig_x_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
+                vm=r.curvel;
+            }
+            if(*ruckig_y_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
+                vm=r.curvel;
+            }
+            if(*ruckig_z_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
+                vm=r.curvel;
+            }
+        }
+
         r.maxvel = vm;
         if(r.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
             r.maxvel=0.01;
@@ -1036,7 +1074,7 @@ inline void update_ruckig(TP_STRUCT * const tp){
             tp->tar_pos=tp->traject_lenght;
 
             //! End of traject.
-            if(tp->cur_pos>tp->traject_lenght-0.001){
+            if(tp->cur_pos>tp->traject_lenght-0.001 && tp->vector_current_exec==tp->vector_size-1){
                 tp->vector_size=0;
                 vector_clear(vector_ptr);
             }
@@ -1130,6 +1168,9 @@ inline void update_ruckig_followers(TP_STRUCT * const tp){
         rx=wrapper_get_pos(rx);
         if(rx.function_return_code==Working){
             //! Update hal pins for monitoring by halscope.
+            if(isnanf(rx.curpos)){
+                printf("rx.curpos isnan!. \n");
+            }
             *ruckig_x_pos->Pin=rx.curpos;
             *ruckig_x_vel->Pin=rx.curvel;
             *ruckig_x_acc->Pin=rx.curacc;
@@ -1140,6 +1181,9 @@ inline void update_ruckig_followers(TP_STRUCT * const tp){
         ry=wrapper_get_pos(ry);
         if(ry.function_return_code==Working){
             //! Update hal pins for monitoring by halscope.
+            if(isnanf(ry.curpos)){
+                printf("ry.curpos isnan!. \n");
+            }
             *ruckig_y_pos->Pin=ry.curpos;
             *ruckig_y_vel->Pin=ry.curvel;
             *ruckig_y_acc->Pin=ry.curacc;
@@ -1150,6 +1194,9 @@ inline void update_ruckig_followers(TP_STRUCT * const tp){
         rz=wrapper_get_pos(rz);
         if(rz.function_return_code==Working){
             //! Update hal pins for monitoring by halscope.
+            if(isnanf(rz.curpos)){
+                printf("rz.curpos isnan!. \n");
+            }
             *ruckig_z_pos->Pin=rz.curpos;
             *ruckig_z_vel->Pin=rz.curvel;
             *ruckig_z_acc->Pin=rz.curacc;
@@ -1159,6 +1206,19 @@ inline void update_ruckig_followers(TP_STRUCT * const tp){
         *ruckig_x_pos_ferror->Pin=xyz.x-rx.curpos;
         *ruckig_y_pos_ferror->Pin=xyz.y-ry.curpos;
         *ruckig_z_pos_ferror->Pin=xyz.z-rz.curpos;
+
+        //! Log the ferror extrema.
+        if(ruckig_ferror_extrema->Pin<*ruckig_x_pos_ferror->Pin){
+            ruckig_ferror_extrema->Pin = *ruckig_x_pos_ferror->Pin;
+        }
+        if(ruckig_ferror_extrema->Pin<*ruckig_y_pos_ferror->Pin){
+            ruckig_ferror_extrema->Pin = *ruckig_y_pos_ferror->Pin;
+        }
+        if(ruckig_ferror_extrema->Pin<*ruckig_z_pos_ferror->Pin){
+            ruckig_ferror_extrema->Pin = *ruckig_z_pos_ferror->Pin;
+        }
+
+
     }
 }
 
