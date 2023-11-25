@@ -52,12 +52,12 @@ float_data_t *ruckig_x_pos, *ruckig_x_vel, *ruckig_x_acc;
 float_data_t *ruckig_y_pos, *ruckig_y_vel, *ruckig_y_acc;
 float_data_t *ruckig_z_pos, *ruckig_z_vel, *ruckig_z_acc;
 float_data_t *ruckig_x_pos_ferror, *ruckig_y_pos_ferror, *ruckig_z_pos_ferror;
-float_data_t *ruckig_ferror_limit;
+float_data_t *ruckig_ferror_limit, *ratio_maxjerk, *ratio_vm, *ratio_acc;
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *reverse_run, *show_runners_toolpath, *limit_ferror;
+bit_data_t *reverse_run, *enable_runners_toolpath, *limit_ferror, *offpath;
 
 typedef struct { //! Int.
     hal_s32_t *Pin;
@@ -126,8 +126,20 @@ static void the_function(){
 static int setup_pins(){
     int r=0;
 
-    show_runners_toolpath = (bit_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_bit_new("tpmod_scurve_skynet.runners_toolpath",HAL_IN,&(show_runners_toolpath->Pin),comp_idx);
+    enable_runners_toolpath = (bit_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_bit_new("tpmod_scurve_skynet.enable_runners_toolpath",HAL_IN,&(enable_runners_toolpath->Pin),comp_idx);
+
+    offpath = (bit_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_bit_new("tpmod_scurve_skynet.offpath",HAL_OUT,&(offpath->Pin),comp_idx);
+
+    ratio_vm = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ratio_vm",HAL_IN,&(ratio_vm->Pin),comp_idx);
+
+    ratio_maxjerk = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ratio_maxjerk",HAL_IN,&(ratio_maxjerk->Pin),comp_idx);
+
+    ratio_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
+    r+=hal_pin_float_new("tpmod_scurve_skynet.ratio_acc",HAL_IN,&(ratio_acc->Pin),comp_idx);
 
     ruckig_ferror_limit = (float_data_t*)hal_malloc(sizeof(float_data_t));
     r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_ferror_limit",HAL_IN,&(ruckig_ferror_limit->Pin),comp_idx);
@@ -288,6 +300,7 @@ extern void vector_clear(struct tp_vector *ptr);
 extern int vector_at_id(struct tp_vector *ptr, int n);
 extern struct tp_segment vector_at(struct tp_vector *ptr, int index);
 extern void vector_add_segment(struct tp_vector *ptr, struct tp_segment b);
+extern void vector_set_vm(tp_vector *ptr, int index, double value);
 extern void vector_remove_last_segment(struct tp_vector *ptr);
 extern void vector_set_end_angle(tp_vector *ptr, int index, double angle_deg);
 
@@ -382,6 +395,12 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
     }
 
     test_param->Pin=0;
+
+    *enable_runners_toolpath->Pin=true;
+    *limit_ferror->Pin=true;
+    *ratio_maxjerk->Pin=1.0;
+    *ratio_vm->Pin=1.0;
+    *ratio_acc->Pin=1.0;
 
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
 
@@ -835,6 +854,22 @@ int tpAddCircle(TP_STRUCT * const tp,
     //! Calculate the arc radius, we can use this for look ahead of tiny arc's.
     b.radius=arc_radius(b.pnt_w,b.pnt_c);
 
+
+    //! Path rule.
+    /*
+    if(b.radius<10){
+        //! Velocity from gcode to sec.
+       b.vm=1400/60;
+    }
+    if(b.radius<5){
+        //! Velocity from gcode.
+       b.vm=500/60;
+    }
+    if(b.radius<1){
+        //! Velocity from gcode.
+       b.vm=250/60;
+    } */
+
     //! Calculate previous segment to current segment path transition corners in degrees.
     if(vector_size_c(vector_ptr)>0){
         struct tp_segment previous=vector_at(vector_ptr,vector_size_c(vector_ptr)-1);
@@ -923,7 +958,7 @@ inline void update_gui(TP_STRUCT * const tp){
         tp->currentPos.tran.z=xyz.z;
 
         //! Output the toolpath created by the ruckig xyz runners.
-        if(*show_runners_toolpath->Pin){
+        if(*enable_runners_toolpath->Pin){
             tp->currentPos.tran.x=rx.curpos;
             tp->currentPos.tran.y=ry.curpos;
             tp->currentPos.tran.z=rz.curpos;
@@ -999,6 +1034,9 @@ inline void update_ruckig(TP_STRUCT * const tp){
         // printf("feed overide: %f \n",emcmotStatus->net_feed_scale);   //! 1.0 is 100%
 
         double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
+        printf("gcode vm: %f \n",vm);
+        printf("vlimit: %f \n",tp->vLimit);
+         printf("vMax: %f \n",tp->vMax);
         if(vm>tp->vLimit){
             vm=tp->vLimit;
         }
@@ -1010,22 +1048,24 @@ inline void update_ruckig(TP_STRUCT * const tp){
         }
 
         //! Limit ferror here.
-        if(*limit_ferror->Pin){
-            //! Check if there is current ferror limit overshoot for xyz.
-            if(*ruckig_x_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
-                vm=r.curvel;
-            }
+        // if(*limit_ferror->Pin){
+
+        //! Check if there is current ferror limit overshoot for xyz.
+        if(*ruckig_x_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
+            *offpath->Pin=1;
+        } else
             if(*ruckig_y_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
-                vm=r.curvel;
-            }
-            if(*ruckig_z_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
-                vm=r.curvel;
-            }
-        }
+                *offpath->Pin=1;
+            } else
+                if(*ruckig_z_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
+                    *offpath->Pin=1;
+                } else {
+                    *offpath->Pin=0;
+                }
 
         r.maxvel = vm;
         if(r.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
-            r.maxvel=0.01;
+            r.maxvel=0.001;
         }
 
         r.enable=1;
@@ -1131,6 +1171,10 @@ inline void update_ruckig_followers(TP_STRUCT * const tp){
         } else {
             rxyz.interfacetype=position;
         }
+
+        rxyz.maxvel*=*ratio_vm->Pin;
+        rxyz.maxjerk*=*ratio_maxjerk->Pin;
+        rxyz.maxacc*=*ratio_acc->Pin;
 
         //! Copy shared values.
         rx.maxacc=rxyz.maxacc;

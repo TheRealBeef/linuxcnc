@@ -14,6 +14,10 @@ extern "C" void vector_add_segment(tp_vector *ptr, struct tp_segment b){
     ptr->pvec.push_back(b);
 }
 
+extern "C" void vector_set_vm(tp_vector *ptr, int index, double value){
+    ptr->pvec.at(index).vm=value;
+}
+
 extern "C" void vector_remove_last_segment(tp_vector *ptr){
     ptr->pvec.pop_back();
 }
