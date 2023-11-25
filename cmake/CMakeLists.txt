@@ -82,6 +82,7 @@ add_subdirectory(${SRC_DIR}/hal_lib)
 add_subdirectory(${SRC_DIR}/components/test)
 add_subdirectory(${SRC_DIR}/components/tp)
 add_subdirectory(${SRC_DIR}/components/tpmod) # Rob Ellenberg's motion planner.
+add_subdirectory(${SRC_DIR}/components/tpmod_runners) # Rob Ellenberg's motion planner testing some scurve runners.
 add_subdirectory(${SRC_DIR}/components/tpmod_template) # a template how the lcnc program flow works.
 add_subdirectory(${SRC_DIR}/components/tpmod_scurve) # working motion component for scurve, excl look ahead.
 add_subdirectory(${SRC_DIR}/components/tpmod_scurve_skynet) # experimental scurve lib using ruckig and look ahead.
