@@ -53,6 +53,8 @@ public:
 private slots:
     void load_cad_data_from_interpreter(std::string filename);
     void load_gcode_text(std::string filename);
+    void make_fillets(double radius);
+
     int get_jog_axis();
 
     void on_toolButton_fit_all_pressed();
@@ -131,8 +133,12 @@ private slots:
 
     void on_tabWidget_currentChanged(int index);
 
+    void on_pushButton_test_pressed();
+
 private:
     Ui::MainWindow *ui;
+
+    QTimer *timer = new QTimer(this);
 
     RCS_STAT_CHANNEL *stat;
     EMC_STAT  *emcStatus;

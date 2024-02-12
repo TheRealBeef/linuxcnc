@@ -105,6 +105,7 @@ public:
     void redraw();
     void fit_all();
     bool ready();
+    void show_shape(Handle(AIS_Shape) aShape);
     void add_shapevec(Handle(AIS_Shape) aShape);
     void clear_shapevec();
 

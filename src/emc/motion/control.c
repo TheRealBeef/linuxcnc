@@ -483,7 +483,7 @@ static void process_inputs(void)
 	}
 	/* update following error flag */
 	if (abs_ferror > joint->ferror_limit) {
-	    SET_JOINT_FERROR_FLAG(joint, 1);
+        // SET_JOINT_FERROR_FLAG(joint, 1);
 	} else {
 	    SET_JOINT_FERROR_FLAG(joint, 0);
 	}

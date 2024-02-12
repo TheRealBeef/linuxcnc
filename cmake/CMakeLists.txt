@@ -163,14 +163,15 @@ add_subdirectory(${SRC_DIR}/linuxcnc_py)
 add_subdirectory(${SRC_DIR}/gcode_py)
 
 # ~/projects (c - c++ gui projects)
-add_subdirectory(${SRC_DIR}/projects/qt_nml) # Requires qt installed, first start linuxcnc, then start qt_nml.
+# add_subdirectory(${SRC_DIR}/projects/qt_nml) # Requires qt installed, first start linuxcnc, then start qt_nml.
 
 # Requires qt & opencascade installed, opencascade version: ~/cmake/vendor/oce-upstream-V7_5_0beta
-add_subdirectory(${SRC_DIR}/projects/qt_gremlin)
-add_subdirectory(${SRC_DIR}/projects/qt_lcnc_controller)
+# add_subdirectory(${SRC_DIR}/projects/qt_gremlin)
+# add_subdirectory(${SRC_DIR}/projects/qt_lcnc_controller)
+add_subdirectory(${SRC_DIR}/projects/qt_occ_draw)
 
 # Experimental scurve motion planner.
-add_subdirectory(${SRC_DIR}/components/sc_tp)
+# add_subdirectory(${SRC_DIR}/components/sc_tp)
 
 
 

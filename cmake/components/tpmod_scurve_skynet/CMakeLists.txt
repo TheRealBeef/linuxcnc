@@ -20,6 +20,8 @@ include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
 include_directories(${SRC_DIR}/../tpmod_scurve_src)
 include_directories(${SRC_DIR}/../../vendor/ruckig)
+include_directories(${SRC_DIR}/../../vendor/linear_motion)
+include_directories(${SRC_DIR}/../../vendor/angular_motion)
 
 # Set path to eigen3, for install $ sudo apt-get install libeigen3-dev
 include_directories("/usr/include/eigen3/Eigen")
@@ -64,6 +66,10 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../vendor/ruckig/position-step2.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
+    ${SRC_DIR}/../../vendor/angular_motion/angular_motion.h
+    ${SRC_DIR}/../../vendor/angular_motion/angular_motion.cpp
+    ${SRC_DIR}/../../vendor/linear_motion/linear_motion.h
+    ${SRC_DIR}/../../vendor/linear_motion/linear_motion.cpp
     )
 
 # Set include paths for libraries to link.

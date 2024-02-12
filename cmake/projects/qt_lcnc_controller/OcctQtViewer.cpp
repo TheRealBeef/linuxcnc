@@ -637,7 +637,21 @@ void OcctQtViewer::set_perspective(){
 }
 
 void OcctQtViewer::add_shapevec(Handle(AIS_Shape) aShape){
+    aShape->Attributes()->SetFaceBoundaryDraw(true);
+    aShape->Attributes()->SetFaceBoundaryAspect(new Prs3d_LineAspect(Quantity_NOC_BLACK, Aspect_TOL_SOLID, 1.));
+    aShape->Attributes()->SetIsoOnTriangulation(true);
+    aShape->Attributes()->SetDisplayMode(AIS_Shaded);
+
     aShapeVec.push_back(aShape);
+    myContext->Display(aShape,false);
+}
+
+void OcctQtViewer::show_shape(Handle(AIS_Shape) aShape){
+    aShape->Attributes()->SetFaceBoundaryDraw(true);
+    aShape->Attributes()->SetFaceBoundaryAspect(new Prs3d_LineAspect(Quantity_NOC_BLACK, Aspect_TOL_SOLID, 1.));
+    aShape->Attributes()->SetIsoOnTriangulation(true);
+    aShape->Attributes()->SetDisplayMode(AIS_Shaded);
+
     myContext->Display(aShape,false);
 }
 

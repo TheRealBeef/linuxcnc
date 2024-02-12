@@ -32,6 +32,9 @@
 
 #include "ruckig_format.h"
 
+#include "angular_motion.h"
+#include "linear_motion.h"
+
 /* module information */
 MODULE_AUTHOR("Skynet_Cyberdyne");
 MODULE_DESCRIPTION("tpmod_scurve_skynet");
@@ -336,12 +339,34 @@ void update_ruckig_followers(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
 
 void update_look_ahead(TP_STRUCT * const tp);
-bool pathrules_forward_stop(int i);
-bool pathrules_reverse_stop(int i);
+bool pathrules_forward_stop(TP_STRUCT * const tp, int i);
+bool pathrules_reverse_stop(TP_STRUCT * const tp, int i);
 
 struct sc_pnt xyz;
 struct sc_dir abc;
 struct sc_ext uvw;
+
+struct angular_motion *angular_ptr;
+extern struct angular_motion* am_init_ptr();
+extern void am_set_values(angular_motion *ptr,
+                       double vm,
+                       double arc_v,
+                       double arc_r);
+extern double am_calculateLinearArcSpeed(angular_motion *ptr, double radius);
+
+struct linear_motion *linear_ptr;
+extern linear_motion* lm_init_ptr();
+extern void lm_set_values(linear_motion *ptr,
+                          double velocity_begin,
+                          double velocity_end,
+                          double velocity_max,
+                          double acceleration_max,
+                          double displacment,
+                          bool debug);
+extern double lm_get_curve_ve(linear_motion *ptr);
+extern double lm_get_curve_total_time(linear_motion *ptr);
+//! Return a array of 3, ot 0=s, at 1=v, at 2=a.
+extern const double* lm_get_curve_at_time(linear_motion *ptr, double t);
 
 //! Create a empty queue.
 int tpInit(TP_STRUCT * const tp)
@@ -370,6 +395,16 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     //! Test function for halscope, to find velocity jumps.
     update_ruckig_followers(tp);
 
+    lm_set_values(linear_ptr,0,0,10,2,100,0);
+
+    const double* array_ptr= lm_get_curve_at_time(linear_ptr,0.5*lm_get_curve_total_time(linear_ptr));
+    double s=array_ptr[0];
+    double v=array_ptr[1];
+    double a=array_ptr[2];
+
+    // printf("s %f \n",s);
+    // printf("v %f \n",v);
+    // printf("a %f \n",a);
     return 0;
 }
 
@@ -384,6 +419,8 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 
     //! Set the queue size to the c++ vector.
     vector_ptr=vector_init_ptr();
+    angular_ptr=am_init_ptr();
+    linear_ptr=lm_init_ptr();
 
     if(max_look_ahead->Pin==0){
         max_look_ahead->Pin=10;
@@ -1034,9 +1071,9 @@ inline void update_ruckig(TP_STRUCT * const tp){
         // printf("feed overide: %f \n",emcmotStatus->net_feed_scale);   //! 1.0 is 100%
 
         double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
-        printf("gcode vm: %f \n",vm);
-        printf("vlimit: %f \n",tp->vLimit);
-         printf("vMax: %f \n",tp->vMax);
+        // printf("gcode vm: %f \n",vm);
+        // printf("vlimit: %f \n",tp->vLimit);
+        // printf("vMax: %f \n",tp->vMax);
         if(vm>tp->vLimit){
             vm=tp->vLimit;
         }
@@ -1301,7 +1338,7 @@ inline void update_look_ahead(TP_STRUCT * const tp){
             //! min is calculating the minimal of 2 input values.
             for(int i=tp->vector_current_exec; i< min(vector_size_c(vector_ptr),tp->vector_current_exec+tp->max_look_ahead); i++){
 
-                if(pathrules_forward_stop(i)){
+                if(pathrules_forward_stop(tp, i)){
                     break;
                 }
 
@@ -1317,7 +1354,7 @@ inline void update_look_ahead(TP_STRUCT * const tp){
             //! max is calculating the maximum of 2 input values.
             for(int i=tp->vector_current_exec; i> max(0,tp->vector_current_exec-tp->max_look_ahead); i--){
 
-                if(pathrules_reverse_stop(i)){
+                if(pathrules_reverse_stop(tp, i)){
                     break;
                 }
 
@@ -1368,7 +1405,7 @@ inline void update_look_ahead(TP_STRUCT * const tp){
 //! These pathrules apply for forward motion.
 //! Looking forward the path, i=tp->max_look_ahead.
 //! return 1 = stop.
-inline bool pathrules_forward_stop(int i){
+inline bool pathrules_forward_stop(TP_STRUCT * const tp, int i){
 
     //! Is next segment colinair?
     //! 180 degrees is 3d coliniar.
@@ -1380,6 +1417,30 @@ inline bool pathrules_forward_stop(int i){
     if(vector_at(vector_ptr,i).type==1){
         return 1;
     }
+
+    /* Just for info.
+    //! When segment is a arc, calculate arc velocity.
+    if(vector_at(vector_ptr,i).type==3){
+
+        double vm=tp->vLimit;
+        if(vm>tp->vLimit){
+            vm=tp->vLimit;
+        }
+
+        if(vector_at(vector_ptr,tp->vector_current_exec).type==1){ //! G0
+            vm*=emcmotStatus->rapid_scale;
+        } else { //! It's a G1,G2,G3.
+            vm*=emcmotStatus->net_feed_scale;
+        }
+
+        double arc_v=1400;
+        double arc_r=5;
+        set_values(angular_ptr,vm,arc_v,arc_r);
+        double arc_speed=calculateLinearArcSpeed(angular_ptr,vector_at(vector_ptr,i).radius);
+
+        return 0;
+    }
+    */
 
     //! A colineair arc, how about to stop if arc has tiny radius, and the arc pathlenght is tiny.
     //! You can even activate this function by a hal pin if you want to.
@@ -1396,7 +1457,7 @@ inline bool pathrules_forward_stop(int i){
 //! These pathrules apply for reverse motion.
 //! Looking backwards the path, i=tp->max_look_ahead.
 //! return 1 = stop.
-inline bool pathrules_reverse_stop(int i){
+inline bool pathrules_reverse_stop(TP_STRUCT * const tp, int i){
 
     //! When segment is a G0 rapid, stop optimizing.
     if(vector_at(vector_ptr,i).type==1){

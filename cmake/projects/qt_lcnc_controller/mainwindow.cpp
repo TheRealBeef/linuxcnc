@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+﻿#include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
 std::string oldfile="";
@@ -36,7 +36,6 @@ MainWindow::MainWindow(QWidget *parent)
     //stat = new RCS_STAT_CHANNEL(emcFormat, "emcStatus", "xemc", EMC2_DEFAULT_NMLFILE);
 
     //! This activates a screen update when robot is moving and screen needs to be updated automaticly.
-    QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::update);
     timer->start(50);
 }
@@ -48,6 +47,56 @@ MainWindow::~MainWindow()
 
 int s=0;
 
+void MainWindow::make_fillets(double radius){
+
+    // occ->add_shapevec(draw_primitives().draw_3d_pc_circle({0,0,0},{0,0,1},150));
+
+    std::vector<Handle(AIS_Shape)> aFilletShapeVec, tempVec;
+
+    for(uint i=0; i<occ->aShapeVec.size()-1; i++){
+        Handle(AIS_Shape) aShapeA,aShapeB;
+
+
+        //! Line-line
+        if(draw_primitives().get_shapetype(occ->aShapeVec.at(i))==1 && draw_primitives().get_shapetype(occ->aShapeVec.at(i+1))==1){
+            //! Create fillet.
+            //            if(draw_primitives().draw_3d_line_line_fillet(occ->aShapeVec.at(i),occ->aShapeVec.at(i+1),radius,aShape)){
+            //                occ->add_shapevec(aShape);
+            //            }
+        }
+        //! Line-arc
+        if(draw_primitives().get_shapetype(occ->aShapeVec.at(i))==1 && draw_primitives().get_shapetype(occ->aShapeVec.at(i+1))==2){
+
+            // draw_primitives().draw_3d_line_arc_offset_lines(occ->aShapeVec.at(i),occ->aShapeVec.at(i+1),radius,aShapeA,aShapeB);
+            // occ->add_shapevec(aShapeA);
+            // occ->add_shapevec(aShapeB);
+
+            aFilletShapeVec=draw_primitives().create_line_arc_intersections(occ->aShapeVec.at(i),occ->aShapeVec.at(i+1),radius);
+
+            for(uint k=0; k<aFilletShapeVec.size(); k++){
+                // occ->show_shape(aFilletShapeVec.at(k));
+                tempVec.push_back(aFilletShapeVec.at(k));
+            }
+
+            //! Create fillet.
+            //            if(draw_primitives().draw_3d_line_arc_fillet_conventional(occ->aShapeVec.at(i),occ->aShapeVec.at(i+1),radius,aShape)){
+            //                occ->add_shapevec(aShape);
+            //            }
+        }
+        //! Arc-line
+        if(draw_primitives().get_shapetype(occ->aShapeVec.at(i))==2 && draw_primitives().get_shapetype(occ->aShapeVec.at(i+1))==1){
+            //! Create fillet.
+            //if(draw_primitives().draw_3d_arc_line_fillet_conventional(occ->aShapeVec.at(i),occ->aShapeVec.at(i+1),radius,aShape)){
+            //    occ->add_shapevec(aShape);
+            //}
+        }
+    }
+
+    for(uint i=0; i<tempVec.size(); i++){
+        occ->add_shapevec(tempVec.at(i));
+    }
+}
+
 void MainWindow::update(){
 
     //! Update nml.
@@ -57,6 +106,11 @@ void MainWindow::update(){
     if(oldfile!=nml->theStatus.filename && nml->theStatus.filename.size()>0){
         load_cad_data_from_interpreter(nml->theStatus.filename);
         load_gcode_text(nml->theStatus.filename);
+
+        // timer->stop();
+        // make_fillets(5);
+        // timer->start(50);
+
         oldfile=nml->theStatus.filename;
     }
 
@@ -151,7 +205,7 @@ void MainWindow::update(){
     }
 
     if(nml->theStatus.machine_on && !nml->theStatus.estop){
-          ui->label_machine_status->setText("ON");
+        ui->label_machine_status->setText("ON");
     }
 
     //! To update tp moves.
@@ -196,9 +250,9 @@ void MainWindow::load_cad_data_from_interpreter(std::string filename)
                 std::cout<<""<<std::endl;*/
 
                 if(d.rotation==-1){
-                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,0,0,1),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_pc_arc(p1,p0,pc,0,0,1),Quantity_NOC_GRAY50,0) );
                 } else {
-                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,0,0,1),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_pc_arc(p0,p1,pc,0,0,1),Quantity_NOC_GRAY50,0) );
                 }
             }
             if(d.plane==2){ //!
@@ -214,9 +268,9 @@ void MainWindow::load_cad_data_from_interpreter(std::string filename)
                 std::cout<<""<<std::endl;*/
 
                 if(d.rotation==-1){
-                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,1,0,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_pc_arc(p1,p0,pc,1,0,0),Quantity_NOC_GRAY50,0) );
                 } else {
-                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,1,0,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_pc_arc(p0,p1,pc,1,0,0),Quantity_NOC_GRAY50,0) );
                 }
             }
             if(d.plane==3){ //! Y swap Z.
@@ -232,9 +286,9 @@ void MainWindow::load_cad_data_from_interpreter(std::string filename)
                 std::cout<<""<<std::endl;*/
 
                 if(d.rotation==-1){
-                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p1,p0,pc,0,1,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_pc_arc(p1,p0,pc,0,1,0),Quantity_NOC_GRAY50,0) );
                 } else {
-                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_cp_3d_arc(p0,p1,pc,0,1,0),Quantity_NOC_GRAY50,0) );
+                    occ->add_shapevec(draw_primitives().colorize( draw_primitives().draw_3d_pc_arc(p0,p1,pc,0,1,0),Quantity_NOC_GRAY50,0) );
                 }
             }
         }
@@ -534,6 +588,11 @@ void MainWindow::on_tabWidget_currentChanged(int index)
         nml->mode_manual();
     }
     if(index==1){
-         nml->mode_mdi();
+        nml->mode_mdi();
     }
+}
+
+void MainWindow::on_pushButton_test_pressed()
+{
+
 }

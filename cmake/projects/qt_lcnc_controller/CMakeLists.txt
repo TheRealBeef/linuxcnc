@@ -50,8 +50,8 @@ include_directories(${Python3_INCLUDE_DIRS})
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 
-include_directories("/usr/include/eigen3")
-find_package (Eigen3 3.3 REQUIRED)
+# Set path to eigen3, for install $ sudo apt-get install libeigen3-dev
+include_directories("/usr/include/eigen3/Eigen")
 
 # Set include paths for libraries to link.
 add_library(linuxcnchal SHARED IMPORTED) # or STATIC instead of SHARED

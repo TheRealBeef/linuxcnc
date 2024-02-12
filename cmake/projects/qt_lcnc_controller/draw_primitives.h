@@ -111,6 +111,11 @@
 #undef Success
 #endif
 
+#include <vector>
+#include <iostream>
+#include <Dense>
+#include <Geometry>
+
 // using namespace Eigen;
 
 class draw_primitives
@@ -130,8 +135,10 @@ public:
     Handle(AIS_Shape) draw_3d_line(gp_Pnt point1, gp_Pnt point2);
     Handle(AIS_Shape) draw_3d_line_wire(std::vector<gp_Pnt> points);
     Handle(AIS_Shape) draw_3p_3d_arc(gp_Pnt point1, gp_Pnt point2, gp_Pnt point3);
-    Handle(AIS_Shape) draw_cp_3d_arc(gp_Pnt point1, gp_Pnt point2, gp_Pnt center, bool dir_Xv, bool dir_Yv, bool dir_Zv);
+    Handle(AIS_Shape) draw_3d_pc_arc_closest(gp_Pnt point1,gp_Pnt point2,gp_Pnt center,gp_Dir dir ,gp_Pnt closest);
+    Handle(AIS_Shape) draw_3d_pc_arc(gp_Pnt point1, gp_Pnt point2, gp_Pnt center, double dir_Xv, double dir_Yv, double dir_Zv);
     Handle(AIS_Shape) draw_3p_3d_circle(gp_Pnt point1,gp_Pnt point2,gp_Pnt point3);
+    Handle(AIS_Shape) draw_3d_pc_circle(gp_Pnt center, gp_Dir dir, double radius);
 
     // Draw 3d solids:
     Handle(AIS_Shape) draw_3d_cone(gp_Pnt centerpoint, double bottomdiameter, double topdiameter, double height);
@@ -158,6 +165,67 @@ public:
     Handle(AIS_Shape) draw_3d_wire_origin_cone_text(std::vector<gp_Pnt> points, std::vector<gp_Pnt> euler, std::string text, int textheight);
     Handle(AIS_Shape) draw_3d_arc_origin_cone_text(std::vector<gp_Pnt> points, std::vector<gp_Pnt> euler, std::string text, int textheight);
     Handle(AIS_Shape) draw_3d_circle_origin_cone_text(std::vector<gp_Pnt> points, std::vector<gp_Pnt> euler, std::string text, int textheight);
+
+    // Intersection functions:
+    bool intersect_3d_sphere_sphere(gp_Pnt pc1, double radius1, gp_Pnt pc2, double radius2, gp_Pnt &pi);
+    bool intersect_3d_line_sphere(gp_Pnt cp, gp_Pnt p0, gp_Pnt p1, double radius, gp_Pnt &pi);
+
+    //! Returns true if a sphere touches a line and a arc at the same time.
+    bool intersect_line_arc_sphere(Handle(AIS_Shape) lineShape, Handle(AIS_Shape) arcShape, gp_Pnt sphere_pc, double sphere_radius);
+
+    // Offset functions:
+    void offset_3d_point_on_line(Eigen::Vector3d A, Eigen::Vector3d B, double offset_a, Eigen::Vector3d &C);
+    void offset_3d_point_on_line(gp_Pnt A, gp_Pnt B, double offset_a, gp_Pnt &C);
+    void offset_line_on_a_plane(gp_Pnt line_p0, gp_Pnt line_p1, gp_Pnt plane_p0, double offset, gp_Pnt &offset_line_p0, gp_Pnt &offset_line_p1);
+
+    // Rotate functions:
+    gp_Pnt rotate_3d_point_around_line(gp_Pnt thePointToRotate, double theta, gp_Pnt theLineP1, gp_Pnt theLineP2);
+
+    // Plane functions:
+    bool create_3d_plane(gp_Pnt p_origin, gp_Pnt p2, gp_Pnt p3, gp_Pln &plane);
+
+    // Transformation functions:
+    //! Create coordinate system from 3 points on a plane, where p0-p1 is x-axis.
+    gp_Trsf create_transformation_matrix(gp_Pnt p0, gp_Pnt p1, gp_Pnt point_on_plane);
+
+    // Info request functions:
+    void get_closest_point_to_line( gp_Pnt Point, gp_Pnt LineStart, gp_Pnt LineEnd, gp_Pnt &Intersection);
+    int get_shapetype(Handle(AIS_Shape) aShape);
+    gp_Pnt get_arc_centerpoint(Handle(AIS_Shape) shapeArc);
+    double get_arc_radius(Handle(AIS_Shape) shapeArc);
+    void get_line_points(Handle(AIS_Shape) shapeLine, gp_Pnt &p1, gp_Pnt &p2);
+    void get_arc_points(Handle(AIS_Shape) shapeArc, gp_Pnt &p1, gp_Pnt &p2, gp_Pnt &pw, gp_Pnt &pc);
+    bool is_point_on_line(gp_Pnt p1, gp_Pnt p2, gp_Pnt pi);
+    bool is_point_on_line(Handle(AIS_Shape) shapeLine, gp_Pnt pi);
+    bool is_point_on_arc(Handle(AIS_Shape) shapeLine, gp_Pnt pi);
+    bool is_point_on_plane(gp_Pnt p1, gp_Pnt p2, gp_Pnt p3, gp_Pnt pi); //! is pi on plane p1,p2,p3?
+
+    // Geometric functions:
+    gp_Dir create_normal_from_3_points_on_plane(gp_Pnt p1, gp_Pnt p2, gp_Pnt p3);
+    //! Ensure a correct point flow.
+    void organize_line_arc_points(gp_Pnt &line_p0, gp_Pnt &line_p1, gp_Pnt &arc_p0, gp_Pnt &arc_p1);
+
+    std::vector<Handle(AIS_Shape)> create_line_arc_intersections(Handle(AIS_Shape) shapeLine, Handle(AIS_Shape) shapeArc, double offset);
+
+    // Create fillets:
+    bool draw_3d_line_line_fillet(Handle(AIS_Shape) shapeLineA, Handle(AIS_Shape) shapeLineB, double radius, Handle(AIS_Shape) &shape);
+    bool draw_3d_line_arc_fillet(Handle(AIS_Shape) shapeLine, Handle(AIS_Shape) shapeArc, double radius, Handle(AIS_Shape) &shape);
+    bool draw_3d_arc_line_fillet(Handle(AIS_Shape) shapeArc, Handle(AIS_Shape) shapeLine, double radius, Handle(AIS_Shape) &shape);
+    //! Left for info, function using eigen to create plane.
+    bool draw_3d_line_line_fillet_conventional(Handle(AIS_Shape) shapeA, Handle(AIS_Shape) shapeB, double radius, Handle(AIS_Shape) &shape);
+    bool draw_3d_line_arc_fillet_conventional(Handle(AIS_Shape) shapeLine, Handle(AIS_Shape) shapeArc, double radius, Handle(AIS_Shape) &shape);
+    bool draw_3d_arc_line_fillet_conventional(Handle(AIS_Shape) shapeLine, Handle(AIS_Shape) shapeArc, double radius, Handle(AIS_Shape) &shape);
+
+    void create_3d_line_arc_offset_lines(Handle(AIS_Shape) shapeLine, Handle(AIS_Shape) shapeArc, double offset, gp_Pnt &p0, gp_Pnt &p1, gp_Pnt &p2, gp_Pnt &p3);
+
+    //! Test functions.
+    bool draw_3d_line_arc_offset_lines( Handle(AIS_Shape) shapeLine, Handle(AIS_Shape) shapeArc, double offset, Handle(AIS_Shape) &shapeA, Handle(AIS_Shape) &shapeB);
+
+
+    // Print functions:
+    void print_gp_Pnt(gp_Pnt pnt);
+    void print_gp_Pnt(std::string text, gp_Pnt pnt);
+
 };
 
 #endif // DRAW_PRIMITIVES_H
