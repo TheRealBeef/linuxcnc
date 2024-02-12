@@ -1,4 +1,0 @@
-#ifndef SCURVE_FORUMULA_H
-#define SCURVE_FORUMULA_H
-
-#endif // SCURVE_FORUMULA_H
