@@ -9,6 +9,9 @@
 #include "hal.h"
 #include "stdio.h"
 
+#include "scurve_construct.h"
+
+
 #include "emcpose.h"
 #include "motion.h"
 #include "tc.h"
@@ -20,6 +23,7 @@
 #include "tp_corners.h"
 
 #include "ruckig_format.h"
+#include "scurve_construct.h"
 
 /* module information */
 MODULE_AUTHOR("Skynet_Cyberdyne");

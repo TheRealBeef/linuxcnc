@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-#include "scurve_struct.h"
+#include "scurve_struct.h" // File duplicate is in /emc/motion/ dir.
 
 typedef struct simple_tp_t {
     double pos_cmd;		/* position command */

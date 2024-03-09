@@ -1,4 +1,5 @@
 #include "scurve_construct.h"
+#include "iostream"
 
 scurve_construct::scurve_construct()
 {

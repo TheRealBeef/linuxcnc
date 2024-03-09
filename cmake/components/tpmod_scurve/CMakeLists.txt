@@ -20,6 +20,7 @@ include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
 include_directories(${SRC_DIR}/../tpmod_scurve_src)
 include_directories(${SRC_DIR}/../../vendor/ruckig)
+include_directories(${SRC_DIR}/../../vendor/scurve/scurve_construct)
 
 # Set path to eigen3, for install $ sudo apt-get install libeigen3-dev
 include_directories("/usr/include/eigen3/Eigen")
@@ -64,6 +65,9 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../vendor/ruckig/position-step2.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
+    ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_struct.h
+    ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_construct.h
+    ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_construct.cpp
     )
 
 # Set include paths for libraries to link.

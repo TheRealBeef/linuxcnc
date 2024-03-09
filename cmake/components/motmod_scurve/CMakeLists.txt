@@ -48,7 +48,6 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../vendor/ruckig/position-step2.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
-
     ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_struct.h
     ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_construct.h
     ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_construct.cpp

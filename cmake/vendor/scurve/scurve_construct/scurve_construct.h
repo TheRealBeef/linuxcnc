@@ -2,8 +2,9 @@
 #define SCURVE_CONSTRUCT_H
 
 #include "math.h"
-#include "iostream"
 #include "scurve_struct.h"
+
+#ifdef __cplusplus
 
 double ttot_period(scurve_period p);
 double stot_period(scurve_period p);
@@ -121,6 +122,11 @@ public:
     // The netto difference between two values.
     double diff(double a, double b);
 };
+
+//! Here it tells if this code is used in c, convert the class to a struct. This is handy!
+#else
+typedef struct scurve_construct scurve_construct;
+#endif //! cplusplus
 
 #endif // SCURVE_CONSTRUCT_H
 
