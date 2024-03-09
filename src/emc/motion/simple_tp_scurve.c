@@ -18,6 +18,8 @@
 #include "ruckig_format.h"
 #include "scurve_struct.h"
 
+#include <time.h>
+
 // Ruckig scurve.
 extern struct result wrapper_get_pos(struct result input);
 struct result r;
@@ -31,16 +33,23 @@ extern struct scurve_data set_init_values_c(double jermax,
 extern struct scurve_data scurve_play_c(struct scurve_data data);
 extern struct scurve_data jog_velocity_c(struct scurve_data data, int enable, double tarpos);
 extern struct scurve_data jog_position_c(struct scurve_data data, int enable, double tarpos);
+
 // In terminal : "xset r on", to enable keyboard cursor repeat.
 
-bool use_ruckig=0;
-bool use_grotius_scurve=1;
-
+bool use_ruckig=1;
+bool use_grotius_scurve=0;
+bool print_time=0;
+struct timespec start_time, end_time;
 
 //! For every joint this function is called.
 void simple_tp_update(simple_tp_t *tp, double period)
 {
     if(use_grotius_scurve){
+
+        if(print_time){
+            // Record start time
+            clock_gettime(CLOCK_MONOTONIC, &start_time);
+        }
 
         tp->data=set_init_values_c(tp->max_jerk,tp->max_acc,tp->max_vel,period,tp->data);
 
@@ -59,11 +68,29 @@ void simple_tp_update(simple_tp_t *tp, double period)
             tp->active=0;
             tp->pos_cmd = tp->curr_pos;
         } else {
-           tp->active=1;
+            tp->active=1;
+        }
+
+        if(print_time){
+            // Record end time
+            clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+            // Calculate duration in nanoseconds
+            long long duration_ns = (end_time.tv_sec - start_time.tv_sec) * 1000000000LL +
+                    (end_time.tv_nsec - start_time.tv_nsec);
+
+            // Print the duration
+            printf("Function duration: %lld nanoseconds\n", duration_ns);
         }
     }
 
     if(use_ruckig){
+
+        if(print_time){
+            // Record start time
+            clock_gettime(CLOCK_MONOTONIC, &start_time);
+        }
+
         //! When jog button pressed. The pos_cmd seems to be 500mm away from current tp position.
         r.period=period;
         r.tarpos=tp->pos_cmd;
@@ -106,6 +133,18 @@ void simple_tp_update(simple_tp_t *tp, double period)
             tp->curr_acc = r.curacc;
 
             tp->active=true;
+        }
+
+        if(print_time){
+            // Record end time
+            clock_gettime(CLOCK_MONOTONIC, &end_time);
+
+            // Calculate duration in nanoseconds
+            long long duration_ns = (end_time.tv_sec - start_time.tv_sec) * 1000000000LL +
+                    (end_time.tv_nsec - start_time.tv_nsec);
+
+            // Print the duration
+            printf("Function duration: %lld nanoseconds\n", duration_ns);
         }
     }
 }
