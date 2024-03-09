@@ -173,7 +173,7 @@ add_subdirectory(${SRC_DIR}/projects/qt_occ_draw)
 # Experimental scurve motion planner.
 # add_subdirectory(${SRC_DIR}/components/sc_tp)
 
-# add_subdirectory(${SRC_DIR}/vendor/scurve)
+add_subdirectory(${SRC_DIR}/vendor/scurve)
 
 
 

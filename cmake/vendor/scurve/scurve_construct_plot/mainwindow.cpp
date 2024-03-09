@@ -10,7 +10,6 @@ double maxacc=10;
 double maxvel=10;
 double intval=0.01;
 int enable=0;
-int mode=0;
 double tarpos=0;
 extern "C" struct scurve_data set_init_values_c(double jermax,
                                   double accmax,
@@ -81,11 +80,6 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     connect(timer, SIGNAL( timeout() ), this, SLOT( updatePlot() ) );
     timer->start( timeInterval );
-
-
-
-    // scurve_construct().set_init_values(jermax,maxacc,curvel,curacc,maxvel,intval,s);
-
 }
 
 MainWindow::~MainWindow()
@@ -104,7 +98,6 @@ void MainWindow::updatePlot()
     m_XData.append( timeValue );
 
     s=set_init_values_c(jermax,maxacc,maxvel,intval,s);
-    // s=jog_velocity_c(s,enable,tarpos);
     s=jog_position_c(s,enable,tarpos);
     s=scurve_play_c(s);
 

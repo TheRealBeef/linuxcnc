@@ -39,7 +39,6 @@ typedef struct simple_tp_t {
     double curr_acc;
     double max_jerk;
 
-    int init;
     struct scurve_data data;
 } simple_tp_t;
 
