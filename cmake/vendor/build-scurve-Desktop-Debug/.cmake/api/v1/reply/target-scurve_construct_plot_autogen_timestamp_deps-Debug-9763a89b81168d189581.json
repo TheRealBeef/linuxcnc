@@ -1,0 +1,58 @@
+{
+	"backtrace" : 0,
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : 
+		[
+			"scurve_construct_plot/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			}
+		]
+	},
+	"id" : "scurve_construct_plot_autogen_timestamp_deps::@122a1c2c1f6d0f51052d",
+	"isGeneratorProvided" : true,
+	"name" : "scurve_construct_plot_autogen_timestamp_deps",
+	"paths" : 
+	{
+		"build" : "scurve_construct_plot",
+		"source" : "scurve_construct_plot"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen_timestamp_deps",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen_timestamp_deps.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}

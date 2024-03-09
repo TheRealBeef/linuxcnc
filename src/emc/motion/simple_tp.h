@@ -22,10 +22,11 @@
 // stopping criterion:
 #define TINY_DP(max_acc,period) (max_acc*period*period*0.001)
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "scurve_struct.h"
 
 typedef struct simple_tp_t {
     double pos_cmd;		/* position command */
@@ -37,6 +38,9 @@ typedef struct simple_tp_t {
     int active;         /* non-zero if motion in progress */
     double curr_acc;
     double max_jerk;
+
+    int init;
+    struct scurve_data data;
 } simple_tp_t;
 
 /* I could write a bunch of functions to read and write the first four

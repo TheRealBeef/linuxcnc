@@ -32,8 +32,8 @@
 
 #include "ruckig_format.h"
 
-#include "angular_motion.h"
-#include "linear_motion.h"
+//#include "angular_motion.h"
+//#include "linear_motion.h"
 
 /* module information */
 MODULE_AUTHOR("Skynet_Cyberdyne");
@@ -346,27 +346,27 @@ struct sc_pnt xyz;
 struct sc_dir abc;
 struct sc_ext uvw;
 
-struct angular_motion *angular_ptr;
-extern struct angular_motion* am_init_ptr();
-extern void am_set_values(angular_motion *ptr,
-                       double vm,
-                       double arc_v,
-                       double arc_r);
-extern double am_calculateLinearArcSpeed(angular_motion *ptr, double radius);
+//struct angular_motion *angular_ptr;
+//extern struct angular_motion* am_init_ptr();
+//extern void am_set_values(angular_motion *ptr,
+//                       double vm,
+//                       double arc_v,
+//                       double arc_r);
+//extern double am_calculateLinearArcSpeed(angular_motion *ptr, double radius);
 
-struct linear_motion *linear_ptr;
-extern linear_motion* lm_init_ptr();
-extern void lm_set_values(linear_motion *ptr,
-                          double velocity_begin,
-                          double velocity_end,
-                          double velocity_max,
-                          double acceleration_max,
-                          double displacment,
-                          bool debug);
-extern double lm_get_curve_ve(linear_motion *ptr);
-extern double lm_get_curve_total_time(linear_motion *ptr);
-//! Return a array of 3, ot 0=s, at 1=v, at 2=a.
-extern const double* lm_get_curve_at_time(linear_motion *ptr, double t);
+//struct linear_motion *linear_ptr;
+//extern linear_motion* lm_init_ptr();
+//extern void lm_set_values(linear_motion *ptr,
+//                          double velocity_begin,
+//                          double velocity_end,
+//                          double velocity_max,
+//                          double acceleration_max,
+//                          double displacment,
+//                          bool debug);
+//extern double lm_get_curve_ve(linear_motion *ptr);
+//extern double lm_get_curve_total_time(linear_motion *ptr);
+////! Return a array of 3, ot 0=s, at 1=v, at 2=a.
+//extern const double* lm_get_curve_at_time(linear_motion *ptr, double t);
 
 //! Create a empty queue.
 int tpInit(TP_STRUCT * const tp)
@@ -395,12 +395,12 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     //! Test function for halscope, to find velocity jumps.
     update_ruckig_followers(tp);
 
-    lm_set_values(linear_ptr,0,0,10,2,100,0);
+    // lm_set_values(linear_ptr,0,0,10,2,100,0);
 
-    const double* array_ptr= lm_get_curve_at_time(linear_ptr,0.5*lm_get_curve_total_time(linear_ptr));
-    double s=array_ptr[0];
-    double v=array_ptr[1];
-    double a=array_ptr[2];
+    // const double* array_ptr= lm_get_curve_at_time(linear_ptr,0.5*lm_get_curve_total_time(linear_ptr));
+    // double s=array_ptr[0];
+    // double v=array_ptr[1];
+    // double a=array_ptr[2];
 
     // printf("s %f \n",s);
     // printf("v %f \n",v);
@@ -419,8 +419,8 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 
     //! Set the queue size to the c++ vector.
     vector_ptr=vector_init_ptr();
-    angular_ptr=am_init_ptr();
-    linear_ptr=lm_init_ptr();
+    // angular_ptr=am_init_ptr();
+    // linear_ptr=lm_init_ptr();
 
     if(max_look_ahead->Pin==0){
         max_look_ahead->Pin=10;

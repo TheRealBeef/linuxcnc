@@ -45,7 +45,7 @@ private:
 
 //! Here it tells if this code is used in c, convert the class to a struct. This is handy!
 #else
-typedef struct angular_motion angular_motion
+typedef struct angular_motion angular_motion;
 #endif //! cplusplus
 
 #endif // LINEAR_CYCLE_H

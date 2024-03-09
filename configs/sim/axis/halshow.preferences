@@ -1,10 +1,55 @@
 # Halshow settings
 # This file is generated automatically.
-wm geometry . 703x794+2684+794
+wm geometry . 703x794+0+40
 placeFrames 0.40641711229946526
 set ::ratio 0.40641711229946526
 set ::old_w_leftf 160
 set ::watchlist {
+    pin+axis.x.pos-cmd
+    pin+joint.0.acc-cmd
+    pin+joint.0.active
+    pin+joint.0.pos-cmd
+    param+tc.0.acc
+    param+tc.0.pos
+    param+tc.0.vel
+    param+tc.1.acc
+    param+tc.1.pos
+    param+tc.1.vel
+    pin+joint.0.amp-enable-out
+    pin+joint.0.amp-fault-in
+    pin+joint.0.backlash-corr
+    pin+joint.0.backlash-filt
+    pin+joint.0.backlash-vel
+    pin+joint.0.coarse-pos-cmd
+    pin+joint.0.error
+    pin+joint.0.f-error
+    pin+joint.0.f-error-lim
+    pin+joint.0.f-errored
+    pin+joint.0.faulted
+    pin+joint.0.free-pos-cmd
+    pin+joint.0.free-tp-enable
+    pin+joint.0.free-vel-lim
+    pin+joint.0.home-state
+    pin+joint.0.homing
+    pin+joint.0.in-position
+    pin+joint.0.index-enable
+    pin+joint.0.jog-accel-fraction
+    pin+joint.0.jog-counts
+    pin+joint.0.jog-enable
+    pin+joint.0.jog-scale
+    pin+joint.0.jog-vel-mode
+    pin+joint.0.kb-jog-active
+    pin+joint.0.max-jerk
+    pin+joint.0.motor-offset
+    pin+joint.0.motor-pos-cmd
+    pin+joint.0.motor-pos-fb
+    pin+joint.0.neg-hard-limit
+    pin+joint.0.neg-lim-sw-in
+    pin+joint.0.pos-fb
+    pin+joint.0.pos-hard-limit
+    pin+joint.0.pos-lim-sw-in
+    pin+joint.0.vel-cmd
+    pin+joint.0.wheel-jog-active
 }
 set ::workmode watchhal
 set ::watchInterval 100

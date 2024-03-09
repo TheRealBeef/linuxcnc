@@ -33,6 +33,9 @@ include_directories(${SRC_DIR}/../../src/libnml/posemath)
 include_directories(${SRC_DIR}/../../src/libnml/inifile)
 include_directories(${SRC_DIR}/../../src/libnml/os_intf)
 include_directories(${Python3_INCLUDE_DIRS})
+include_directories(/usr/include/tcl8.6)
+include_directories(/usr/lib/x86_64-linux-gnu)
+include_directories(/usr/include/X11)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -114,6 +117,7 @@ set_target_properties(posemath PROPERTIES
 target_link_libraries(${PROJECT_NAME} PRIVATE
     nml linuxcnchal linuxcncini tooldata linuxcnc_a rs274_ pyplugin posemath
     -I/usr/lib ${PYTHON_LIB} Boost::python${BOOST_PYTHON_LIB_SUFFIX} -lcrypt -lpthread -ldl -lutil -lm -lm -lreadline
+    -ltcl8.6 -ltk8.6 -lX11
     )
 
 # Set custom output name :

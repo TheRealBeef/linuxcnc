@@ -34,7 +34,6 @@
 #include "rcs_print.hh"
 #include "timer.hh"
 #include <rtapi_string.h>
-
 #include "shcom.hh"
 
 #define setresult(t,s) Tcl_SetObjResult((t), Tcl_NewStringObj((s),-1))
@@ -330,6 +329,8 @@
   parallel=3, custom=4
 */
 
+
+
 #define CHECKEMC \
     if (!checkStatus() ) {\
         setresult(interp,"emc not connected");\
@@ -565,7 +566,6 @@ static int emc_update(ClientData clientdata,
 	    return TCL_OK;
 	}
     }
-
     return TCL_OK;
 }
 
@@ -1753,6 +1753,11 @@ static int emc_jog_stop(ClientData clientdata,
 static int emc_jog(ClientData clientdata,
 		   Tcl_Interp * interp, int objc, Tcl_Obj * CONST objv[])
 {
+   //toggleDetectableAutorepeat(interp,false);
+
+    // printf("emc updating..... \n");
+    // XkbSetAutoRepeatRate(getDisplay(interp),0,1000000,1000000);
+
     int joint;
     int jjogmode;
     double speed;
@@ -1788,6 +1793,9 @@ static int emc_jog_incr(ClientData clientdata,
 			Tcl_Interp * interp, int objc,
 			Tcl_Obj * CONST objv[])
 {
+
+    // toggleDetectableAutorepeat(interp,false);
+
     int joint;
     int jjogmode;
     double speed;
@@ -3374,6 +3382,9 @@ static void initMain()
 
 int emc_init(ClientData cd, Tcl_Interp *interp, int argc, const char **argv)
 {
+    printf("emc init ............................. \n");
+
+
     bool quick = false;
     initMain();
     // process command line args

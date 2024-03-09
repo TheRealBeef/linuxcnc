@@ -68,8 +68,6 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
     ${SRC_DIR}/../../vendor/angular_motion/angular_motion.h
     ${SRC_DIR}/../../vendor/angular_motion/angular_motion.cpp
-    ${SRC_DIR}/../../vendor/linear_motion/linear_motion.h
-    ${SRC_DIR}/../../vendor/linear_motion/linear_motion.cpp
     )
 
 # Set include paths for libraries to link.

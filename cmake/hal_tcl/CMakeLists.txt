@@ -33,6 +33,7 @@ include_directories(${SRC_DIR}/../../src/libnml/inifile)
 include_directories(${SRC_DIR}/../../src/libnml/os_intf)
 include_directories(${SRC_DIR}/../../src/hal/utils)
 include_directories(/usr/include/tcl8.6)
+include_directories(/usr/include/X11)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -67,7 +68,7 @@ set_target_properties(linuxcnchal_ PROPERTIES
 target_link_libraries(${PROJECT_NAME} PRIVATE
     linuxcncini_
     linuxcnchal_
-    -ltcl8.6 -ltk8.6
+    -ltcl8.6 -ltk8.6 -lX11
     )
 
 # Set custom output name :

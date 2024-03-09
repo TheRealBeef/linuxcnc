@@ -17,6 +17,7 @@ include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/tp)
 include_directories(${SRC_DIR}/../../../src/libnml/posemath)
 include_directories(${SRC_DIR}/../../vendor/ruckig)
+include_directories(${SRC_DIR}/../../vendor/scurve/scurve_construct)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -48,20 +49,9 @@ ADD_LIBRARY(${PROJECT} SHARED
     ${SRC_DIR}/../../vendor/ruckig/velocity-step1.cpp
     ${SRC_DIR}/../../vendor/ruckig/velocity-step2.cpp
 
-    #${SRC_DIR}/../sc_tp_src/ruckig/block.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/calculator.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/calculator_online.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/calculator_target.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/input_parameter.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/output_parameter.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/position.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/profile.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/reflexxes_comparison.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/roots.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/ruckig.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/trajectory.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/utils.hpp
-    #${SRC_DIR}/../sc_tp_src/ruckig/velocity.hpp
+    ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_struct.h
+    ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_construct.h
+    ${SRC_DIR}/../../vendor/scurve/scurve_construct/scurve_construct.cpp
 )
 
 # Set path to eigen3, for install $ sudo apt-get install libeigen3-dev

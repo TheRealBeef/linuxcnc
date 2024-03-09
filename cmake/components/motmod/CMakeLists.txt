@@ -15,6 +15,9 @@ include_directories(${SRC_DIR}/../../../src/emc/nml_intf)
 include_directories(${SRC_DIR}/../../../src/emc/kinematics)
 include_directories(${SRC_DIR}/../../../src/emc/tp)
 include_directories(${SRC_DIR}/../../../src/libnml/posemath)
+include_directories(/usr/include/tcl8.6)
+include_directories(/usr/lib/x86_64-linux-gnu)
+include_directories(/usr/include/X11)
 
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
@@ -49,7 +52,7 @@ set_target_properties(linuxcnchal PROPERTIES
 )
 
 # Link to libraries.
-target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal)
+target_link_libraries(${PROJECT_NAME} PRIVATE linuxcnchal -ltcl8.6 -ltk8.6 -lX11)
 
 # Set custom output name :
 # set_property(TARGET  ${PROJECT} PROPERTY OUTPUT_NAME thename)

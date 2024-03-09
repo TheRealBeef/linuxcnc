@@ -460,7 +460,7 @@ Suggestion: Split this in to an Error and a Status flag register..
 	double pos_cmd;		/* commanded joint position */
 	double vel_cmd;		/* commanded joint velocity */
 	double acc_cmd;		/* commanded joint acceleration */
-    double max_jerk;    /* max jerk for scurve motion profile */
+        double max_jerk;    /* max jerk for scurve motion profile */
 	double backlash_corr;	/* correction for backlash */
 	double backlash_filt;	/* filtered backlash correction */
 	double backlash_vel;	/* backlash velocity variable */

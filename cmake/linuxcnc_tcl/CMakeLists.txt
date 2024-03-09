@@ -33,7 +33,7 @@ include_directories(${SRC_DIR}/../../src/libnml/inifile)
 include_directories(${SRC_DIR}/../../src/libnml/os_intf)
 include_directories(/usr/include/tcl8.6)
 include_directories(/usr/lib/x86_64-linux-gnu)
-
+include_directories(/usr/include/X11)
 # Set prefix.
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
@@ -62,7 +62,6 @@ set_target_properties(nml PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${SRC_DIR}/../../include"
     )
 
-
 add_library(linuxcncini_ SHARED IMPORTED) # or STATIC instead of SHARED
 set_target_properties(linuxcncini_ PROPERTIES
     IMPORTED_LOCATION "${SRC_DIR}/../build/liblinuxcncini/liblinuxcncini.so"
@@ -74,8 +73,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     linuxcncini_
     linuxcnc_
     nml
-    -ltclstub8.6  -lX11 -lXss -lXext -lXft -lfontconfig -lfreetype -lfontconfig  -lpthread -ldl -lz  -lpthread -lm  -lXinerama
-    -ltcl8.6 -ltk8.6
+    -ltclstub8.6 -lXss -lXext -lXft -lfontconfig -lfreetype -lfontconfig -lpthread -ldl -lz -lpthread -lm -lXinerama
+    -ltcl8.6 -ltk8.6 -lX11
     )
 
 # Set custom output name :

@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <tcl.h>
 #include "halcmd.h"
+#include "tk.h"
 
 Tcl_Interp *target_interp = NULL;
 static int pending_cr = 0;
@@ -86,7 +87,7 @@ static int halCmd(ClientData cd, Tcl_Interp *interp, int argc, const char **argv
 
 int Hal_Init(Tcl_Interp *interp) {
     int result = init();
-    if(result < 0) {
+    if(result < 0) {        
 	Tcl_ResetResult(interp);
 	halError(interp, result);
 	return TCL_ERROR;
@@ -100,6 +101,7 @@ int Hal_Init(Tcl_Interp *interp) {
     Tcl_CreateCommand(interp, "hal", halCmd, 0, halExit);
 
     Tcl_PkgProvide(interp, "Hal", "1.0");
+
     return TCL_OK;
 }
 

@@ -1,0 +1,138 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "scurve_construct_plot",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "scurve_construct_plot",
+					"targetIndexes" : 
+					[
+						1,
+						2,
+						3
+					]
+				},
+				{
+					"build" : "scurve_construct",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "scurve_construct",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "scurve_jog_project"
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "scurve_construct_plot",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1,
+						2,
+						3
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "scurve_construct",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 2,
+					"id" : "scurve_construct::@22913c5137ee7081402e",
+					"jsonFile" : "target-scurve_construct-Debug-ceec03774dadd7f215ab.json",
+					"name" : "scurve_construct",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "scurve_construct_plot::@122a1c2c1f6d0f51052d",
+					"jsonFile" : "target-scurve_construct_plot-Debug-10e3b8286dfd7c594447.json",
+					"name" : "scurve_construct_plot",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "scurve_construct_plot_autogen::@122a1c2c1f6d0f51052d",
+					"jsonFile" : "target-scurve_construct_plot_autogen-Debug-c1e3f2d5a5a206638adf.json",
+					"name" : "scurve_construct_plot_autogen",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "scurve_construct_plot_autogen_timestamp_deps::@122a1c2c1f6d0f51052d",
+					"jsonFile" : "target-scurve_construct_plot_autogen_timestamp_deps-Debug-9763a89b81168d189581.json",
+					"name" : "scurve_construct_plot_autogen_timestamp_deps",
+					"projectIndex" : 1
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug",
+		"source" : "/home/user/linuxcnc/cmake/vendor/scurve"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 1
+	}
+}

@@ -1,0 +1,10 @@
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/CMakeFiles/rebuild_cache.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/CMakeFiles/edit_cache.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/rebuild_cache.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/edit_cache.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/scurve_construct_plot.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen_timestamp_deps.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct/CMakeFiles/rebuild_cache.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct/CMakeFiles/edit_cache.dir
+/home/user/linuxcnc/cmake/vendor/build-scurve-Desktop-Debug/scurve_construct/CMakeFiles/scurve_construct.dir

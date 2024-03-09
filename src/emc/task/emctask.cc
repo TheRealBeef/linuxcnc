@@ -43,7 +43,7 @@
 static EMC_TASK_MODE mdiOrAuto = EMC_TASK_MODE::AUTO;
 
 InterpBase *pinterp=0;
-#define interp (*pinterp)
+//#define interp (*pinterp)
 setup_pointer _is = 0; // helper for gdb hardware watchpoints FIXME
 
 
@@ -63,7 +63,7 @@ static void print_interp_error(int retval)
     }
 
     interp_error_text_buf[0] = 0;
-    interp.error_text(retval, interp_error_text_buf, LINELEN);
+    (*pinterp).error_text(retval, interp_error_text_buf, LINELEN);
     if (0 != interp_error_text_buf[0]) {
 	rcs_print_error("interp_error: %s\n", interp_error_text_buf);
     }
@@ -73,7 +73,7 @@ static void print_interp_error(int retval)
 	rcs_print("Interpreter stack: \t");
 	while (index < 5) {
 	    interp_stack_buf[0] = 0;
-	    interp.stack_name(index, interp_stack_buf, LINELEN);
+        (*pinterp).stack_name(index, interp_stack_buf, LINELEN);
 	    if (0 == interp_stack_buf[0]) {
 		break;
 	    }
@@ -445,22 +445,25 @@ int emcTaskPlanInit()
         pinterp = new Interp;
     }
 
+
+
     Interp *i = dynamic_cast<Interp*>(pinterp);
+
     if(i) _is = &i->_setup; // FIXME
     else  _is = 0;
-    interp.ini_load(emc_inifile);
+    (*pinterp).ini_load(emc_inifile);
     waitFlag = 0;
 
-    int retval = interp.init();
+    int retval = (*pinterp).init();
     // In task, enable M99 main program endless looping
-    interp.set_loop_on_main_m99(true);
+    (*pinterp).set_loop_on_main_m99(true);
     if (retval > INTERP_MIN_ERROR) {  // I'd think this should be fatal.
 	print_interp_error(retval);
     } else {
 	if (0 != rs274ngc_startup_code[0]) {
-	    retval = interp.execute(rs274ngc_startup_code);
+        retval = (*pinterp).execute(rs274ngc_startup_code);
 	    while (retval == INTERP_EXECUTE_FINISH) {
-		retval = interp.execute(0);
+        retval = (*pinterp).execute(0);
 	    }
 	    if (retval > INTERP_MIN_ERROR) {
 		print_interp_error(retval);
@@ -517,7 +520,7 @@ int emcTaskPlanSetBlockDelete(bool state)
 
 int emcTaskPlanSynch()
 {
-    int retval = interp.synch();
+    int retval = (*pinterp).synch();
     if (retval == INTERP_ERROR) {
         emcTaskAbort();
     }
@@ -532,7 +535,7 @@ int emcTaskPlanSynch()
 void emcTaskPlanExit()
 {
     if (pinterp != NULL) {
-        interp.exit();
+        (*pinterp).exit();
     }
 }
 
@@ -544,7 +547,7 @@ int emcTaskPlanOpen(const char *file)
 	emcStatus->task.readLine = 0;
     }
 
-    int retval = interp.open(file);
+    int retval = (*pinterp).open(file);
     if (retval > INTERP_MIN_ERROR) {
 	print_interp_error(retval);
 	return retval;
@@ -561,14 +564,14 @@ int emcTaskPlanOpen(const char *file)
 
 int emcTaskPlanRead()
 {
-    int retval = interp.read();
+    int retval = (*pinterp).read();
     if (retval == INTERP_FILE_NOT_OPEN) {
 	if (emcStatus->task.file[0] != 0) {
-	    retval = interp.open(emcStatus->task.file);
+        retval = (*pinterp).open(emcStatus->task.file);
 	    if (retval > INTERP_MIN_ERROR) {
 		print_interp_error(retval);
 	    }
-	    retval = interp.read();
+        retval = (*pinterp).read();
 	}
     }
     if (retval > INTERP_MIN_ERROR) {
@@ -589,10 +592,10 @@ int emcTaskPlanExecute(const char *command)
     if (command != 0) {		// Command is 0 if in AUTO mode, non-null if in MDI mode.
 	// Don't sync if not in position.
 	if ((*command != 0) && (inpos)) {
-	    interp.synch();
+        (*pinterp).synch();
 	}
     }
-    int retval = interp.execute(command);
+    int retval = (*pinterp).execute(command);
     if (retval > INTERP_MIN_ERROR) {
 	print_interp_error(retval);
     }
@@ -609,7 +612,7 @@ int emcTaskPlanExecute(const char *command)
 
 int emcTaskPlanExecute(const char *command, int line_number)
 {
-    int retval = interp.execute(command, line_number);
+    int retval = (*pinterp).execute(command, line_number);
     if (retval > INTERP_MIN_ERROR) {
 	print_interp_error(retval);
     }
@@ -626,7 +629,7 @@ int emcTaskPlanExecute(const char *command, int line_number)
 
 int emcTaskPlanClose()
 {
-    int retval = interp.close();
+    int retval = (*pinterp).close();
     if (retval > INTERP_MIN_ERROR) {
 	print_interp_error(retval);
     }
@@ -637,7 +640,7 @@ int emcTaskPlanClose()
 
 int emcTaskPlanReset()
 {
-    int retval = interp.reset();
+    int retval = (*pinterp).reset();
     if (retval > INTERP_MIN_ERROR) {
 	print_interp_error(retval);
     }
@@ -647,7 +650,7 @@ int emcTaskPlanReset()
 
 int emcTaskPlanLine()
 {
-    int retval = interp.line();
+    int retval = (*pinterp).line();
     
     if (emc_debug & EMC_DEBUG_INTERP) {
         rcs_print("emcTaskPlanLine() returned %d\n", retval);
@@ -658,7 +661,7 @@ int emcTaskPlanLine()
 
 int emcTaskPlanLevel()
 {
-    int retval = interp.call_level();
+    int retval = (*pinterp).call_level();
 
     if (emc_debug & EMC_DEBUG_INTERP) {
         rcs_print("emcTaskPlanLevel() returned %d\n", retval);
@@ -671,7 +674,7 @@ int emcTaskPlanCommand(char *cmd)
 {
     char buf[LINELEN];
 
-    strcpy(cmd, interp.command(buf, LINELEN));
+    strcpy(cmd, (*pinterp).command(buf, LINELEN));
 
     if (emc_debug & EMC_DEBUG_INTERP) {
         rcs_print("emcTaskPlanCommand(%s) called. (line_number=%d)\n",
@@ -703,14 +706,14 @@ int emcTaskUpdate(EMC_TASK_STAT * stat)
     // readLine set in main
 
     char buf[LINELEN];
-    rtapi_strxcpy(stat->file, interp.file(buf, LINELEN));
+    rtapi_strxcpy(stat->file, (*pinterp).file(buf, LINELEN));
     // command set in main
 
     // update active G and M codes
     // Start by assuming that we can't unpack a state tag from motion
     int res_state = INTERP_ERROR;
     if (emcStatus->task.interpState != EMC_TASK_INTERP::IDLE) {
-        res_state = interp.active_modes(&stat->activeGCodes[0],
+        res_state = (*pinterp).active_modes(&stat->activeGCodes[0],
 					&stat->activeMCodes[0],
 					&stat->activeSettings[0],
 					emcStatus->motion.traj.tag);
@@ -719,9 +722,9 @@ int emcTaskUpdate(EMC_TASK_STAT * stat)
     // use interp's internal state, so the active state is never out of date
     if (emcStatus->task.mode != EMC_TASK_MODE::AUTO ||
 	res_state == INTERP_ERROR) {
-        interp.active_g_codes(&stat->activeGCodes[0]);
-        interp.active_m_codes(&stat->activeMCodes[0]);
-        interp.active_settings(&stat->activeSettings[0]);
+       (*pinterp).active_g_codes(&stat->activeGCodes[0]);
+        (*pinterp).active_m_codes(&stat->activeMCodes[0]);
+        (*pinterp).active_settings(&stat->activeSettings[0]);
     }
 
     //update state of optional stop
@@ -735,7 +738,7 @@ int emcTaskUpdate(EMC_TASK_STAT * stat)
 
 int emcAbortCleanup(int reason, const char *message)
 {
-    int status = interp.on_abort(reason,message);
+    int status = (*pinterp).on_abort(reason,message);
     if (status > INTERP_MIN_ERROR)
 	print_interp_error(status);
     return status;
