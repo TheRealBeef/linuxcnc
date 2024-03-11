@@ -35,23 +35,26 @@ public:
     QGridLayout *gridLayout_3;
     QGridLayout *gridLayout;
     QGridLayout *gridLayout_2;
-    QLabel *label_curvel;
+    QLabel *label_curpos;
+    QLabel *label_3;
+    QLabel *label_5;
+    QPushButton *pushButton_jog_reverse;
+    QSpacerItem *horizontalSpacer;
+    QCheckBox *checkBox_finished;
+    QLabel *label_6;
+    QLabel *label;
+    QPushButton *pushButton_jog_pos_rev;
     QPushButton *pushButton_pause;
     QLineEdit *lineEdit_fwd_tarpos;
-    QLabel *label_3;
-    QLabel *label;
-    QSpacerItem *horizontalSpacer;
-    QPushButton *pushButton_jog_reverse;
-    QLabel *label_curacc;
-    QLabel *label_2;
-    QLabel *label_5;
-    QLabel *label_curpos;
     QLabel *label_4;
-    QLineEdit *lineEdit_rev_tarpos;
+    QLineEdit *lineEdit_endvel;
     QPushButton *pushButton_jog_forward;
-    QCheckBox *checkBox_finished;
-    QPushButton *pushButton_jog_pos_rev;
+    QLineEdit *lineEdit_rev_tarpos;
+    QLabel *label_curacc;
+    QLabel *label_curvel;
     QPushButton *pushButton_jog_pos_fwd;
+    QLabel *label_2;
+    QPushButton *pushButton_jog_pause;
     QMenuBar *menuBar;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
@@ -95,90 +98,105 @@ public:
         gridLayout_2 = new QGridLayout();
         gridLayout_2->setSpacing(6);
         gridLayout_2->setObjectName(QString::fromUtf8("gridLayout_2"));
-        label_curvel = new QLabel(centralWidget);
-        label_curvel->setObjectName(QString::fromUtf8("label_curvel"));
-        label_curvel->setMinimumSize(QSize(100, 0));
+        label_curpos = new QLabel(centralWidget);
+        label_curpos->setObjectName(QString::fromUtf8("label_curpos"));
 
-        gridLayout_2->addWidget(label_curvel, 0, 4, 1, 1);
-
-        pushButton_pause = new QPushButton(centralWidget);
-        pushButton_pause->setObjectName(QString::fromUtf8("pushButton_pause"));
-
-        gridLayout_2->addWidget(pushButton_pause, 2, 0, 1, 1);
-
-        lineEdit_fwd_tarpos = new QLineEdit(centralWidget);
-        lineEdit_fwd_tarpos->setObjectName(QString::fromUtf8("lineEdit_fwd_tarpos"));
-
-        gridLayout_2->addWidget(lineEdit_fwd_tarpos, 3, 1, 1, 1);
+        gridLayout_2->addWidget(label_curpos, 3, 4, 1, 1);
 
         label_3 = new QLabel(centralWidget);
         label_3->setObjectName(QString::fromUtf8("label_3"));
 
         gridLayout_2->addWidget(label_3, 1, 3, 1, 1);
 
-        label = new QLabel(centralWidget);
-        label->setObjectName(QString::fromUtf8("label"));
+        label_5 = new QLabel(centralWidget);
+        label_5->setObjectName(QString::fromUtf8("label_5"));
 
-        gridLayout_2->addWidget(label, 0, 3, 1, 1);
-
-        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-
-        gridLayout_2->addItem(horizontalSpacer, 0, 2, 1, 1);
+        gridLayout_2->addWidget(label_5, 4, 0, 1, 1);
 
         pushButton_jog_reverse = new QPushButton(centralWidget);
         pushButton_jog_reverse->setObjectName(QString::fromUtf8("pushButton_jog_reverse"));
 
         gridLayout_2->addWidget(pushButton_jog_reverse, 0, 0, 1, 1);
 
-        label_curacc = new QLabel(centralWidget);
-        label_curacc->setObjectName(QString::fromUtf8("label_curacc"));
+        horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-        gridLayout_2->addWidget(label_curacc, 1, 4, 1, 1);
-
-        label_2 = new QLabel(centralWidget);
-        label_2->setObjectName(QString::fromUtf8("label_2"));
-
-        gridLayout_2->addWidget(label_2, 2, 3, 1, 1);
-
-        label_5 = new QLabel(centralWidget);
-        label_5->setObjectName(QString::fromUtf8("label_5"));
-
-        gridLayout_2->addWidget(label_5, 3, 0, 1, 1);
-
-        label_curpos = new QLabel(centralWidget);
-        label_curpos->setObjectName(QString::fromUtf8("label_curpos"));
-
-        gridLayout_2->addWidget(label_curpos, 2, 4, 1, 1);
-
-        label_4 = new QLabel(centralWidget);
-        label_4->setObjectName(QString::fromUtf8("label_4"));
-
-        gridLayout_2->addWidget(label_4, 4, 0, 1, 1);
-
-        lineEdit_rev_tarpos = new QLineEdit(centralWidget);
-        lineEdit_rev_tarpos->setObjectName(QString::fromUtf8("lineEdit_rev_tarpos"));
-
-        gridLayout_2->addWidget(lineEdit_rev_tarpos, 4, 1, 1, 1);
-
-        pushButton_jog_forward = new QPushButton(centralWidget);
-        pushButton_jog_forward->setObjectName(QString::fromUtf8("pushButton_jog_forward"));
-
-        gridLayout_2->addWidget(pushButton_jog_forward, 1, 0, 1, 1);
+        gridLayout_2->addItem(horizontalSpacer, 0, 2, 1, 1);
 
         checkBox_finished = new QCheckBox(centralWidget);
         checkBox_finished->setObjectName(QString::fromUtf8("checkBox_finished"));
 
-        gridLayout_2->addWidget(checkBox_finished, 2, 2, 1, 1);
+        gridLayout_2->addWidget(checkBox_finished, 3, 2, 1, 1);
+
+        label_6 = new QLabel(centralWidget);
+        label_6->setObjectName(QString::fromUtf8("label_6"));
+
+        gridLayout_2->addWidget(label_6, 6, 0, 1, 1);
+
+        label = new QLabel(centralWidget);
+        label->setObjectName(QString::fromUtf8("label"));
+
+        gridLayout_2->addWidget(label, 0, 3, 1, 1);
 
         pushButton_jog_pos_rev = new QPushButton(centralWidget);
         pushButton_jog_pos_rev->setObjectName(QString::fromUtf8("pushButton_jog_pos_rev"));
 
         gridLayout_2->addWidget(pushButton_jog_pos_rev, 0, 1, 1, 1);
 
+        pushButton_pause = new QPushButton(centralWidget);
+        pushButton_pause->setObjectName(QString::fromUtf8("pushButton_pause"));
+
+        gridLayout_2->addWidget(pushButton_pause, 3, 0, 1, 1);
+
+        lineEdit_fwd_tarpos = new QLineEdit(centralWidget);
+        lineEdit_fwd_tarpos->setObjectName(QString::fromUtf8("lineEdit_fwd_tarpos"));
+
+        gridLayout_2->addWidget(lineEdit_fwd_tarpos, 4, 1, 1, 1);
+
+        label_4 = new QLabel(centralWidget);
+        label_4->setObjectName(QString::fromUtf8("label_4"));
+
+        gridLayout_2->addWidget(label_4, 5, 0, 1, 1);
+
+        lineEdit_endvel = new QLineEdit(centralWidget);
+        lineEdit_endvel->setObjectName(QString::fromUtf8("lineEdit_endvel"));
+
+        gridLayout_2->addWidget(lineEdit_endvel, 6, 1, 1, 1);
+
+        pushButton_jog_forward = new QPushButton(centralWidget);
+        pushButton_jog_forward->setObjectName(QString::fromUtf8("pushButton_jog_forward"));
+
+        gridLayout_2->addWidget(pushButton_jog_forward, 1, 0, 1, 1);
+
+        lineEdit_rev_tarpos = new QLineEdit(centralWidget);
+        lineEdit_rev_tarpos->setObjectName(QString::fromUtf8("lineEdit_rev_tarpos"));
+
+        gridLayout_2->addWidget(lineEdit_rev_tarpos, 5, 1, 1, 1);
+
+        label_curacc = new QLabel(centralWidget);
+        label_curacc->setObjectName(QString::fromUtf8("label_curacc"));
+
+        gridLayout_2->addWidget(label_curacc, 1, 4, 1, 1);
+
+        label_curvel = new QLabel(centralWidget);
+        label_curvel->setObjectName(QString::fromUtf8("label_curvel"));
+        label_curvel->setMinimumSize(QSize(100, 0));
+
+        gridLayout_2->addWidget(label_curvel, 0, 4, 1, 1);
+
         pushButton_jog_pos_fwd = new QPushButton(centralWidget);
         pushButton_jog_pos_fwd->setObjectName(QString::fromUtf8("pushButton_jog_pos_fwd"));
 
         gridLayout_2->addWidget(pushButton_jog_pos_fwd, 1, 1, 1, 1);
+
+        label_2 = new QLabel(centralWidget);
+        label_2->setObjectName(QString::fromUtf8("label_2"));
+
+        gridLayout_2->addWidget(label_2, 3, 3, 1, 1);
+
+        pushButton_jog_pause = new QPushButton(centralWidget);
+        pushButton_jog_pause->setObjectName(QString::fromUtf8("pushButton_jog_pause"));
+
+        gridLayout_2->addWidget(pushButton_jog_pause, 2, 1, 1, 1);
 
 
         gridLayout_4->addLayout(gridLayout_2, 1, 0, 1, 1);
@@ -203,22 +221,25 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "scurve jog plot", nullptr));
-        label_curvel->setText(QCoreApplication::translate("MainWindow", "0.000", nullptr));
-        pushButton_pause->setText(QCoreApplication::translate("MainWindow", "pause timer", nullptr));
-        lineEdit_fwd_tarpos->setText(QCoreApplication::translate("MainWindow", "10", nullptr));
-        label_3->setText(QCoreApplication::translate("MainWindow", "curacc:", nullptr));
-        label->setText(QCoreApplication::translate("MainWindow", "curvel:", nullptr));
-        pushButton_jog_reverse->setText(QCoreApplication::translate("MainWindow", "jog velocity reverse", nullptr));
-        label_curacc->setText(QCoreApplication::translate("MainWindow", "0.000", nullptr));
-        label_2->setText(QCoreApplication::translate("MainWindow", "curpos:", nullptr));
-        label_5->setText(QCoreApplication::translate("MainWindow", "fwd_tarpos:", nullptr));
         label_curpos->setText(QCoreApplication::translate("MainWindow", "0.000", nullptr));
-        label_4->setText(QCoreApplication::translate("MainWindow", "rev_tarpos:", nullptr));
-        lineEdit_rev_tarpos->setText(QCoreApplication::translate("MainWindow", "-10", nullptr));
-        pushButton_jog_forward->setText(QCoreApplication::translate("MainWindow", "jog velocity forward", nullptr));
+        label_3->setText(QCoreApplication::translate("MainWindow", "curacc:", nullptr));
+        label_5->setText(QCoreApplication::translate("MainWindow", "fwd_tarpos:", nullptr));
+        pushButton_jog_reverse->setText(QCoreApplication::translate("MainWindow", "jog velocity reverse", nullptr));
         checkBox_finished->setText(QCoreApplication::translate("MainWindow", "finished", nullptr));
+        label_6->setText(QCoreApplication::translate("MainWindow", "velocity end:", nullptr));
+        label->setText(QCoreApplication::translate("MainWindow", "curvel:", nullptr));
         pushButton_jog_pos_rev->setText(QCoreApplication::translate("MainWindow", "jog position reverse", nullptr));
+        pushButton_pause->setText(QCoreApplication::translate("MainWindow", "pause timer", nullptr));
+        lineEdit_fwd_tarpos->setText(QCoreApplication::translate("MainWindow", "100", nullptr));
+        label_4->setText(QCoreApplication::translate("MainWindow", "rev_tarpos:", nullptr));
+        lineEdit_endvel->setText(QCoreApplication::translate("MainWindow", "2", nullptr));
+        pushButton_jog_forward->setText(QCoreApplication::translate("MainWindow", "jog velocity forward", nullptr));
+        lineEdit_rev_tarpos->setText(QCoreApplication::translate("MainWindow", "-100", nullptr));
+        label_curacc->setText(QCoreApplication::translate("MainWindow", "0.000", nullptr));
+        label_curvel->setText(QCoreApplication::translate("MainWindow", "0.000", nullptr));
         pushButton_jog_pos_fwd->setText(QCoreApplication::translate("MainWindow", "jog position forward", nullptr));
+        label_2->setText(QCoreApplication::translate("MainWindow", "curpos:", nullptr));
+        pushButton_jog_pause->setText(QCoreApplication::translate("MainWindow", "jog pause", nullptr));
     } // retranslateUi
 
 };

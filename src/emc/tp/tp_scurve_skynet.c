@@ -50,17 +50,12 @@ skynet_t *skynet;
 typedef struct {
     hal_float_t *Pin;
 } float_data_t;
-float_data_t *tp_curvel, *tp_curacc;
-float_data_t *ruckig_x_pos, *ruckig_x_vel, *ruckig_x_acc;
-float_data_t *ruckig_y_pos, *ruckig_y_vel, *ruckig_y_acc;
-float_data_t *ruckig_z_pos, *ruckig_z_vel, *ruckig_z_acc;
-float_data_t *ruckig_x_pos_ferror, *ruckig_y_pos_ferror, *ruckig_z_pos_ferror;
-float_data_t *ruckig_ferror_limit, *ratio_maxjerk, *ratio_vm, *ratio_acc;
+
 //! Pins
 typedef struct {
     hal_bit_t *Pin;
 } bit_data_t;
-bit_data_t *reverse_run, *enable_runners_toolpath, *limit_ferror, *offpath;
+bit_data_t *enable;
 
 typedef struct { //! Int.
     hal_s32_t *Pin;
@@ -69,7 +64,6 @@ typedef struct { //! Int.
 typedef struct { //! Param int.
     hal_s32_t Pin;
 } param_s32_data_t;
-param_s32_data_t *max_look_ahead;
 
 typedef struct { //! Uint.
     hal_u32_t *Pin;
@@ -87,12 +81,10 @@ typedef struct {
 typedef struct {
     hal_float_t Pin;
 } param_float_data_t;
-param_float_data_t *test_param, *ruckig_ferror_extrema;
 
 typedef struct {
     hal_bit_t Pin;
 } param_bit_data_t;
-param_bit_data_t *clear_vec, *done;
 
 static int comp_idx; /* component ID */
 
@@ -129,134 +121,11 @@ static void the_function(){
 static int setup_pins(){
     int r=0;
 
-    enable_runners_toolpath = (bit_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_bit_new("tpmod_scurve_skynet.enable_runners_toolpath",HAL_IN,&(enable_runners_toolpath->Pin),comp_idx);
-
-    offpath = (bit_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_bit_new("tpmod_scurve_skynet.offpath",HAL_OUT,&(offpath->Pin),comp_idx);
-
-    ratio_vm = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ratio_vm",HAL_IN,&(ratio_vm->Pin),comp_idx);
-
-    ratio_maxjerk = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ratio_maxjerk",HAL_IN,&(ratio_maxjerk->Pin),comp_idx);
-
-    ratio_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ratio_acc",HAL_IN,&(ratio_acc->Pin),comp_idx);
-
-    ruckig_ferror_limit = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_ferror_limit",HAL_IN,&(ruckig_ferror_limit->Pin),comp_idx);
-
-    ruckig_ferror_extrema = (param_float_data_t*)hal_malloc(sizeof(param_float_data_t));
-    r+=hal_param_float_new("tpmod_scurve_skynet.ruckig_ferror_extrema",HAL_RW,&(ruckig_ferror_extrema->Pin),comp_idx);
-
-    //! Pins to be motitored by halscope.
-    tp_curvel = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.curvel",HAL_OUT,&(tp_curvel->Pin),comp_idx);
-
-    tp_curacc = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.curacc",HAL_OUT,&(tp_curacc->Pin),comp_idx);
-
-    ruckig_x_pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_pos",HAL_OUT,&(ruckig_x_pos->Pin),comp_idx);
-
-    ruckig_x_pos_ferror = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_pos_ferror",HAL_OUT,&(ruckig_x_pos_ferror->Pin),comp_idx);
-
-    ruckig_x_vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_vel",HAL_OUT,&(ruckig_x_vel->Pin),comp_idx);
-
-    ruckig_x_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_x_acc",HAL_OUT,&(ruckig_x_acc->Pin),comp_idx);
-
-    ruckig_y_pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_pos",HAL_OUT,&(ruckig_y_pos->Pin),comp_idx);
-
-    ruckig_y_pos_ferror = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_pos_ferror",HAL_OUT,&(ruckig_y_pos_ferror->Pin),comp_idx);
-
-    ruckig_y_vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_vel",HAL_OUT,&(ruckig_y_vel->Pin),comp_idx);
-
-    ruckig_y_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_y_acc",HAL_OUT,&(ruckig_y_acc->Pin),comp_idx);
-
-    ruckig_z_pos = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_pos",HAL_OUT,&(ruckig_z_pos->Pin),comp_idx);
-
-    ruckig_z_pos_ferror = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_pos_ferror",HAL_OUT,&(ruckig_z_pos_ferror->Pin),comp_idx);
-
-    ruckig_z_vel = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_vel",HAL_OUT,&(ruckig_z_vel->Pin),comp_idx);
-
-    ruckig_z_acc = (float_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_float_new("tpmod_scurve_skynet.ruckig_z_acc",HAL_OUT,&(ruckig_z_acc->Pin),comp_idx);
-
-    reverse_run = (bit_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_bit_new("tpmod_scurve_skynet.reverse",HAL_IN,&(reverse_run->Pin),comp_idx);
-
-    limit_ferror = (bit_data_t*)hal_malloc(sizeof(float_data_t));
-    r+=hal_pin_bit_new("tpmod_scurve_skynet.limit_ferror",HAL_IN,&(limit_ferror->Pin),comp_idx);
-
-    max_look_ahead = (param_s32_data_t*)hal_malloc(sizeof(param_s32_data_t));
-    r+=hal_param_s32_new("tpmod_scurve_skynet.look_ahead",HAL_RW,&(max_look_ahead->Pin),comp_idx);
-
-    test_param = (param_float_data_t*)hal_malloc(sizeof(param_float_data_t));
-    r+=hal_param_float_new("tpmod_scurve_skynet.vel_end",HAL_RW,&(test_param->Pin),comp_idx);
-
-    clear_vec = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
-    r+=hal_param_bit_new("tpmod_scurve_skynet.clear_vec",HAL_RW,&(clear_vec->Pin),comp_idx);
-
-    done = (param_bit_data_t*)hal_malloc(sizeof(param_bit_data_t));
-    r+=hal_param_bit_new("tpmod_scurve_skynet.done",HAL_RW,&(done->Pin),comp_idx);
+    enable = (bit_data_t*)hal_malloc(sizeof(bit_data_t));
+    r+=hal_pin_bit_new("tpmod_scurve_skynet.enable",HAL_IN,&(enable->Pin),comp_idx);
 
     return r;
 }
-
-int min(float a, float b){
-
-    if(a==b){
-        return a;
-    }
-
-    if(a<b){
-        return a;
-    }
-
-    if(b<a){
-        return b;
-    }
-
-    return a;
-}
-
-int max(float a, float b){
-
-    if(a==b){
-        return a;
-    }
-
-    if(a>b){
-        return a;
-    }
-
-    if(b>a){
-        return b;
-    }
-
-    return a;
-}
-
-#define TOL 0.001
-bool near(double a, double b, double dist){
-
-    if(a<(b+dist) && a>(b-dist)){
-        return 1;
-    }
-    return 0;
-}
-
 
 //! Status and config from motion.h
 static emcmot_status_t *emcmotStatus;
@@ -326,47 +195,66 @@ extern double arc_radius( struct sc_pnt arc_way, struct sc_pnt arc_center);
 //! Gcode vector dynamic.
 struct tp_vector *vector_ptr;
 
-//! Ruckig scurve.
-extern struct result wrapper_get_pos(struct result input);
-extern double wrapper_stop_lenght(struct result input);
-struct result r={};
-struct result restore={};
-struct result rx={},ry={},rz={},rxyz={}; //! Xyz tp followers using scurve algo.
-
 void update_gui(TP_STRUCT * const tp);
-void update_ruckig(TP_STRUCT * const tp);
-void update_ruckig_followers(TP_STRUCT * const tp);
+void update_scurve(TP_STRUCT * const tp);
 void update_hal(TP_STRUCT * const tp);
-
-void update_look_ahead(TP_STRUCT * const tp);
-bool pathrules_forward_stop(TP_STRUCT * const tp, int i);
-bool pathrules_reverse_stop(TP_STRUCT * const tp, int i);
 
 struct sc_pnt xyz;
 struct sc_dir abc;
 struct sc_ext uvw;
 
-//struct angular_motion *angular_ptr;
-//extern struct angular_motion* am_init_ptr();
-//extern void am_set_values(angular_motion *ptr,
-//                       double vm,
-//                       double arc_v,
-//                       double arc_r);
-//extern double am_calculateLinearArcSpeed(angular_motion *ptr, double radius);
+//! A Inline functinn is compiled in between the upper-level function. So
+//! its not called every time, but compiled inbetween. This makes it faster.
+inline void update_scurve(TP_STRUCT * const tp){
 
-//struct linear_motion *linear_ptr;
-//extern linear_motion* lm_init_ptr();
-//extern void lm_set_values(linear_motion *ptr,
-//                          double velocity_begin,
-//                          double velocity_end,
-//                          double velocity_max,
-//                          double acceleration_max,
-//                          double displacment,
-//                          bool debug);
-//extern double lm_get_curve_ve(linear_motion *ptr);
-//extern double lm_get_curve_total_time(linear_motion *ptr);
-////! Return a array of 3, ot 0=s, at 1=v, at 2=a.
-//extern const double* lm_get_curve_at_time(linear_motion *ptr, double t);
+    // Check the vector. Load first segment into the ruckig planner.
+    if(tp->vector_size>0){
+
+         printf("vector size: %i",tp->vector_size);
+
+         tp->traject_progress+=0.0001;
+
+         if(tp->traject_progress>=1){
+             vector_clear(vector_ptr);
+             tp->vector_size=0;
+         }
+
+        // printf("segment nr: %i",tp->vector_current_exec);
+        // printf(" segment progress: %f \n",tp->segment_progress);
+
+        //! Gcode exec line nr.
+        //! Used by funtion tpGetExecId to set the gui's current executed gcode line.
+
+        // tp->gcode_current_executed_line_nr=vector_at(vector_ptr,tp->vector_current_exec).gcode_line_nr;
+
+        // tp->cur_acc;
+        // tp->cur_pos;
+        ///tp->cur_vel;
+
+        // tp->aMax;  // Maxacc.
+        // tp->max_jerk; // Maxjerk.
+
+        // printf("rapid overide: %f \n",emcmotStatus->rapid_scale);     //! 1.0 is 100%
+        // printf("feed overide: %f \n",emcmotStatus->net_feed_scale);   //! 1.0 is 100%
+
+//        double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
+//        // printf("gcode vm: %f \n",vm);
+//        // printf("vlimit: %f \n",tp->vLimit);
+//        // printf("vMax: %f \n",tp->vMax);
+//        if(vm>tp->vLimit){
+//            vm=tp->vLimit;
+//        }
+
+//        if(vector_at(vector_ptr,tp->vector_current_exec).type==1){ //! G0
+//            // vm*=emcmotStatus->rapid_scale;
+//        } else { //! It's a G1,G2,G3.
+//            // vm*=emcmotStatus->net_feed_scale;
+//        }
+
+ //       tp->cur_pos+=0.01;
+        //tp->traject_progress+=0.001;
+    }
+}
 
 //! Create a empty queue.
 int tpInit(TP_STRUCT * const tp)
@@ -383,28 +271,11 @@ int tpRunCycle(TP_STRUCT * const tp, long period)
     update_hal(tp);
 
     //! Goto the target position.
-    update_ruckig(tp);
-
-    //! Get the netto look ahead segments for the trajectory based on
-    //! the current executed segment : tp->vector_current_exec.
-    update_look_ahead(tp);
+    update_scurve(tp);
 
     //! Interpolate tp position given a 0-1 trajectory progress.
     update_gui(tp);
 
-    //! Test function for halscope, to find velocity jumps.
-    update_ruckig_followers(tp);
-
-    // lm_set_values(linear_ptr,0,0,10,2,100,0);
-
-    // const double* array_ptr= lm_get_curve_at_time(linear_ptr,0.5*lm_get_curve_total_time(linear_ptr));
-    // double s=array_ptr[0];
-    // double v=array_ptr[1];
-    // double a=array_ptr[2];
-
-    // printf("s %f \n",s);
-    // printf("v %f \n",v);
-    // printf("a %f \n",a);
     return 0;
 }
 
@@ -419,44 +290,8 @@ int tpCreate(TP_STRUCT * const tp, int _queueSize,int id)
 
     //! Set the queue size to the c++ vector.
     vector_ptr=vector_init_ptr();
-    // angular_ptr=am_init_ptr();
-    // linear_ptr=lm_init_ptr();
-
-    if(max_look_ahead->Pin==0){
-        max_look_ahead->Pin=10;
-        printf("tpCreate, set look_ahead to : %i \n",max_look_ahead->Pin);
-    }
-
-    if(*ruckig_ferror_limit->Pin==0){
-        *ruckig_ferror_limit->Pin=0.1;
-    }
-
-    test_param->Pin=0;
-
-    *enable_runners_toolpath->Pin=true;
-    *limit_ferror->Pin=true;
-    *ratio_maxjerk->Pin=1.0;
-    *ratio_vm->Pin=1.0;
-    *ratio_acc->Pin=1.0;
 
     printf("tpCreate. set tp->queuesize to: %i \n", tp->queueSize);
-
-
-    //! Test if a circle is processed ok.
-    struct sc_pnt start={0,0,0};
-    struct sc_pnt center={50,0,0};
-    struct sc_pnt end={0,0,0};
-    struct sc_pnt way={0,0,0};
-
-    //! Create a 3d arc using waypoint technique.
-    sc_arc_get_mid_waypoint_c(start,
-                              center,
-                              end,
-                              &way);
-
-    printf("Testing circle, start{0,0,0} center{50,0,0} end {0,0,0} \n");
-    printf("waypoint rotated at Pi radians x : %f y: %f z: %f \n",way.x,way.y,way.z);
-    printf("arc lenght: %f \n", arc_lenght_c(start,way,end,center));
 
     return 0;
 }
@@ -529,10 +364,7 @@ int tpSetVlimit(TP_STRUCT * const tp, double vLimit)
 
 int tpSetAmax(TP_STRUCT * const tp, double aMax)
 {
-    if (!tp || aMax <= 0.0) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     tp->aMax=aMax;
     printf("tpSetAmax to: %f \n",tp->aMax);
     return 0;
@@ -541,10 +373,7 @@ int tpSetAmax(TP_STRUCT * const tp, double aMax)
 //! Set gcode line nr for upcoming new line, arc.
 int tpSetId(TP_STRUCT * const tp, int id)
 {
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     //! printf("tpSetId. \n");
     tp->gcode_upcoming_line_nr=id;
 
@@ -555,12 +384,8 @@ int tpSetId(TP_STRUCT * const tp, int id)
 //! uses this to set the line.
 int tpGetExecId(TP_STRUCT * const tp)
 {
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     //! printf("tpGetExecId. \n");
-
     return tp->gcode_current_executed_line_nr;
 }
 
@@ -570,33 +395,21 @@ int tpSetTermCond(TP_STRUCT * const tp, int cond, double tolerance)
     return 0;
 }
 
-
 //! Used to tell the tp the initial position.
 //! It sets the current position AND the goal position to be the same.  Used
 //! only at TP initialization and when switching modes.
 int tpSetPos(TP_STRUCT * const tp, EmcPose const * const pos)
 {
-    if (!tp) {
-        return -1;
-    }
-
-    // printf("tpSetPos x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
-
+    if (!tp) { return -1; }
     tp->currentPos=*pos;
-
-    // printf("vector size: %i \n",vector_size_c(vector_ptr));
     // printf("tpCurrentPos x: %f y: %f z: %f \n",tp->currentPos.tran.x,tp->currentPos.tran.y,tp->currentPos.tran.z);
-
     return 0;
 }
 
 //! The gui's toolposition tp is updated from here.
 int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
 {
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     *pos = tp->currentPos;
     // printf("tpGetPos x: %f y: %f z: %f \n",pos->tran.x,pos->tran.y,pos->tran.z);
     return 0;
@@ -605,20 +418,14 @@ int tpGetPos(TP_STRUCT const * const tp, EmcPose * const pos)
 //! Not used.
 int tpErrorCheck(TP_STRUCT const * const tp) {
 
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     return 0;
 }
 
 //! Not used.
 int tpSetSpindleSync(TP_STRUCT * const tp, int spindle, double sync, int mode) {
 
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     return 0;
 }
 
@@ -626,7 +433,6 @@ int tpSetSpindleSync(TP_STRUCT * const tp, int spindle, double sync, int mode) {
 int tpPause(TP_STRUCT * const tp)
 {
     // printf("tpPause. \n");
-
     tp->pausing=1;
 
     return 0;
@@ -636,7 +442,6 @@ int tpPause(TP_STRUCT * const tp)
 int tpResume(TP_STRUCT * const tp)
 {
     // printf("tpResume. \n");
-
     tp->pausing=0;
 
     return 0;
@@ -646,7 +451,6 @@ int tpResume(TP_STRUCT * const tp)
 int tpAbort(TP_STRUCT * const tp)
 {
     // printf("tpAbort. \n");
-
     vector_clear(vector_ptr);
     tp->vector_size=0;
 
@@ -677,40 +481,28 @@ int tpIsDone(TP_STRUCT * const tp)
 //! Not used.
 int tpQueueDepth(TP_STRUCT * const tp)
 {
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     return 0;
 }
 
 //! Not used.
 int tpActiveDepth(TP_STRUCT * const tp)
 {
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     return 0;
 }
 
 //! Not used.
 int tpSetAout(TP_STRUCT * const tp, unsigned char index, double start, double end) {
 
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     return 0;
 }
 
 //! Not used.
 int tpSetDout(TP_STRUCT * const tp, int index, unsigned char start, unsigned char end) {
 
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     return 0;
 }
 
@@ -718,12 +510,8 @@ int tpSetDout(TP_STRUCT * const tp, int index, unsigned char start, unsigned cha
 //! This is now done by set the hal pin.
 int tpSetRunDir(TP_STRUCT * const tp, tc_direction_t dir){
 
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     // printf("tpSetRunDir, motion reverse : %i \n",dir);
-
     tp->reverse_run=dir;
 
     return 0;
@@ -739,12 +527,8 @@ int tpAddRigidTap(TP_STRUCT * const tp,
                   double scale,
                   struct state_tag_t tag) {
 
-    if (!tp) {
-        return -1;
-    }
-
+    if (!tp) { return -1; }
     // printf("tpAddRigidTap \n");
-
     return 0;
 }
 
@@ -760,11 +544,9 @@ int tpAddLine(TP_STRUCT *
               int indexer_jnum,
               struct state_tag_t tag){
 
-    if (!tp) {
-        return -1;
-    }
+    if (!tp) { return -1; }
 
-    // printf("tpAddLine \n");
+    printf("tpAddLine \n");
 
     if(tp->vector_size==0){
         tp->gcode_lastPos=tp->currentPos;
@@ -828,8 +610,8 @@ int tpAddLine(TP_STRUCT *
     tp->cur_pos=0;
     tp->tar_pos=tp->traject_lenght;
 
-    printf("line startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
-    printf("line endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
+    // printf("line startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
+    // printf("line endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
 
     return 0;
 }
@@ -847,9 +629,7 @@ int tpAddCircle(TP_STRUCT * const tp,
                 char atspeed,
                 struct state_tag_t tag){
 
-    if (!tp) {
-        return -1;
-    }
+    if (!tp) { return -1; }
 
     printf("tpAddCircle. \n");
 
@@ -891,22 +671,6 @@ int tpAddCircle(TP_STRUCT * const tp,
     //! Calculate the arc radius, we can use this for look ahead of tiny arc's.
     b.radius=arc_radius(b.pnt_w,b.pnt_c);
 
-
-    //! Path rule.
-    /*
-    if(b.radius<10){
-        //! Velocity from gcode to sec.
-       b.vm=1400/60;
-    }
-    if(b.radius<5){
-        //! Velocity from gcode.
-       b.vm=500/60;
-    }
-    if(b.radius<1){
-        //! Velocity from gcode.
-       b.vm=250/60;
-    } */
-
     //! Calculate previous segment to current segment path transition corners in degrees.
     if(vector_size_c(vector_ptr)>0){
         struct tp_segment previous=vector_at(vector_ptr,vector_size_c(vector_ptr)-1);
@@ -918,14 +682,14 @@ int tpAddCircle(TP_STRUCT * const tp,
 
     vector_add_segment(vector_ptr,b);
     tp->vector_size=vector_size_c(vector_ptr);
-    printf("vector size: %i \n",tp->vector_size);
+    // printf("vector size: %i \n",tp->vector_size);
 
     //! Update last pose to end of gcode block.
     tp->gcode_lastPos=end;
 
     tp->traject_lenght+=b.path_lenght;
-    printf("lengt of this segment: %f \n",b.path_lenght);
-    printf("traject lenght now: %f \n",tp->traject_lenght);
+    // printf("lengt of this segment: %f \n",b.path_lenght);
+    // printf("traject lenght now: %f \n",tp->traject_lenght);
 
     tp->vector_current_exec=0;
     tp->segment_progress=0;
@@ -933,9 +697,9 @@ int tpAddCircle(TP_STRUCT * const tp,
     tp->cur_pos=0;
     tp->tar_pos=tp->traject_lenght;
 
-    printf("arc startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
-    printf("arc endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
-    printf("arc center x: %f, y: %f, z: %f \n",center.x,center.y,center.z);
+    // printf("arc startpoint x: %f, y: %f, z: %f \n",tp->gcode_lastPos.tran.x,tp->gcode_lastPos.tran.y,tp->gcode_lastPos.tran.z);
+    // printf("arc endpoint x: %f, y: %f, z: %f \n",end.tran.x,end.tran.y,end.tran.z);
+    // printf("arc center x: %f, y: %f, z: %f \n",center.x,center.y,center.z);
 
     return 0;
 }
@@ -994,12 +758,7 @@ inline void update_gui(TP_STRUCT * const tp){
         tp->currentPos.tran.y=xyz.y;
         tp->currentPos.tran.z=xyz.z;
 
-        //! Output the toolpath created by the ruckig xyz runners.
-        if(*enable_runners_toolpath->Pin){
-            tp->currentPos.tran.x=rx.curpos;
-            tp->currentPos.tran.y=ry.curpos;
-            tp->currentPos.tran.z=rz.curpos;
-        }
+
 
         interpolate_dir_c(vector_at(vector_ptr,id).dir_s,
                           vector_at(vector_ptr,id).dir_e,
@@ -1036,449 +795,8 @@ inline void update_gui(TP_STRUCT * const tp){
 
 //! A Inline functinn is compiled in between the upper-level function. So
 //! its not called every time, but compiled inbetween. This makes it faster.
-inline void update_ruckig(TP_STRUCT * const tp){
-
-    // Check the vector. Load first segment into the ruckig planner.
-    if(tp->vector_size>0){
-
-        //! To prevent motion reverse from halting at segment start position.
-        if(tp->reverse_run && near(tp->cur_pos,tp->tar_pos,TOL)){
-            // if(tp->reverse_run && tp->cur_pos<tp->tar_pos+0.001 && tp->cur_pos>tp->tar_pos-0.001){
-
-            //! This shows, reverse at current_exec_nr = 0. So you can not go any further back, sent message.
-            if(tp->vector_current_exec==0){
-                printf("At begin of gcode queue (gcode vector), can not go further back. \n");
-            }
-
-            tp->tar_pos=0;
-        }
-
-        // printf("segment nr: %i",tp->vector_current_exec);
-        // printf(" segment progress: %f \n",tp->segment_progress);
-
-        //! Gcode exec line nr.
-        //! Used by funtion tpGetExecId to set the gui's current executed gcode line.
-        tp->gcode_current_executed_line_nr=vector_at(vector_ptr,tp->vector_current_exec).gcode_line_nr;
-
-        r.curacc=tp->cur_acc;
-        r.curpos=tp->cur_pos;
-        r.curvel=tp->cur_vel;
-
-        r.maxacc=tp->aMax;
-        r.maxjerk=tp->max_jerk;
-
-        // printf("rapid overide: %f \n",emcmotStatus->rapid_scale);     //! 1.0 is 100%
-        // printf("feed overide: %f \n",emcmotStatus->net_feed_scale);   //! 1.0 is 100%
-
-        double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
-        // printf("gcode vm: %f \n",vm);
-        // printf("vlimit: %f \n",tp->vLimit);
-        // printf("vMax: %f \n",tp->vMax);
-        if(vm>tp->vLimit){
-            vm=tp->vLimit;
-        }
-
-        if(vector_at(vector_ptr,tp->vector_current_exec).type==1){ //! G0
-            vm*=emcmotStatus->rapid_scale;
-        } else { //! It's a G1,G2,G3.
-            vm*=emcmotStatus->net_feed_scale;
-        }
-
-        //! Limit ferror here.
-        // if(*limit_ferror->Pin){
-
-        //! Check if there is current ferror limit overshoot for xyz.
-        if(*ruckig_x_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
-            *offpath->Pin=1;
-        } else
-            if(*ruckig_y_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
-                *offpath->Pin=1;
-            } else
-                if(*ruckig_z_pos_ferror->Pin > *ruckig_ferror_limit->Pin){
-                    *offpath->Pin=1;
-                } else {
-                    *offpath->Pin=0;
-                }
-
-        r.maxvel = vm;
-        if(r.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
-            r.maxvel=0.001;
-        }
-
-        r.enable=1;
-        r.durationdiscretizationtype=Discrete;
-        r.synchronizationtype=None;
-
-        //! MENTION: tp->cycletime is not set to 0.001, or it has a long to double conversion error.
-        //! We set it fixed for now.
-        r.period=0.001;
-        r.tarpos=tp->tar_pos;
-
-        r.taracc=0;
-        r.tarvel=0;
-
-        //! When pausing, goto velocity 0. See the component motdot
-        //! how a jog stop is done.
-        if(tp->pausing || vm==0 ){
-            r.interfacetype=velocity;
-        } else {
-            r.interfacetype=position;
-        }
-
-        // restore=r;
-        r=wrapper_get_pos(r);
-
-        if(r.function_return_code==Working){
-            tp->cur_pos=r.curpos;
-            tp->cur_acc=r.curacc;
-            tp->cur_vel=r.curvel;
-
-            //if(isnanf(tp->cur_pos)){
-            //    r=restore;
-            //}
-
-            //! Update hal pins for monitoring by halscope.
-            *tp_curvel->Pin=r.curvel;
-            *tp_curacc->Pin=r.curacc;
-
-            tp->traject_progress=tp->cur_pos/tp->traject_lenght;
-        }
-
-        if(r.function_return_code==Finished && !tp->pausing){
-
-            // printf("curpos: %f trajectlenght: %f \n",tp->cur_pos,tp->traject_lenght);
-
-            tp->tar_pos=tp->traject_lenght;
-
-            //! End of traject.
-            if(tp->cur_pos>tp->traject_lenght-0.001 && tp->vector_current_exec==tp->vector_size-1){
-                tp->vector_size=0;
-                vector_clear(vector_ptr);
-            }
-        }
-
-        if(r.function_return_code<0){
-            // printf("ruckig error code %i \n",r.function_return_code);
-        }
-
-        // printf("ruckig code %i \n",r.function_return_code);
-    }
-}
-
-inline void update_ruckig_followers(TP_STRUCT * const tp){
-
-    // Check the vector. Load first segment into the ruckig planner.
-    if(tp->vector_size>0){
-
-
-        rxyz.maxacc=tp->aMax;
-        rxyz.maxjerk=tp->max_jerk;
-
-        double vm=vector_at(vector_ptr,tp->vector_current_exec).vm;
-        if(vm>tp->vLimit){
-            vm=tp->vLimit;
-        }
-
-        if(vector_at(vector_ptr,tp->vector_current_exec).type==1){ //! G0
-            vm*=emcmotStatus->rapid_scale;
-        } else { //! It's a G1,G2,G3.
-            vm*=emcmotStatus->net_feed_scale;
-        }
-
-        rxyz.maxvel = vm;
-        if(rxyz.maxvel==0){ //! Ruckig's maxvel may not be zero. Invalid.
-            rxyz.maxvel=0.01;
-        }
-
-        rxyz.enable=1;
-        rxyz.durationdiscretizationtype=Discrete;
-        rxyz.synchronizationtype=None;
-
-        //! MENTION: tp->cycletime is not set to 0.001, or it has a long to double conversion error.
-        //! We set it fixed for now.
-        rxyz.period=0.001;
-
-        rxyz.taracc=0;
-        rxyz.tarvel=0;
-
-        //! When pausing, goto velocity 0. See the component motdot
-        //! how a jog stop is done.
-        if(tp->pausing || vm==0 ){
-            rxyz.interfacetype=velocity;
-        } else {
-            rxyz.interfacetype=position;
-        }
-
-        rxyz.maxvel*=*ratio_vm->Pin;
-        rxyz.maxjerk*=*ratio_maxjerk->Pin;
-        rxyz.maxacc*=*ratio_acc->Pin;
-
-        //! Copy shared values.
-        rx.maxacc=rxyz.maxacc;
-        rx.maxjerk=rxyz.maxjerk;
-        rx.maxvel=rxyz.maxvel;
-        rx.enable=rxyz.enable;
-        rx.durationdiscretizationtype=rxyz.durationdiscretizationtype;
-        rx.synchronizationtype=rxyz.synchronizationtype;
-        rx.period=rxyz.period;
-        rx.taracc=rxyz.taracc;
-        rx.tarvel=rxyz.tarvel;
-
-        ry.maxacc=rxyz.maxacc;
-        ry.maxjerk=rxyz.maxjerk;
-        ry.maxvel=rxyz.maxvel;
-        ry.enable=rxyz.enable;
-        ry.durationdiscretizationtype=rxyz.durationdiscretizationtype;
-        ry.synchronizationtype=rxyz.synchronizationtype;
-        ry.period=rxyz.period;
-        ry.taracc=rxyz.taracc;
-        ry.tarvel=rxyz.tarvel;
-
-        rz.maxacc=rxyz.maxacc;
-        rz.maxjerk=rxyz.maxjerk;
-        rz.maxvel=rxyz.maxvel;
-        rz.enable=rxyz.enable;
-        rz.durationdiscretizationtype=rxyz.durationdiscretizationtype;
-        rz.synchronizationtype=rxyz.synchronizationtype;
-        rz.period=rxyz.period;
-        rz.taracc=rxyz.taracc;
-        rz.tarvel=rxyz.tarvel;
-
-        //! Calculate the x axis follower.
-        rx.tarpos=xyz.x;
-        rx=wrapper_get_pos(rx);
-        if(rx.function_return_code==Working){
-            //! Update hal pins for monitoring by halscope.
-            if(isnanf(rx.curpos)){
-                printf("rx.curpos isnan!. \n");
-            }
-            *ruckig_x_pos->Pin=rx.curpos;
-            *ruckig_x_vel->Pin=rx.curvel;
-            *ruckig_x_acc->Pin=rx.curacc;
-        }
-
-        //! Calculate the y axis follower.
-        ry.tarpos=xyz.y;
-        ry=wrapper_get_pos(ry);
-        if(ry.function_return_code==Working){
-            //! Update hal pins for monitoring by halscope.
-            if(isnanf(ry.curpos)){
-                printf("ry.curpos isnan!. \n");
-            }
-            *ruckig_y_pos->Pin=ry.curpos;
-            *ruckig_y_vel->Pin=ry.curvel;
-            *ruckig_y_acc->Pin=ry.curacc;
-        }
-
-        //! Calculate the z axis follower.
-        rz.tarpos=xyz.z;
-        rz=wrapper_get_pos(rz);
-        if(rz.function_return_code==Working){
-            //! Update hal pins for monitoring by halscope.
-            if(isnanf(rz.curpos)){
-                printf("rz.curpos isnan!. \n");
-            }
-            *ruckig_z_pos->Pin=rz.curpos;
-            *ruckig_z_vel->Pin=rz.curvel;
-            *ruckig_z_acc->Pin=rz.curacc;
-        }
-
-        //! Calculate out of position distances for xyz.
-        *ruckig_x_pos_ferror->Pin=xyz.x-rx.curpos;
-        *ruckig_y_pos_ferror->Pin=xyz.y-ry.curpos;
-        *ruckig_z_pos_ferror->Pin=xyz.z-rz.curpos;
-
-        //! Log the ferror extrema.
-        if(ruckig_ferror_extrema->Pin<*ruckig_x_pos_ferror->Pin){
-            ruckig_ferror_extrema->Pin = *ruckig_x_pos_ferror->Pin;
-        }
-        if(ruckig_ferror_extrema->Pin<*ruckig_y_pos_ferror->Pin){
-            ruckig_ferror_extrema->Pin = *ruckig_y_pos_ferror->Pin;
-        }
-        if(ruckig_ferror_extrema->Pin<*ruckig_z_pos_ferror->Pin){
-            ruckig_ferror_extrema->Pin = *ruckig_z_pos_ferror->Pin;
-        }
-
-
-    }
-}
-
-
-//! A Inline functinn is compiled in between the upper-level function. So
-//! its not called every time, but compiled inbetween. This makes it faster.
 inline void update_hal(TP_STRUCT * const tp){
     //! For info, a pin uses a * before, a parameter not.
-    tp->reverse_run=*reverse_run->Pin;
-    tp->max_look_ahead=max_look_ahead->Pin;
-
-    //! Force clear.
-    if(clear_vec->Pin){
-        vector_clear(vector_ptr);
-        tp->vector_size=0;
-        //! Reset pin directly.
-        clear_vec->Pin=0;
-    }
-}
-
-//! A Inline functinn is compiled in between the upper-level function. So
-//! its not called every time, but compiled inbetween. This makes it faster.
-//!
-//! This function calculates how much gcode segments can be optimized moving forward and
-//! or moving backwards.
-inline void update_look_ahead(TP_STRUCT * const tp){
-
-    //! If gcode vector is empty, skip.
-    //! If ruckig is state::working, go on.
-    if(tp->vector_size>0 && r.function_return_code==0){
-
-        int count=0;
-
-        if(!tp->reverse_run){
-            //! Motion forward. Look forward, ahead.
-            //! min is calculating the minimal of 2 input values.
-            for(int i=tp->vector_current_exec; i< min(vector_size_c(vector_ptr),tp->vector_current_exec+tp->max_look_ahead); i++){
-
-                if(pathrules_forward_stop(tp, i)){
-                    break;
-                }
-
-                count++;
-                // printf("look ahead forward, checking vector segment : %i \n",i);
-            }
-            // printf("\n");
-
-        }
-
-        if(tp->reverse_run){
-            //! Motion reverse, look back.
-            //! max is calculating the maximum of 2 input values.
-            for(int i=tp->vector_current_exec; i> max(0,tp->vector_current_exec-tp->max_look_ahead); i--){
-
-                if(pathrules_reverse_stop(tp, i)){
-                    break;
-                }
-
-                count++;
-                // printf("look ahead backward, checking vector segment : %i \n",i);
-
-            }
-            // printf("\n");
-        }
-
-        double lbegin=0, lend=0;
-        //! Calculate traject positions begin & end for current segment.
-        for(int i=0; i<tp->vector_current_exec; i++){
-            lbegin+=vector_at(vector_ptr,i).path_lenght;
-        }
-
-        lend+=lbegin;
-        lend+=vector_at(vector_ptr,tp->vector_current_exec).path_lenght;
-
-        // printf("traject lenght to current segment start: %f end: %f \n",lbegin,lend);
-
-        if(!tp->reverse_run){
-            //! Add look_ahead distance.
-            for(int i=min(tp->vector_current_exec+1,tp->vector_size); i<min(tp->vector_current_exec+1+count,tp->vector_size); i++){
-                lend+=vector_at(vector_ptr,i).path_lenght;
-            }
-
-            // printf("look ahead tarpos: %f \n",lend);
-            tp->tar_pos=lend;
-        }
-
-        if(tp->reverse_run){
-            //! Add look_back distance.
-            for(int i=max(0,tp->vector_current_exec-1); i>max(0,tp->vector_current_exec-1-count); i--){
-                lbegin-=vector_at(vector_ptr,i).path_lenght;
-            }
-
-            // printf("look back tarpos: %f \n",lbegin);
-            tp->tar_pos=lbegin;
-        }
-
-        // printf("look ahead: %i current_pos: %f \n",count,tp->cur_pos);
-        // printf("calculated tarpos: %f \n",tp->tar_pos);
-    }
-}
-
-//! Add your pathrules to stop motion at a segment nr here.
-//! These pathrules apply for forward motion.
-//! Looking forward the path, i=tp->max_look_ahead.
-//! return 1 = stop.
-inline bool pathrules_forward_stop(TP_STRUCT * const tp, int i){
-
-    //! Is next segment colinair?
-    //! 180 degrees is 3d coliniar.
-    if(vector_at(vector_ptr,i).angle_end<170){
-        return 1;
-    }
-
-    //! When segment is a G0 rapid, stop optimizing.
-    if(vector_at(vector_ptr,i).type==1){
-        return 1;
-    }
-
-    /* Just for info.
-    //! When segment is a arc, calculate arc velocity.
-    if(vector_at(vector_ptr,i).type==3){
-
-        double vm=tp->vLimit;
-        if(vm>tp->vLimit){
-            vm=tp->vLimit;
-        }
-
-        if(vector_at(vector_ptr,tp->vector_current_exec).type==1){ //! G0
-            vm*=emcmotStatus->rapid_scale;
-        } else { //! It's a G1,G2,G3.
-            vm*=emcmotStatus->net_feed_scale;
-        }
-
-        double arc_v=1400;
-        double arc_r=5;
-        set_values(angular_ptr,vm,arc_v,arc_r);
-        double arc_speed=calculateLinearArcSpeed(angular_ptr,vector_at(vector_ptr,i).radius);
-
-        return 0;
-    }
-    */
-
-    //! A colineair arc, how about to stop if arc has tiny radius, and the arc pathlenght is tiny.
-    //! You can even activate this function by a hal pin if you want to.
-    // if(vector_at(vector_ptr,i).primitive_id==sc_arc && vector_at(vector_ptr,i).radius<5 && vector_at(vector_ptr,i).path_lenght<5){
-    //   return 1;
-    //}
-
-    // You can add extra pathrules here for forward motion ..
-
-    return 0;
-}
-
-//! Add your pathrules to stop motion at a segment nr here.
-//! These pathrules apply for reverse motion.
-//! Looking backwards the path, i=tp->max_look_ahead.
-//! return 1 = stop.
-inline bool pathrules_reverse_stop(TP_STRUCT * const tp, int i){
-
-    //! When segment is a G0 rapid, stop optimizing.
-    if(vector_at(vector_ptr,i).type==1){
-        return 1;
-    }
-
-    //! Is next segment colinair?
-    //! Pointing at angle begin!
-    if(vector_at(vector_ptr,i).angle_begin<170){
-        return 1;
-    }
-
-    //! A colineair arc, how about to stop if arc has tiny radius, and the arc pathlenght is tiny.
-    //! You can even activate this function by a hal pin if you want to.
-    // if(vector_at(vector_ptr,i).primitive_id==sc_arc && vector_at(vector_ptr,i).radius<5 && vector_at(vector_ptr,i).path_lenght<5){
-    //   return 1;
-    // }
-
-    // You can add extra pathrules here for backward motion ..
-
-    return 0;
 }
 
 EXPORT_SYMBOL(tpMotFunctions);

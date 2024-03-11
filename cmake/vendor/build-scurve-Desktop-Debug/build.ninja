@@ -188,7 +188,7 @@ build scurve_construct_plot/scurve_construct_plot_autogen/timestamp: CUSTOM_COMM
 #############################################
 # Phony custom command for scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen_timestamp_deps
 
-build scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen_timestamp_deps: phony /opt/qt-creator/5.15.1/gcc_64/lib/libQt5PrintSupport.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/lib/libQt5Core.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/bin/moc /opt/qt-creator/5.15.1/gcc_64/lib/libQt5Gui.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/lib/libQt5Widgets.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/bin/uic
+build scurve_construct_plot/CMakeFiles/scurve_construct_plot_autogen_timestamp_deps: phony /opt/qt-creator/5.15.1/gcc_64/bin/moc /opt/qt-creator/5.15.1/gcc_64/lib/libQt5Widgets.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/lib/libQt5Gui.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/lib/libQt5Core.so.5.15.1 /opt/qt-creator/5.15.1/gcc_64/bin/uic /opt/qt-creator/5.15.1/gcc_64/lib/libQt5PrintSupport.so.5.15.1
 
 
 #############################################

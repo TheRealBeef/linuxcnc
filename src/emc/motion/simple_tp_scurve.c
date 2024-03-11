@@ -36,8 +36,8 @@ extern struct scurve_data jog_position_c(struct scurve_data data, int enable, do
 
 // In terminal : "xset r on", to enable keyboard cursor repeat.
 
-bool use_ruckig=1;
-bool use_grotius_scurve=0;
+bool use_ruckig=0;
+bool use_grotius_scurve=1;
 bool print_time=0;
 struct timespec start_time, end_time;
 

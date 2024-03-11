@@ -39,6 +39,8 @@ private slots:
 
     void on_pushButton_jog_pos_fwd_released();
 
+    void on_pushButton_jog_pause_pressed();
+
 private:
     Ui::MainWindow *ui;
     // Our custom plot widget
